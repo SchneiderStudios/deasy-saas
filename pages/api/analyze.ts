@@ -53,28 +53,19 @@ export default async function handler(
     let mediaType = mediaTypeMatch ? mediaTypeMatch[1].toLowerCase() : 'image/jpeg';
     const base64Data = imageData.replace(/^data:[^;]+;base64,/, '');
 
-    // Check if it's a PDF - PDFs need to be scanned/converted to image first
-    if (mediaType === 'application/pdf') {
-      console.error('❌ PDF received - needs to be converted to image');
-      res.status(400).json({ 
-        error: 'PDF-Format wird noch nicht direkt unterstützt. Bitte scanne das PDF als JPG/PNG oder konvertiere es zu einem Bildformat.' 
-      });
-      return;
-    }
-
-    // Validate image media type - only allow supported formats
+    // Validate media type - only allow supported formats
     const allowedMediaTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedMediaTypes.includes(mediaType)) {
       console.error(`❌ Unsupported media type: ${mediaType}`);
-      res.status(400).json({ 
-        error: `Format nicht unterstützt: ${mediaType}. Bitte verwende JPG, PNG, GIF oder WebP.` 
+      res.status(400).json({
+        error: `Format nicht unterstützt: ${mediaType}. Bitte verwende JPG, PNG, GIF oder WebP.`
       });
       return;
     }
 
     const message = await anthropic.messages.create(
       {
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-opus-5-5',
         max_tokens: 1024,
         messages: [
           {
