@@ -1,20 +1,58 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from '@/styles/Landing.module.css';
+import { translations, Language } from '@/lib/translations';
 
 export default function Home() {
+  const [language, setLanguage] = useState<Language>('ru');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('deasyLanguage') as Language;
+    if (savedLanguage && (savedLanguage === 'de' || savedLanguage === 'ru')) {
+      setLanguage(savedLanguage);
+    }
+    setMounted(true);
+  }, []);
+
+  const handleLanguageToggle = () => {
+    const newLanguage = language === 'de' ? 'ru' : 'de';
+    setLanguage(newLanguage);
+    localStorage.setItem('deasyLanguage', newLanguage);
+  };
+
+  if (!mounted) return null;
+
+  const t = translations[language];
+
   return (
     <div className={styles.container}>
       {/* Navigation */}
       <nav className={styles.navbar}>
         <div className={styles.navContent}>
-          <div className={styles.logo}>🇩🇪 DEASY</div>
+          <div className={styles.logo}>🇩🇪 {t.appTitle}</div>
           <div className={styles.navLinks}>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#faq">FAQ</a>
+            <a href="#features">{t.features}</a>
+            <a href="#pricing">{t.pricing}</a>
+            <a href="#faq">{t.faq}</a>
+            <button
+              onClick={handleLanguageToggle}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#666',
+                padding: '8px 12px',
+              }}
+            >
+              {language === 'de' ? '🇷🇺 РУ' : '🇩🇪 DE'}
+            </button>
             <Link href="/app" className={styles.ctaButton}>
-              Start Free
+              {t.startFree}
             </Link>
           </div>
         </div>
@@ -23,13 +61,10 @@ export default function Home() {
       {/* Hero */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <h1>Verstehe deine Behördenbriefe mit KI</h1>
-          <p>
-            DEASY hilft dir, deutsche Bürokratiebriefe in 30 Sekunden zu verstehen.
-            Fristen, nächste Schritte, einfach erklärt.
-          </p>
+          <h1>{t.heroTitle}</h1>
+          <p>{t.heroSubtitle}</p>
           <Link href="/app" className={styles.heroButton}>
-            Dokument analysieren →
+            {t.analyzeButton}
           </Link>
         </div>
         <div className={styles.heroIllustration}>
@@ -39,84 +74,84 @@ export default function Home() {
 
       {/* Features */}
       <section id="features" className={styles.features}>
-        <h2>Wie funktioniert's?</h2>
+        <h2>{t.featuresTitle}</h2>
         <div className={styles.featureGrid}>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>📸</div>
-            <h3>1. Dokument hochladen</h3>
-            <p>Fotografiere deinen Brief oder lade eine Datei hoch</p>
+            <h3>{t.feature1Title}</h3>
+            <p>{t.feature1Desc}</p>
           </div>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>⚡</div>
-            <h3>2. KI analysiert</h3>
-            <p>Claude Vision liest die Behörden-DNA in 30 Sekunden</p>
+            <h3>{t.feature2Title}</h3>
+            <p>{t.feature2Desc}</p>
           </div>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>🎯</div>
-            <h3>3. Ergebnisse</h3>
-            <p>Zusammenfassung, Fristen, Nächste Schritte, auf Deutsch</p>
+            <h3>{t.feature3Title}</h3>
+            <p>{t.feature3Desc}</p>
           </div>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>💬</div>
-            <h3>4. Chat mit KI</h3>
-            <p>Stelle Fragen zu deinem Brief, KI antwortet</p>
+            <h3>{t.feature4Title}</h3>
+            <p>{t.feature4Desc}</p>
           </div>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>📁</div>
-            <h3>5. Alle Fälle tracken</h3>
-            <p>Organisiere Dokumente in Cases (Pro+)</p>
+            <h3>{t.feature5Title}</h3>
+            <p>{t.feature5Desc}</p>
           </div>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>🔒</div>
-            <h3>6. Datenschutz</h3>
-            <p>DSGVO-konform, deine Daten sind sicher</p>
+            <h3>{t.feature6Title}</h3>
+            <p>{t.feature6Desc}</p>
           </div>
         </div>
       </section>
 
       {/* Pricing */}
       <section id="pricing" className={styles.pricing}>
-        <h2>Transparent Pricing</h2>
+        <h2>{t.pricingTitle}</h2>
         <div className={styles.pricingGrid}>
           <div className={styles.pricingCard}>
-            <h3>Free</h3>
-            <div className={styles.price}>€0<span>/Monat</span></div>
+            <h3>{t.planFree}</h3>
+            <div className={styles.price}>{t.planFreePrice}<span>{t.planFreePeriod}</span></div>
             <ul>
-              <li>✓ 5 Dokumente/Monat</li>
-              <li>✓ Unbegrenzter Chat</li>
-              <li>✓ Basis-Analyse</li>
+              <li>{t.planFreeFeature1}</li>
+              <li>{t.planFreeFeature2}</li>
+              <li>{t.planFreeFeature3}</li>
             </ul>
             <Link href="/app" className={styles.pricingButton}>
-              Jetzt starten
+              {t.planFreeButton}
             </Link>
           </div>
 
           <div className={styles.pricingCard + ' ' + styles.featured}>
-            <div className={styles.badge}>Beliebt</div>
-            <h3>Pro</h3>
-            <div className={styles.price}>€9,99<span>/Monat</span></div>
+            <div className={styles.badge}>{t.planProBadge}</div>
+            <h3>{t.planPro}</h3>
+            <div className={styles.price}>{t.planProPrice}<span>{t.planProPeriod}</span></div>
             <ul>
-              <li>✓ 100 Dokumente/Monat</li>
-              <li>✓ Fälle-Tracking</li>
-              <li>✓ Export in PDF</li>
-              <li>✓ Priority Support</li>
+              <li>{t.planProFeature1}</li>
+              <li>{t.planProFeature2}</li>
+              <li>{t.planProFeature3}</li>
+              <li>{t.planProFeature4}</li>
             </ul>
             <a href="/checkout?plan=pro" className={styles.pricingButton}>
-              Pro aktivieren
+              {t.planProButton}
             </a>
           </div>
 
           <div className={styles.pricingCard}>
-            <h3>Business</h3>
-            <div className={styles.price}>€49,99<span>/Monat</span></div>
+            <h3>{t.planBusiness}</h3>
+            <div className={styles.price}>{t.planBusinessPrice}<span>{t.planBusinessPeriod}</span></div>
             <ul>
-              <li>✓ Unlimited Dokumente</li>
-              <li>✓ Team-Zugang (bis 5 User)</li>
-              <li>✓ API-Zugang</li>
-              <li>✓ White-Label-Option</li>
+              <li>{t.planBusinessFeature1}</li>
+              <li>{t.planBusinessFeature2}</li>
+              <li>{t.planBusinessFeature3}</li>
+              <li>{t.planBusinessFeature4}</li>
             </ul>
             <a href="/checkout?plan=business" className={styles.pricingButton}>
-              Business aktivieren
+              {t.planBusinessButton}
             </a>
           </div>
         </div>
@@ -124,50 +159,41 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className={styles.faq}>
-        <h2>Häufig gefragt</h2>
+        <h2>{t.faqTitle}</h2>
         <div className={styles.faqList}>
           <details className={styles.faqItem}>
-            <summary>Welche Dateiformate werden unterstützt?</summary>
-            <p>JPG, PNG, GIF, WebP, PDF bis 10 MB. Neue Formate folgen bald.</p>
+            <summary>{t.faqQ1}</summary>
+            <p>{t.faqA1}</p>
           </details>
           <details className={styles.faqItem}>
-            <summary>Ist mein Dokument sicher?</summary>
-            <p>
-              Ja! Dein Brief wird verschlüsselt übertragen, einmal analysiert und nicht
-              dauerhaft gespeichert. Details in unserer Datenschutzerklärung.
-            </p>
+            <summary>{t.faqQ2}</summary>
+            <p>{t.faqA2}</p>
           </details>
           <details className={styles.faqItem}>
-            <summary>Kann ich mein Abo kündigen?</summary>
-            <p>Ja, jederzeit ohne Kündigungsfrist. Deine Dokumente bleiben erhalten.</p>
+            <summary>{t.faqQ3}</summary>
+            <p>{t.faqA3}</p>
           </details>
           <details className={styles.faqItem}>
-            <summary>Gibt es eine kostenlosen Trial?</summary>
-            <p>Ja! Das Free-Plan ist zeitlich unbegrenzt (5 Dokumente/Monat).</p>
+            <summary>{t.faqQ4}</summary>
+            <p>{t.faqA4}</p>
           </details>
           <details className={styles.faqItem}>
-            <summary>Wie viel kostet die API?</summary>
-            <p>
-              Business-Kunden bekommen API-Zugang für €49,99/Monat. Maßgeschneiderte
-              Enterprise-Lösungen auf Anfrage.
-            </p>
+            <summary>{t.faqQ5}</summary>
+            <p>{t.faqA5}</p>
           </details>
           <details className={styles.faqItem}>
-            <summary>Akzeptiert ihr internationale Briefe?</summary>
-            <p>
-              Momentan nur deutsche Briefe (beste Qualität). Internationale Varianten
-              folgen Anfang 2027.
-            </p>
+            <summary>{t.faqQ6}</summary>
+            <p>{t.faqA6}</p>
           </details>
         </div>
       </section>
 
       {/* CTA Footer */}
       <section className={styles.ctaFooter}>
-        <h2>Bereit für weniger Bürokratie-Stress?</h2>
-        <p>Starte jetzt kostenlos. Kein Zahlungsmittel erforderlich.</p>
+        <h2>{t.ctaTitle}</h2>
+        <p>{t.ctaSubtitle}</p>
         <Link href="/app" className={styles.ctaButtonLarge}>
-          Kostenlos starten →
+          {t.ctaButton}
         </Link>
       </section>
 
@@ -175,40 +201,40 @@ export default function Home() {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div>
-            <strong>DEASY</strong>
-            <p>KI-Assistent für deutsche Bürokratie</p>
+            <strong>{t.footerCompanyName}</strong>
+            <p>{t.footerCompanyDesc}</p>
           </div>
           <div>
-            <h4>Links</h4>
+            <h4>{t.footerLinksTitle}</h4>
             <ul>
               <li>
-                <a href="/datenschutz">Datenschutz</a>
+                <a href="/datenschutz">{t.footerPrivacy}</a>
               </li>
               <li>
-                <a href="/impressum">Impressum</a>
+                <a href="/impressum">{t.footerImprint}</a>
               </li>
               <li>
-                <a href="mailto:info@deasy.de">Kontakt</a>
+                <a href="mailto:info@deasy.de">{t.footerContact}</a>
               </li>
             </ul>
           </div>
           <div>
-            <h4>Sozial</h4>
+            <h4>{t.footerSocialTitle}</h4>
             <ul>
               <li>
                 <a href="https://twitter.com/deasy_de" target="_blank">
-                  Twitter
+                  {t.footerTwitter}
                 </a>
               </li>
               <li>
                 <a href="https://github.com/deasy-ai" target="_blank">
-                  GitHub
+                  {t.footerGithub}
                 </a>
               </li>
             </ul>
           </div>
         </div>
-        <p className={styles.footerCopy}>© 2024 DEASY. All rights reserved.</p>
+        <p className={styles.footerCopy}>{t.footerCopyright}</p>
       </footer>
     </div>
   );
