@@ -1,0 +1,38 @@
+export type Language = 'de' | 'ru';
+
+export const translations: Record<Language, Record<string, string>> = {
+  de: {
+    uploadTitle: 'Dokument hochladen',
+    uploadSubtitle: 'Lade einen deutschen Behördenbrief hoch und lasse ihn analysieren',
+    uploadPlaceholder: 'Ziehe ein Dokument hier hin oder klicke zum Upload',
+    analyzeButton: 'Analysieren',
+    analyzing: 'Analysiere...',
+    freeDescription: 'Dokumente / Monat',
+    analysisLimitReached: 'Limit erreicht – Upgrade erforderlich',
+    chatPlaceholder: 'Stelle eine Frage zum Brief...',
+    technicalError: 'Fehler beim Analysieren des Dokuments',
+    upgradeTitle: 'Upgrade erforderlich',
+    upgradeSubtitle: 'Wähle einen Plan, um mehr Analysen zu nutzen',
+    upgradeButton: 'Upgrade',
+    proDescription: '10 Analysen – einmalig',
+    proMonthlyDescription: '100 Analysen – monatlich',
+    businessDescription: 'Unbegrenzte Analysen – monatlich',
+  },
+  ru: {
+    uploadTitle: 'Загрузить документ',
+    uploadSubtitle: 'Загрузи немецкое служебное письмо и получи его анализ',
+    uploadPlaceholder: 'Перетащи документ сюда или нажми для загрузки',
+    analyzeButton: 'Анализировать',
+    analyzing: 'Анализирую...',
+    freeDescription: 'документов / месяц',
+    analysisLimitReached: 'Лимит достигнут – требуется обновление',
+    chatPlaceholder: 'Задай вопрос к письму...',
+    technicalError: 'Ошибка при анализе документа',
+    upgradeTitle: 'Требуется обновление',
+    upgradeSubtitle: 'Выбери план для большего количества анализов',
+    upgradeButton: 'Обновить',
+    proDescription: '10 анализов – единовременно',
+    proMonthlyDescription: '100 анализов – ежемесячно',
+    businessDescription: 'Неограниченные анализы – ежемесячно',
+  },
+};
