@@ -48,8 +48,10 @@ export default async function handler(
       return;
     }
 
-    // Base64 zu Binär
-    const base64Data = imageData.replace(/^data:image\/[^;]+;base64,/, '');
+    // Extract media type from data URL
+    const mediaTypeMatch = imageData.match(/^data:([^;]+);base64,/);
+    const mediaType = mediaTypeMatch ? mediaTypeMatch[1] : 'image/jpeg';
+    const base64Data = imageData.replace(/^data:[^;]+;base64,/, '');
 
     const message = await anthropic.messages.create(
       {
@@ -63,7 +65,7 @@ export default async function handler(
                 type: 'image',
                 source: {
                   type: 'base64',
-                  media_type: 'image/jpeg',
+                  media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
                   data: base64Data,
                 },
               },
