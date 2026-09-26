@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from '@/styles/App.module.css';
+import { translations, Language } from '@/lib/translations';
 
 interface AnalysisResult {
   summary?: string;
@@ -15,6 +16,12 @@ interface ChatMessage {
   content: string;
 }
 
+interface UsageStats {
+  analysisUsed: number;
+  analysisPaid: number;
+  proMonthlyUntil: string | null;
+}
+
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
   const [imageData, setImageData] = useState<string | null>(null);
@@ -23,21 +30,64 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [language, setLanguage] = useState<Language>('de');
+  const [usage, setUsage] = useState<UsageStats>({ analysisUsed: 0, analysisPaid: 0, proMonthlyUntil: null });
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImageData(event.target?.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
+  const t = translations[language];
+
+  // Load usage and language from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('deasyUsage');
+    if (stored) setUsage(JSON.parse(stored));
+    const lang = (localStorage.getItem('deasyLanguage') as Language) || 'de';
+    setLanguage(lang);
+  }, []);
+
+  // Calculate available analyses
+  const getAvailableAnalyses = () => {
+    const isProMonthly = usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date();
+    if (isProMonthly) return 100;
+    if (usage.analysisPaid > 0) return usage.analysisPaid;
+    if (usage.analysisUsed < 2) return 2 - usage.analysisUsed;
+    return 0;
+  };
+
+  const canAnalyze = usage.analysisUsed < 2 || usage.analysisPaid > 0 || (usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date());
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    let selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    // Convert HEIC to JPEG if needed (iPhone support)
+    if (selectedFile.type === 'image/heic' || selectedFile.type === 'image/heif' || selectedFile.name.toLowerCase().endsWith('.heic')) {
+      try {
+        const heic2any = (await import('heic2any')).default;
+        const convertedBlob = await heic2any({
+          blob: selectedFile,
+          toType: 'image/jpeg',
+        });
+        selectedFile = new File([convertedBlob], selectedFile.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+      } catch (error) {
+        console.warn('⚠️ HEIC conversion failed, trying original:', error);
+        // Continue with original file
+      }
     }
+
+    setFile(selectedFile);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImageData(event.target?.result as string);
+    };
+    reader.readAsDataURL(selectedFile);
   };
 
   const handleAnalyze = async () => {
     if (!imageData) return;
+    if (!canAnalyze) {
+      setShowUpgradeModal(true);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -53,9 +103,17 @@ export default function App() {
       const data = await response.json();
       setAnalysis(data);
       setChatMessages([]);
+
+      // Update usage
+      const newUsage = { ...usage, analysisUsed: usage.analysisUsed + 1 };
+      if (usage.analysisPaid > 0 && usage.analysisUsed >= 2) {
+        newUsage.analysisPaid = Math.max(0, usage.analysisPaid - 1);
+      }
+      setUsage(newUsage);
+      localStorage.setItem('deasyUsage', JSON.stringify(newUsage));
     } catch (error) {
       setAnalysis({
-        error: 'Fehler beim Analysieren des Dokuments',
+        error: t.technicalError,
       });
     } finally {
       setLoading(false);
@@ -114,10 +172,19 @@ export default function App() {
           ← DEASY
         </Link>
         <div className={styles.headerRight}>
-          <span className={styles.plan}>Free Plan (5 Dokumente/Monat)</span>
-          <Link href="/checkout?plan=pro" className={styles.upgradeButton}>
-            Upgrade
-          </Link>
+          <span className={styles.plan}>
+            {getAvailableAnalyses()} {t.freeDescription.toLowerCase()}
+          </span>
+          <button
+            className={styles.upgradeButton}
+            onClick={() => {
+              const newLang = language === 'de' ? 'ru' : 'de';
+              setLanguage(newLang);
+              localStorage.setItem('deasyLanguage', newLang);
+            }}
+          >
+            {language === 'de' ? '🇷🇺 РУ' : '🇩🇪 DE'}
+          </button>
         </div>
       </header>
 
@@ -125,20 +192,20 @@ export default function App() {
         {/* Upload Section */}
         {!analysis ? (
           <div className={styles.uploadSection}>
-            <h1>Dokument hochladen</h1>
+            <h1>{t.uploadTitle}</h1>
+            <p>{t.uploadSubtitle}</p>
             <div
               className={styles.uploadArea}
               onClick={() => document.getElementById('fileInput')?.click()}
             >
               <div className={styles.uploadIcon}>📄</div>
               <p className={styles.uploadText}>
-                Ziehe ein Dokument hier hin oder klicke zum Upload
+                {t.uploadPlaceholder}
               </p>
-              <p className={styles.uploadSubtext}>JPG, PNG, GIF, WebP bis 10 MB</p>
               <input
                 id="fileInput"
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf"
                 onChange={handleFileChange}
                 hidden
               />
@@ -150,16 +217,26 @@ export default function App() {
                 <button
                   className={styles.analyzeButton}
                   onClick={handleAnalyze}
-                  disabled={loading}
+                  disabled={loading || !canAnalyze}
                 >
-                  {loading ? '⏳ Analysiere...' : '▶ Analysieren'}
+                  {loading ? `⏳ ${t.analyzing}` : `▶ ${t.analyzeButton}`}
                 </button>
               </div>
             )}
 
+            {usage.analysisUsed >= 2 && !canAnalyze && (
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className={styles.upgradePrompt}
+              >
+                📤 {t.analysisLimitReached}
+              </button>
+            )}
+
             <div className={styles.securityNote}>
-              🔒 Dein Dokument ist verschlüsselt und wird nach der Analyse nicht
-              gespeichert.
+              🔒 {language === 'de'
+                ? 'Dein Dokument ist verschlüsselt und wird nach der Analyse nicht gespeichert.'
+                : 'Ваш документ зашифрован и не сохраняется после анализа.'}
             </div>
           </div>
         ) : (
@@ -233,12 +310,12 @@ export default function App() {
             {/* Chat Section */}
             {!analysis.error && (
               <div className={styles.chatPanel}>
-                <h2>💬 Fragen zum Brief?</h2>
+                <h2>💬 {language === 'de' ? 'Fragen zum Brief?' : 'Вопросы к письму?'}</h2>
 
                 <div className={styles.chatMessages}>
                   {chatMessages.length === 0 && (
                     <p className={styles.chatPlaceholder}>
-                      Stelle eine Frage zu deinem Brief...
+                      {t.chatPlaceholder}
                     </p>
                   )}
                   {chatMessages.map((msg, i) => (
@@ -251,7 +328,7 @@ export default function App() {
                   ))}
                   {chatLoading && (
                     <div className={styles.chatMessage + ' ' + styles.assistant}>
-                      <p className={styles.typing}>⏳ Antwortet...</p>
+                      <p className={styles.typing}>⏳ {language === 'de' ? 'Antwortet...' : 'Отвечает...'}</p>
                     </div>
                   )}
                 </div>
@@ -259,7 +336,7 @@ export default function App() {
                 <div className={styles.chatInput}>
                   <input
                     type="text"
-                    placeholder="Deine Frage..."
+                    placeholder={t.chatPlaceholder}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyPress={(e) => {
@@ -279,6 +356,67 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h2>{t.upgradeTitle}</h2>
+            <p>{t.upgradeSubtitle}</p>
+
+            <div className={styles.plans}>
+              {/* Once Payment */}
+              <div className={styles.planCard}>
+                <h3>$2.99</h3>
+                <p>{t.proDescription}</p>
+                
+                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_ONCE_LINK"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.planButton}
+                >
+                  {t.upgradeButton}
+                </a>
+              </div>
+
+              {/* Monthly Pro */}
+              <div className={styles.planCard}>
+                <h3>$9.99</h3>
+                <p>{t.proMonthlyDescription}</p>
+                
+                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.planButton}
+                >
+                  {t.upgradeButton}
+                </a>
+              </div>
+
+              {/* Unlimited Business */}
+              <div className={styles.planCard}>
+                <h3>$49.99</h3>
+                <p>{t.businessDescription}</p>
+                
+                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_UNLIMITED_LINK"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.planButton}
+                >
+                  {t.upgradeButton}
+                </a>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className={styles.closeModal}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
