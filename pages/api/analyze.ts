@@ -107,7 +107,7 @@ Nur JSON, keine weiteren Worte.`,
 
     const result = JSON.parse(jsonMatch[0]) as AnalysisResult;
     res.status(200).json(result);
-   } catch (error: any) {
+  } catch (error: any) {
     console.error('❌ Analyse-Fehler:', error?.message);
     console.error('❌ Error Details:', error);
     console.error('❌ Error Status:', error?.status);
@@ -120,8 +120,9 @@ Nur JSON, keine weiteren Worte.`,
     } else if (error?.message?.includes('credit')) {
       res.status(402).json({ error: 'Keine Credits verfügbar. Bitte Guthaben aufladen.' });
     } else {
-      res.status(500).json({ 
-        error: `Technischer Fehler: ${error?.message || 'Unbekannter Fehler'}` 
+      res.status(500).json({
+        error: `Technischer Fehler: ${error?.message || 'Unbekannter Fehler'}`
       });
     }
   }
+}
