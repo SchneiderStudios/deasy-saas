@@ -1,0 +1,226 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f3ff 0%, #f0f0ff 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.navbar {
+  background: white;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.navbar a {
+  color: #4338ca;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.navbar a:hover {
+  color: #3829a0;
+}
+
+.content {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+.checkoutCard {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 8px 32px rgba(67, 56, 202, 0.15);
+}
+
+.checkoutCard h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #1c2340;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.planDetails {
+  margin-bottom: 2rem;
+}
+
+.price {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #4338ca;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.price span {
+  font-size: 1rem;
+  color: #4b4e5c;
+  font-weight: 500;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.description {
+  text-align: center;
+  color: #4b4e5c;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.features {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.features h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1c2340;
+  margin-bottom: 1rem;
+}
+
+.features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features li {
+  padding: 0.75rem 0;
+  color: #4b4e5c;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.features li:last-child {
+  border-bottom: none;
+}
+
+.payButton {
+  width: 100%;
+  background: #4338ca;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);
+}
+
+.payButton:hover:not(:disabled) {
+  background: #3829a0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(67, 56, 202, 0.35);
+}
+
+.payButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.note {
+  text-align: center;
+  color: #4b4e5c;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.error {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(67, 56, 202, 0.15);
+}
+
+.error p {
+  color: #1c2340;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.error a {
+  display: inline-block;
+  color: #4338ca;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.faq {
+  margin-top: 3rem;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(67, 56, 202, 0.15);
+}
+
+.faq h2 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #1c2340;
+  margin-bottom: 1.5rem;
+}
+
+.faq details {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+}
+
+.faq details:last-child {
+  border-bottom: none;
+}
+
+.faq summary {
+  font-weight: 700;
+  color: #1c2340;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.faq summary::before {
+  content: '▶ ';
+  display: inline-block;
+  transition: transform 0.3s;
+  margin-right: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.faq details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.faq p {
+  color: #4b4e5c;
+  margin-top: 0.75rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .checkoutCard {
+    padding: 1.5rem;
+  }
+
+  .checkoutCard h1 {
+    font-size: 1.5rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
+
+  .faq {
+    padding: 1.5rem;
+  }
+
+  .faq h2 {
+    font-size: 1.25rem;
+  }
+}

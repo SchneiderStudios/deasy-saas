@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User & Auth
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  password      String?    // Nur für Passwort-basierte Auth
+  emailVerified DateTime?
+  image         String?
+  plan          String     @default("free") // free, pro, business
+  stripeId      String?    @unique           // Stripe Customer ID
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  documents     Document[]
+  cases         Case[]
+  subscriptions Subscription[]
+
+  @@map("users")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Fälle (Cases)
+model Case {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  status      String     @default("active") // active, closed, pending
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents   Document[]
+
+  @@index([userId])
+  @@map("cases")
+}
+
+// Hochgeladene Dokumente
+model Document {
+  id           String   @id @default(cuid())
+  userId       String
+  caseId       String?
+  fileName     String
+  fileSize     Int
+  fileType     String
+  storagePath  String   // S3 oder lokal
+
+  // Analyse-Ergebnisse
+  summary      String?
+  risk         String?  // Kritisch, Wichtig, Niedrig
+  deadlines    String[] // JSON array von Fristen
+  nextSteps    String[] // JSON array von nächsten Schritten
+
+  // Metadaten
+  analyzedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  case         Case?    @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([caseId])
+  @@map("documents")
+}
+
+// Subscriptions & Billing
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  stripeSubId     String?  @unique           // Stripe Subscription ID
+  planId          String                     // pro, business
+  status          String   @default("active") // active, canceled, past_due
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  canceledAt         DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// Usage Tracking
+model Usage {
+  id           String   @id @default(cuid())
+  userId       String
+  month        String   // YYYY-MM
+  documentsUsed Int     @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, month])
+  @@map("usage")
+}
+
+// Invoice / Payments Log
+model Invoice {
+  id          String   @id @default(cuid())
+  userId      String
+  stripeId    String?  @unique
+  amount      Int      // in cents
+  currency    String   @default("EUR")
+  status      String   @default("draft") // draft, sent, paid, failed
+  dueDate     DateTime
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("invoices")
+}
