@@ -107,17 +107,21 @@ Nur JSON, keine weiteren Worte.`,
 
     const result = JSON.parse(jsonMatch[0]) as AnalysisResult;
     res.status(200).json(result);
-  } catch (error: any) {
+   } catch (error: any) {
     console.error('❌ Analyse-Fehler:', error?.message);
+    console.error('❌ Error Details:', error);
+    console.error('❌ Error Status:', error?.status);
+    console.error('❌ Error Type:', error?.type);
 
     if (error?.status === 401) {
       res.status(401).json({ error: 'API-Authentifizierung fehlgeschlagen' });
     } else if (error?.message?.includes('timeout')) {
       res.status(504).json({ error: 'Analyse-Timeout' });
+    } else if (error?.message?.includes('credit')) {
+      res.status(402).json({ error: 'Keine Credits verfügbar. Bitte Guthaben aufladen.' });
     } else {
-      res
-        .status(500)
-        .json({ error: 'Technischer Fehler bei der Analyse' });
+      res.status(500).json({ 
+        error: `Technischer Fehler: ${error?.message || 'Unbekannter Fehler'}` 
+      });
     }
   }
-}
