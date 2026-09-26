@@ -235,3 +235,39 @@ export const translations = {
     // Landing Page - CTA Footer
     ctaTitle: "Готов избавиться от бюрократического стресса?",
     ctaSubtitle: "Начни прямо сейчас бесплатно. Никакие платежные данные не требуются.",
+    ctaButton: "Начать бесплатно →",
+
+    // Footer
+    footerCompanyName: "DEASY",
+    footerCompanyDesc: "AI-ассистент для немецкой бюрократии",
+    footerLinksTitle: "Ссылки",
+    footerPrivacy: "Конфиденциальность",
+    footerImprint: "Правовая информация",
+    footerContact: "Контакт",
+    footerSocialTitle: "Социальные сети",
+    footerTwitter: "Twitter",
+    footerGithub: "GitHub",
+    footerCopyright: "© 2024 DEASY. Все права защищены.",
+
+    // Pricing
+    free: "Бесплатно",
+    freeDescription: "2 анализа",
+    pro: "Про",
+    proDescription: "10 анализов",
+    proMonthly: "Про подписка",
+    proMonthlyDescription: "100 анализов/месяц",
+    business: "Бизнес",
+    businessDescription: "Неограниченно",
+    upgradeButton: "Обновить",
+    upgradeTitle: "Выберите план",
+    upgradeSubtitle: "Вы использовали 2 бесплатных анализа",
+
+    // Messages
+    analysisLimitReached: "Вы достигли лимита. Выберите план.",
+    upgradeSuccess: "Спасибо за покупку!",
+    technicalError: "Техническая ошибка при анализе",
+  }
+};
+
+export type Language = 'de' | 'ru';
+export type TranslationKey = keyof typeof translations.de;
