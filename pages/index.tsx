@@ -136,9 +136,12 @@ export default function Home() {
               <li>{t.planProFeature3}</li>
               <li>{t.planProFeature4}</li>
             </ul>
-            <a href="/checkout?plan=pro" className={styles.pricingButton}>
-              {t.planProButton}
+            <a href="mailto:info@deasy.de?subject=Pro%20Plan%20Anfrage" className={styles.pricingButton}>
+              {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
             </a>
+            <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
+              {language === 'de' ? 'Für Unternehmen - Persönliches Angebot' : 'Для компаний - Персональное предложение'}
+            </p>
           </div>
 
           <div className={styles.pricingCard}>
