@@ -8,6 +8,8 @@ interface AnalysisResult {
   risk?: string;
   deadlines?: string[];
   nextSteps?: string[];
+  actionSuggestions?: string[];
+  language?: string;
   error?: string;
 }
 
@@ -36,6 +38,7 @@ export default function App() {
 
   const t = translations[language];
 
+  // Load usage and language from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('deasyUsage');
     if (stored) setUsage(JSON.parse(stored));
@@ -43,20 +46,22 @@ export default function App() {
     setLanguage(lang);
   }, []);
 
+  // Calculate available analyses
   const getAvailableAnalyses = () => {
     const isProMonthly = usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date();
     if (isProMonthly) return 100;
     if (usage.analysisPaid > 0) return usage.analysisPaid;
-    if (usage.analysisUsed < 2) return 2 - usage.analysisUsed;
+    if (usage.analysisUsed < 3) return 3 - usage.analysisUsed;
     return 0;
   };
 
-  const canAnalyze = usage.analysisUsed < 2 || usage.analysisPaid > 0 || (usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date());
+  const canAnalyze = usage.analysisUsed < 3 || usage.analysisPaid > 0 || (usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date());
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     let selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
+    // Convert HEIC to JPEG if needed (iPhone support)
     if (selectedFile.type === 'image/heic' || selectedFile.type === 'image/heif' || selectedFile.name.toLowerCase().endsWith('.heic')) {
       try {
         const heic2any = (await import('heic2any')).default;
@@ -64,10 +69,10 @@ export default function App() {
           blob: selectedFile,
           toType: 'image/jpeg',
         });
-        const blobToConvert = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-        selectedFile = new File([blobToConvert], selectedFile.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+        selectedFile = new File([convertedBlob], selectedFile.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
       } catch (error) {
-        console.warn('⚠️ HEIC conversion failed:', error);
+        console.warn('⚠️ HEIC conversion failed, trying original:', error);
+        // Continue with original file
       }
     }
 
@@ -91,21 +96,27 @@ export default function App() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageData, fileName: file?.name }),
+        body: JSON.stringify({
+          imageData,
+          fileName: file?.name,
+        }),
       });
 
       const data = await response.json();
       setAnalysis(data);
       setChatMessages([]);
 
+      // Update usage
       const newUsage = { ...usage, analysisUsed: usage.analysisUsed + 1 };
-      if (usage.analysisPaid > 0 && usage.analysisUsed >= 2) {
+      if (usage.analysisPaid > 0 && usage.analysisUsed >= 3) {
         newUsage.analysisPaid = Math.max(0, usage.analysisPaid - 1);
       }
       setUsage(newUsage);
       localStorage.setItem('deasyUsage', JSON.stringify(newUsage));
     } catch (error) {
-      setAnalysis({ error: t.technicalError });
+      setAnalysis({
+        error: t.technicalError,
+      });
     } finally {
       setLoading(false);
     }
@@ -114,7 +125,11 @@ export default function App() {
   const handleChatSend = async () => {
     if (!chatInput || !analysis) return;
 
-    const newMessage: ChatMessage = { role: 'user', content: chatInput };
+    const newMessage: ChatMessage = {
+      role: 'user',
+      content: chatInput,
+    };
+
     setChatMessages([...chatMessages, newMessage]);
     setChatInput('');
     setChatLoading(true);
@@ -123,35 +138,45 @@ export default function App() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: chatInput, context: analysis.summary }),
+        body: JSON.stringify({
+          message: chatInput,
+          context: analysis.summary,
+        }),
       });
 
       const data = await response.json();
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: data.response || data.error || (language === 'de' ? 'Fehler' : 'Ошибка') }]);
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.response || data.error || 'Fehler beim Chat',
+        },
+      ]);
     } catch (error) {
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: language === 'de' ? 'Chat-Fehler' : 'Ошибка чата' }]);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Chat-Fehler',
+        },
+      ]);
     } finally {
       setChatLoading(false);
     }
   };
 
-  const newDocLabel = language === 'de' ? 'Neues Dokument' : 'Новый документ';
-  const resetLabel = language === 'de' ? '← Neues Dokument' : '← Новый документ';
-  const questionsLabel = language === 'de' ? 'Fragen zum Brief?' : 'Вопросы к письму?';
-  const respondingLabel = language === 'de' ? 'Antwortet...' : 'Отвечает...';
-  const securityText = language === 'de'
-    ? 'Dein Dokument ist verschlüsselt und wird nach der Analyse nicht gespeichert.'
-    : 'Твой документ зашифрован и не сохраняется после анализа.';
-  const summaryLabel = language === 'de' ? 'Zusammenfassung' : 'Резюме';
-  const deadlinesLabel = language === 'de' ? 'Fristen' : 'Сроки';
-  const stepsLabel = language === 'de' ? 'Nächste Schritte' : 'Следующие шаги';
-
   return (
     <div className={styles.container}>
+      {/* Header */}
       <header className={styles.header}>
-        <Link href="/" className={styles.logo}>← DEASY</Link>
+        <Link href="/" className={styles.logo}>
+          ← DEASY
+        </Link>
         <div className={styles.headerRight}>
-          <span className={styles.plan}>{getAvailableAnalyses()} {t.freeDescription.toLowerCase()}</span>
+          <span className={styles.plan}>
+            {getAvailableAnalyses()} {t.freeDescription.toLowerCase()}
+          </span>
           <button
             className={styles.upgradeButton}
             onClick={() => {
@@ -166,6 +191,7 @@ export default function App() {
       </header>
 
       <div className={styles.content}>
+        {/* Upload Section */}
         {!analysis ? (
           <div className={styles.uploadSection}>
             <h1>{t.uploadTitle}</h1>
@@ -175,8 +201,16 @@ export default function App() {
               onClick={() => document.getElementById('fileInput')?.click()}
             >
               <div className={styles.uploadIcon}>📄</div>
-              <p className={styles.uploadText}>{t.uploadPlaceholder}</p>
-              <input id="fileInput" type="file" accept="image/*,.pdf" onChange={handleFileChange} hidden />
+              <p className={styles.uploadText}>
+                {t.uploadPlaceholder}
+              </p>
+              <input
+                id="fileInput"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.pdf"
+                onChange={handleFileChange}
+                hidden
+              />
             </div>
 
             {file && (
@@ -192,18 +226,24 @@ export default function App() {
               </div>
             )}
 
-            {usage.analysisUsed >= 2 && !canAnalyze && (
-              <button onClick={() => setShowUpgradeModal(true)} className={styles.upgradePrompt}>
+            {usage.analysisUsed >= 3 && !canAnalyze && (
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className={styles.upgradePrompt}
+              >
                 📤 {t.analysisLimitReached}
               </button>
             )}
 
             <div className={styles.securityNote}>
-              🔒 {securityText}
+              🔒 {language === 'de'
+                ? 'Dein Dokument ist verschlüsselt und wird nach der Analyse nicht gespeichert.'
+                : 'Ваш документ зашифрован и не сохраняется после анализа.'}
             </div>
           </div>
         ) : (
           <div className={styles.analysisLayout}>
+            {/* Analysis Result */}
             <div className={styles.analysisPanel}>
               {analysis.error ? (
                 <div className={styles.errorBox}>
@@ -216,7 +256,7 @@ export default function App() {
                       setImageData(null);
                     }}
                   >
-                    {resetLabel}
+                    ← Neues Dokument
                   </button>
                 </div>
               ) : (
@@ -229,12 +269,12 @@ export default function App() {
                   </div>
 
                   <div className={styles.analysisContent}>
-                    <h2>{summaryLabel}</h2>
+                    <h2>Zusammenfassung</h2>
                     <p>{analysis.summary}</p>
 
                     {analysis.deadlines && analysis.deadlines.length > 0 && (
                       <>
-                        <h3>⏰ {deadlinesLabel}</h3>
+                        <h3>⏰ Fristen</h3>
                         <ul>
                           {analysis.deadlines.map((deadline, i) => (
                             <li key={i}>{deadline}</li>
@@ -245,12 +285,38 @@ export default function App() {
 
                     {analysis.nextSteps && analysis.nextSteps.length > 0 && (
                       <>
-                        <h3>👣 {stepsLabel}</h3>
+                        <h3>👣 {language === 'de' ? 'Nächste Schritte' : 'Следующие шаги'}</h3>
                         <ul>
                           {analysis.nextSteps.map((step, i) => (
                             <li key={i}>{step}</li>
                           ))}
                         </ul>
+                      </>
+                    )}
+
+                    {analysis.actionSuggestions && analysis.actionSuggestions.length > 0 && (
+                      <>
+                        <h3>{language === 'de' ? '🎯 Was möchten Sie tun?' : '🎯 Что вы хотите сделать?'}</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 0' }}>
+                          {analysis.actionSuggestions.map((action, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setChatInput(action)}
+                              style={{
+                                padding: '10px 12px',
+                                border: '1px solid #007AFF',
+                                borderRadius: '6px',
+                                backgroundColor: '#f0f4ff',
+                                color: '#007AFF',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                fontWeight: '500',
+                              }}
+                            >
+                              {action}
+                            </button>
+                          ))}
+                        </div>
                       </>
                     )}
                   </div>
@@ -263,27 +329,34 @@ export default function App() {
                       setImageData(null);
                     }}
                   >
-                    {resetLabel}
+                    ← Neues Dokument
                   </button>
                 </>
               )}
             </div>
 
+            {/* Chat Section */}
             {!analysis.error && (
               <div className={styles.chatPanel}>
-                <h2>💬 {questionsLabel}</h2>
+                <h2>💬 {language === 'de' ? 'Fragen zum Brief?' : 'Вопросы к письму?'}</h2>
+
                 <div className={styles.chatMessages}>
                   {chatMessages.length === 0 && (
-                    <p className={styles.chatPlaceholder}>{t.chatPlaceholder}</p>
+                    <p className={styles.chatPlaceholder}>
+                      {t.chatPlaceholder}
+                    </p>
                   )}
                   {chatMessages.map((msg, i) => (
-                    <div key={i} className={`${styles.chatMessage} ${styles[msg.role]}`}>
+                    <div
+                      key={i}
+                      className={`${styles.chatMessage} ${styles[msg.role]}`}
+                    >
                       <p>{msg.content}</p>
                     </div>
                   ))}
                   {chatLoading && (
-                    <div className={`${styles.chatMessage} ${styles.assistant}`}>
-                      <p className={styles.typing}>⏳ {respondingLabel}</p>
+                    <div className={styles.chatMessage + ' ' + styles.assistant}>
+                      <p className={styles.typing}>⏳ {language === 'de' ? 'Antwortet...' : 'Отвечает...'}</p>
                     </div>
                   )}
                 </div>
@@ -299,7 +372,10 @@ export default function App() {
                     }}
                     disabled={chatLoading}
                   />
-                  <button onClick={handleChatSend} disabled={!chatInput || chatLoading}>
+                  <button
+                    onClick={handleChatSend}
+                    disabled={!chatInput || chatLoading}
+                  >
                     📤
                   </button>
                 </div>
@@ -309,6 +385,7 @@ export default function App() {
         )}
       </div>
 
+      {/* Upgrade Modal */}
       {showUpgradeModal && (
         <div className={styles.modal}>
           <div className={styles.modalContent}>
@@ -316,6 +393,7 @@ export default function App() {
             <p>{t.upgradeSubtitle}</p>
 
             <div className={styles.plans}>
+              {/* Once Payment */}
               <div className={styles.planCard}>
                 <h3>$2.99</h3>
                 <p>{t.proDescription}</p>
@@ -329,19 +407,22 @@ export default function App() {
                 </a>
               </div>
 
+              {/* Monthly Pro */}
               <div className={styles.planCard}>
-                <h3>$9.99</h3>
+                <h3>{language === 'de' ? 'Pro' : 'Про'}</h3>
                 <p>{t.proMonthlyDescription}</p>
                 <a
-                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="mailto:info@deasy.de?subject=Pro%20Plan%20Request"
                   className={styles.planButton}
                 >
-                  {t.upgradeButton}
+                  {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
                 </a>
+                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                  {language === 'de' ? 'Für Unternehmen' : 'Для компаний'}
+                </p>
               </div>
 
+              {/* Unlimited Business */}
               <div className={styles.planCard}>
                 <h3>$49.99</h3>
                 <p>{t.businessDescription}</p>
@@ -356,7 +437,10 @@ export default function App() {
               </div>
             </div>
 
-            <button onClick={() => setShowUpgradeModal(false)} className={styles.closeModal}>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              className={styles.closeModal}
+            >
               ✕
             </button>
           </div>
