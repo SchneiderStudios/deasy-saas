@@ -63,7 +63,7 @@ export const translations = {
     planFreeFeature2: "✓ Unbegrenzter Chat",
     planFreeFeature3: "✓ Basis-Analyse",
     planFreeButton: "Jetzt starten",
-    
+
     planPro: "Pro",
     planProPrice: "€9,99",
     planProPeriod: "/Monat",
@@ -73,7 +73,7 @@ export const translations = {
     planProFeature3: "✓ Export in PDF",
     planProFeature4: "✓ Priority Support",
     planProButton: "Pro aktivieren",
-    
+
     planBusiness: "Business",
     planBusinessPrice: "€49,99",
     planBusinessPeriod: "/Monat",
@@ -117,7 +117,7 @@ export const translations = {
 
     // Pricing
     free: "Kostenlos",
-    freeDescription: "2 Analysen",
+    freeDescription: "3 Analysen",
     pro: "Pro",
     proDescription: "10 Analysen",
     proMonthly: "Pro Monatsabo",
@@ -126,7 +126,13 @@ export const translations = {
     businessDescription: "Unlimited Analysen",
     upgradeButton: "Upgraden",
     upgradeTitle: "Wählen Sie einen Plan",
-    upgradeSubtitle: "Sie haben 2 kostenlose Analysen verwendet",
+    upgradeSubtitle: "Sie haben 3 kostenlose Analysen verwendet",
+
+    // Action suggestions after analysis
+    actionSuggestions: "Was möchten Sie tun?",
+    actionReply: "✉️ Antwort schreiben",
+    actionObjection: "⚖️ Einspruch einreichen",
+    actionTemplate: "📋 Antwort-Vorlage",
 
     // Messages
     analysisLimitReached: "Sie haben Ihr Limit erreicht. Bitte wählen Sie einen Plan.",
@@ -197,7 +203,7 @@ export const translations = {
     planFreeFeature2: "✓ Неограниченный чат",
     planFreeFeature3: "✓ Базовый анализ",
     planFreeButton: "Начать",
-    
+
     planPro: "Про",
     planProPrice: "€9,99",
     planProPeriod: "/месяц",
@@ -207,7 +213,7 @@ export const translations = {
     planProFeature3: "✓ Экспорт в PDF",
     planProFeature4: "✓ Приоритетная поддержка",
     planProButton: "Активировать Про",
-    
+
     planBusiness: "Бизнес",
     planBusinessPrice: "€49,99",
     planBusinessPeriod: "/месяц",
@@ -251,7 +257,7 @@ export const translations = {
 
     // Pricing
     free: "Бесплатно",
-    freeDescription: "2 анализа",
+    freeDescription: "3 анализа",
     pro: "Про",
     proDescription: "10 анализов",
     proMonthly: "Про подписка",
@@ -260,7 +266,13 @@ export const translations = {
     businessDescription: "Неограниченно",
     upgradeButton: "Обновить",
     upgradeTitle: "Выберите план",
-    upgradeSubtitle: "Вы использовали 2 бесплатных анализа",
+    upgradeSubtitle: "Вы использовали 3 бесплатных анализа",
+
+    // Action suggestions after analysis
+    actionSuggestions: "Что вы хотите сделать?",
+    actionReply: "✉️ Написать ответ",
+    actionObjection: "⚖️ Подать возражение",
+    actionTemplate: "📋 Шаблон ответа",
 
     // Messages
     analysisLimitReached: "Вы достигли лимита. Выберите план.",
