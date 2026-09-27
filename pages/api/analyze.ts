@@ -194,8 +194,9 @@ Nur JSON, keine weiteren Worte.`;
     } else if (error?.message?.includes('credit')) {
       res.status(402).json({ error: 'Keine Credits verfügbar. Bitte Guthaben aufladen.' });
     } else {
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
       res.status(500).json({
-        error: `Technischer Fehler: ${error?.message || 'Unbekannter Fehler'}`
+        error: 'Technischer Fehler bei der Analyse. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Support.'
       });
     }
   }
