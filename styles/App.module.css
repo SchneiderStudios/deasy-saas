@@ -389,6 +389,178 @@
   }
 }
 
+/* Modal and Upgrade */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.modalContent h2 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #1c2340;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.modalContent > p {
+  text-align: center;
+  color: #4b4e5c;
+  margin-bottom: 2rem;
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.planCard {
+  background: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.planCard:hover {
+  border-color: #4338ca;
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.15);
+  transform: translateY(-2px);
+}
+
+.planCard h3 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #1c2340;
+  margin-bottom: 0.5rem;
+}
+
+.planCard p {
+  font-size: 0.85rem;
+  color: #4b4e5c;
+  margin-bottom: 1rem;
+}
+
+.planButton {
+  display: inline-block;
+  background: #4338ca;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.planButton:hover {
+  background: #3829a0;
+}
+
+.closeModal {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #4b4e5c;
+  transition: color 0.2s;
+}
+
+.closeModal:hover {
+  color: #1c2340;
+}
+
+.upgradePrompt {
+  width: 100%;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #fca5a5;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s;
+}
+
+.upgradePrompt:hover {
+  background: #fecaca;
+}
+
+.upgradeSection {
+  background: white;
+  border: 2px solid #4338ca;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.upgradeSection p {
+  color: #1c2340;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .analysisLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .headerRight {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .plan {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .upgradeButton {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  .analysisPanel,
+  .chatPanel {
+    min-height: auto;
+  }
+
+  .plans {
+    grid-template-columns: 1fr;
+  }
+
+  .modalContent {
+    width: 95%;
+  }
+}
+
 @media (max-width: 480px) {
   .content {
     padding: 1rem;
@@ -422,5 +594,17 @@
 
   .chatMessage {
     max-width: 100%;
+  }
+
+  .plans {
+    grid-template-columns: 1fr;
+  }
+
+  .modalContent {
+    padding: 1.5rem;
+  }
+
+  .planCard {
+    padding: 1rem;
   }
 }
