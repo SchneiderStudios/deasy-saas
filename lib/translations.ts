@@ -61,7 +61,7 @@ export const translations = {
     planFree: "Free",
     planFreePrice: "€0",
     planFreePeriod: "/Monat",
-    planFreeFeature1: "✓ 5 Dokumente/Monat",
+    planFreeFeature1: "✓ 3 Dokumente/Monat",
     planFreeFeature2: "✓ Unbegrenzter Chat",
     planFreeFeature3: "✓ Basis-Analyse",
     planFreeButton: "Jetzt starten",
@@ -115,7 +115,7 @@ export const translations = {
     footerSocialTitle: "Sozial",
     footerTwitter: "Twitter",
     footerGithub: "GitHub",
-    footerCopyright: "© 2024 DEASY. Alle Rechte vorbehalten.",
+    footerCopyright: "© 2026 DEASY. Alle Rechte vorbehalten.",
 
     // Pricing
     free: "Kostenlos",
@@ -203,7 +203,7 @@ export const translations = {
     planFree: "Бесплатно",
     planFreePrice: "€0",
     planFreePeriod: "/месяц",
-    planFreeFeature1: "✓ 5 документов/месяц",
+    planFreeFeature1: "✓ 3 документов/месяц",
     planFreeFeature2: "✓ Неограниченный чат",
     planFreeFeature3: "✓ Базовый анализ",
     planFreeButton: "Начать",
