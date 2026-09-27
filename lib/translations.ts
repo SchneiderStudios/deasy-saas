@@ -37,8 +37,10 @@ export const translations = {
     uploadTitle: "Dokument hochladen",
     uploadSubtitle: "Laden Sie einen Screenshot oder ein Foto Ihres Behördenbriefes hoch",
     uploadPlaceholder: "Klicken Sie zum Hochladen oder ziehen Sie Ihre Datei hierher",
+    supportedFormats: "Unterstützte Formate: JPG, PNG, GIF, WebP, HEIC (iPhone)",
     analyzing: "Wird analysiert...",
     uploadError: "Fehler beim Hochladen",
+    formatNotSupported: "Format nicht unterstützt. Bitte verwende JPG, PNG, GIF oder WebP",
 
     // Results
     riskLevel: "Risiko-Level",
@@ -126,7 +128,7 @@ export const translations = {
     businessDescription: "Unlimited Analysen",
     upgradeButton: "Upgraden",
     upgradeTitle: "Wählen Sie einen Plan",
-    upgradeSubtitle: "Sie haben 3 kostenlose Analysen verwendet",
+    upgradeSubtitle: "Sie haben Ihr kostenloses Limit (3 Analysen) erreicht",
 
     // Action suggestions after analysis
     actionSuggestions: "Was möchten Sie tun?",
@@ -177,8 +179,10 @@ export const translations = {
     uploadTitle: "Загрузить документ",
     uploadSubtitle: "Загрузите скриншот или фото вашего официального письма",
     uploadPlaceholder: "Нажмите для загрузки или перетащите файл",
+    supportedFormats: "Поддерживаемые форматы: JPG, PNG, GIF, WebP, HEIC (iPhone)",
     analyzing: "Анализируется...",
     uploadError: "Ошибка загрузки",
+    formatNotSupported: "Формат не поддерживается. Пожалуйста, используйте JPG, PNG, GIF или WebP",
 
     // Results
     riskLevel: "Уровень риска",
@@ -266,7 +270,7 @@ export const translations = {
     businessDescription: "Неограниченно",
     upgradeButton: "Обновить",
     upgradeTitle: "Выберите план",
-    upgradeSubtitle: "Вы использовали 3 бесплатных анализа",
+    upgradeSubtitle: "Вы достигли лимита (3 бесплатных анализа)",
 
     // Action suggestions after analysis
     actionSuggestions: "Что вы хотите сделать?",
