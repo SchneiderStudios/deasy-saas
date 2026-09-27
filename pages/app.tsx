@@ -92,6 +92,18 @@ export default function App() {
       return;
     }
 
+    // Validate file format before analyzing
+    const supportedFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const mediaTypeMatch = imageData.match(/^data:([^;]+);base64,/);
+    const mediaType = mediaTypeMatch ? mediaTypeMatch[1].toLowerCase() : '';
+
+    if (!supportedFormats.includes(mediaType)) {
+      setAnalysis({
+        error: t.formatNotSupported,
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch('/api/analyze', {
@@ -208,10 +220,14 @@ export default function App() {
               <input
                 id="fileInput"
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.pdf"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                 onChange={handleFileChange}
                 hidden
               />
+            </div>
+
+            <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#4b4e5c', marginBottom: '1.5rem' }}>
+              ✅ {t.supportedFormats}
             </div>
 
             {file && (
@@ -410,31 +426,31 @@ export default function App() {
 
               {/* Monthly Pro */}
               <div className={styles.planCard}>
-                <h3>{language === 'de' ? 'Pro' : 'Про'}</h3>
+                <h3>€9,99</h3>
                 <p>{t.proMonthlyDescription}</p>
                 <a
-                  href="mailto:info@deasy.de?subject=Pro%20Plan%20Request"
-                  className={styles.planButton}
-                >
-                  {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
-                </a>
-                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
-                  {language === 'de' ? 'Für Unternehmen' : 'Для компаний'}
-                </p>
-              </div>
-
-              {/* Unlimited Business */}
-              <div className={styles.planCard}>
-                <h3>$49.99</h3>
-                <p>{t.businessDescription}</p>
-                <a
-                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_UNLIMITED_LINK"
+                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.planButton}
                 >
                   {t.upgradeButton}
                 </a>
+              </div>
+
+              {/* Business - Request only */}
+              <div className={styles.planCard}>
+                <h3>{language === 'de' ? 'Business' : 'Бизнес'}</h3>
+                <p>{t.businessDescription}</p>
+                <a
+                  href="mailto:info@deasy.de?subject=Business%20Plan%20Request%20-%20API%20Access"
+                  className={styles.planButton}
+                >
+                  {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
+                </a>
+                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
+                  {language === 'de' ? 'API + White-Label' : 'API + White-Label'}
+                </p>
               </div>
             </div>
 
