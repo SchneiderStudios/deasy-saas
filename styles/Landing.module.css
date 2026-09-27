@@ -48,17 +48,19 @@
 
 .ctaButton {
   background: #4338ca;
-  color: white;
+  color: #ffffff !important;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
   transition: background 0.2s;
+  display: inline-block;
 }
 
 .ctaButton:hover {
   background: #3829a0;
+  color: #ffffff !important;
 }
 
 .hero {
