@@ -136,26 +136,26 @@ export default function Home() {
               <li>{t.planProFeature3}</li>
               <li>{t.planProFeature4}</li>
             </ul>
-            <a href="mailto:info@deasy.de?subject=Pro%20Plan%20Anfrage" className={styles.pricingButton}>
-              {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
+            <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK" target="_blank" rel="noopener noreferrer" className={styles.pricingButton}>
+              {t.planProButton}
             </a>
-            <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
-              {language === 'de' ? 'Für Unternehmen - Persönliches Angebot' : 'Для компаний - Персональное предложение'}
-            </p>
           </div>
 
           <div className={styles.pricingCard}>
             <h3>{t.planBusiness}</h3>
-            <div className={styles.price}>{t.planBusinessPrice}<span>{t.planBusinessPeriod}</span></div>
+            <div className={styles.price}>{language === 'de' ? 'Maßgeschneidert' : 'Индивидуально'}<span></span></div>
             <ul>
               <li>{t.planBusinessFeature1}</li>
               <li>{t.planBusinessFeature2}</li>
               <li>{t.planBusinessFeature3}</li>
               <li>{t.planBusinessFeature4}</li>
             </ul>
-            <a href="/checkout?plan=business" className={styles.pricingButton}>
-              {t.planBusinessButton}
+            <a href="mailto:info@deasy.de?subject=Business%20Plan%20Anfrage%20-%20API%20Zugang" className={styles.pricingButton}>
+              {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
             </a>
+            <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
+              {language === 'de' ? 'Mit API-Zugang & White-Label' : 'С API-доступом и White-Label'}
+            </p>
           </div>
         </div>
       </section>
