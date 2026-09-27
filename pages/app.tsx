@@ -227,16 +227,21 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#4b4e5c', marginBottom: '1.5rem' }}>
-              ✅ {t.supportedFormats}
+              ✅ {t.supportedFormats} | 📦 Max 25 MB
             </div>
 
             {file && (
               <div className={styles.filePreview}>
-                <p>📎 {file.name}</p>
+                <p>📎 {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)</p>
+                {file.size > 25 * 1024 * 1024 && (
+                  <p style={{ color: '#dc2626', fontSize: '0.9rem' }}>
+                    ❌ Файл слишком большой (макс. 25 MB)
+                  </p>
+                )}
                 <button
                   className={styles.analyzeButton}
                   onClick={handleAnalyze}
-                  disabled={loading || !canAnalyze}
+                  disabled={loading || !canAnalyze || file.size > 25 * 1024 * 1024}
                 >
                   {loading ? `⏳ ${t.analyzing}` : `▶ ${t.analyzeButton}`}
                 </button>
@@ -244,12 +249,25 @@ export default function App() {
             )}
 
             {usage.analysisUsed >= 3 && !canAnalyze && (
-              <button
-                onClick={() => setShowUpgradeModal(true)}
-                className={styles.upgradePrompt}
-              >
-                📤 {t.analysisLimitReached}
-              </button>
+              <div className={styles.upgradeSection}>
+                <p style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: '500' }}>
+                  {language === 'de'
+                    ? '🎉 Вы использовали все 3 бесплатные анализа!'
+                    : '🎉 Вы использовали все 3 бесплатные анализа!'}
+                </p>
+                <button
+                  onClick={() => setShowUpgradeModal(true)}
+                  className={styles.upgradePrompt}
+                  style={{ width: '100%', marginBottom: '0.5rem' }}
+                >
+                  ⬆️ {language === 'de' ? 'Обновить до Pro' : 'Обновить до Pro'}
+                </button>
+                <p style={{ fontSize: '0.85rem', color: '#4b4e5c', textAlign: 'center' }}>
+                  {language === 'de'
+                    ? 'Pro: €9,99/месяц • 100 анализов'
+                    : 'Pro: €9,99/месяц • 100 анализов'}
+                </p>
+              </div>
             )}
 
             <div className={styles.securityNote}>
