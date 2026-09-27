@@ -65,11 +65,12 @@ export default function App() {
     if (selectedFile.type === 'image/heic' || selectedFile.type === 'image/heif' || selectedFile.name.toLowerCase().endsWith('.heic')) {
       try {
         const heic2any = (await import('heic2any')).default;
-        const convertedBlob = await heic2any({
+        const converted = await heic2any({
           blob: selectedFile,
           toType: 'image/jpeg',
         });
-        selectedFile = new File([convertedBlob], selectedFile.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+        const convertedBlob = Array.isArray(converted) ? converted[0] : converted;
+        selectedFile = new File([convertedBlob as Blob], selectedFile.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
       } catch (error) {
         console.warn('⚠️ HEIC conversion failed, trying original:', error);
         // Continue with original file
