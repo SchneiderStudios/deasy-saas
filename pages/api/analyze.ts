@@ -6,6 +6,8 @@ interface AnalysisResult {
   risk?: string;
   deadlines?: string[];
   nextSteps?: string[];
+  actionSuggestions?: string[];
+  language?: string;
   error?: string;
 }
 
@@ -16,7 +18,7 @@ const anthropic = new Anthropic({
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb',
+      sizeLimit: '25mb',
     },
   },
 };
@@ -63,6 +65,76 @@ export default async function handler(
       return;
     }
 
+    // First, detect document language
+    const langDetectionMessage = await anthropic.messages.create(
+      {
+        model: 'claude-opus-5-5',
+        max_tokens: 50,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+                  data: base64Data,
+                },
+              },
+              {
+                type: 'text',
+                text: `What language is this document in? Answer with ONLY "de" for German or "ru" for Russian. No other text.`,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        timeout: 45000,
+      }
+    );
+
+    const langText = langDetectionMessage.content
+      .filter((block) => block.type === 'text')
+      .map((block) => (block.type === 'text' ? block.text : ''))
+      .join('')
+      .trim();
+
+    const documentLanguage = langText.includes('ru') ? 'ru' : 'de';
+
+    // Create analysis prompt based on detected language
+    let analysisPrompt = '';
+    let riskTerms = '';
+
+    if (documentLanguage === 'ru') {
+      analysisPrompt = `Проанализируй это официальное письмо и ответь СТРОГО в следующем JSON-формате:
+
+{
+  "summary": "2-3 предложения: О чем этот письмо?",
+  "risk": "КРИТИЧНО | ВАЖНО | НИЗКИЙ",
+  "deadlines": ["Срок 1", "Срок 2"],
+  "nextSteps": ["Шаг 1", "Шаг 2"],
+  "actionSuggestions": ["Написать ответ", "Подать возражение", "Подготовить шаблон ответа"]
+}
+
+Только JSON, без других слов.`;
+      riskTerms = 'КРИТИЧНО | ВАЖНО | НИЗКИЙ';
+    } else {
+      analysisPrompt = `Analysiere diesen deutschen Behördenbrief und antworte STRIKT im folgenden JSON-Format:
+
+{
+  "summary": "2-3 Sätze: Worum geht es in diesem Brief?",
+  "risk": "KRITISCH | WICHTIG | NIEDRIG",
+  "deadlines": ["Frist 1", "Frist 2"],
+  "nextSteps": ["Schritt 1", "Schritt 2"],
+  "actionSuggestions": ["Antwort schreiben", "Einspruch einreichen", "Antwort-Vorlage"]
+}
+
+Nur JSON, keine weiteren Worte.`;
+      riskTerms = 'KRITISCH | WICHTIG | NIEDRIG';
+    }
+
     const message = await anthropic.messages.create(
       {
         model: 'claude-opus-5-5',
@@ -81,16 +153,7 @@ export default async function handler(
               },
               {
                 type: 'text',
-                text: `Analysiere diesen deutschen Behördenbrief und antworte STRIKT im folgenden JSON-Format:
-
-{
-  "summary": "2-3 Sätze: Worum geht es in diesem Brief?",
-  "risk": "KRITISCH | WICHTIG | NIEDRIG",
-  "deadlines": ["Frist 1", "Frist 2"],
-  "nextSteps": ["Schritt 1", "Schritt 2"]
-}
-
-Nur JSON, keine weiteren Worte.`,
+                text: analysisPrompt,
               },
             ],
           },
@@ -116,6 +179,7 @@ Nur JSON, keine weiteren Worte.`,
     }
 
     const result = JSON.parse(jsonMatch[0]) as AnalysisResult;
+    result.language = documentLanguage;
     res.status(200).json(result);
   } catch (error: any) {
     console.error('❌ Analyse-Fehler:', error?.message);
@@ -136,3 +200,4 @@ Nur JSON, keine weiteren Worte.`,
     }
   }
 }
+
