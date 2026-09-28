@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from '@/styles/App.module.css';
 import { translations, Language } from '@/lib/translations';
+import { useDocumentHistory } from '@/hooks/useDocumentHistory';
 
 interface AnalysisResult {
   summary?: string;
@@ -35,6 +36,10 @@ export default function App() {
   const [language, setLanguage] = useState<Language>('ru');
   const [usage, setUsage] = useState<UsageStats>({ analysisUsed: 0, analysisPaid: 0, proMonthlyUntil: null });
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [caseHistory, setCaseHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
 
   const t = translations[language];
 
@@ -119,6 +124,11 @@ export default function App() {
       setAnalysis(data);
       setChatMessages([]);
 
+      // Save to case history
+      if (!data.error && file) {
+        saveCaseToHistory(data, file.name);
+      }
+
       // Update usage
       const newUsage = { ...usage, analysisUsed: usage.analysisUsed + 1 };
       if (usage.analysisPaid > 0 && usage.analysisUsed >= 3) {
@@ -190,6 +200,16 @@ export default function App() {
           <span className={styles.plan}>
             {getAvailableAnalyses()} {t.freeDescription.toLowerCase()}
           </span>
+          <button
+            className={styles.upgradeButton}
+            onClick={() => {
+              setCaseHistory(getCaseHistory());
+              setShowHistory(true);
+            }}
+            title={language === 'de' ? 'Meine Fälle anzeigen' : 'Показать мои дела'}
+          >
+            📋 {caseHistory.length}
+          </button>
           <button
             className={styles.upgradeButton}
             onClick={() => {
@@ -333,24 +353,32 @@ export default function App() {
                       <>
                         <h3>{language === 'de' ? '🎯 Was möchten Sie tun?' : '🎯 Что вы хотите сделать?'}</h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 0' }}>
-                          {analysis.actionSuggestions.map((action, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setChatInput(action)}
-                              style={{
-                                padding: '10px 12px',
-                                border: '1px solid #007AFF',
-                                borderRadius: '6px',
-                                backgroundColor: '#f0f4ff',
-                                color: '#007AFF',
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                              }}
-                            >
-                              {action}
-                            </button>
-                          ))}
+                          {analysis.actionSuggestions.map((action, i) => {
+                            let icon = '💡';
+                            const lowerAction = action.toLowerCase();
+                            if (lowerAction.includes('antwort') || lowerAction.includes('ответ')) icon = '✉️';
+                            if (lowerAction.includes('einspruch') || lowerAction.includes('возражение')) icon = '⚖️';
+                            if (lowerAction.includes('vorlage') || lowerAction.includes('шаблон')) icon = '📋';
+
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => setChatInput(action)}
+                                style={{
+                                  padding: '10px 12px',
+                                  border: '1px solid #007AFF',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#f0f4ff',
+                                  color: '#007AFF',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '500',
+                                }}
+                              >
+                                {icon} {action}
+                              </button>
+                            );
+                          })}
                         </div>
                       </>
                     )}
