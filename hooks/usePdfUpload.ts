@@ -12,7 +12,7 @@ export function usePdfUpload() {
 
   // Load PDF.js worker - use CDN fallback if needed
   const initPdfJs = useCallback(async () => {
-    if (typeof window !== 'undefined' && !window.pdfjsWorker) {
+    if (typeof window !== 'undefined') {
       const pdfjsLib = await import('pdfjs-dist');
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
       return pdfjsLib;
