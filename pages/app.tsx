@@ -25,12 +25,15 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showReplyModal, setShowReplyModal] = useState(false);
+  const [generatedReply, setGeneratedReply] = useState<any>(null);
+  const [replyLoading, setReplyLoading] = useState(false);
 
   const { usageStats, canMakeRequest, incrementUsage, allTiers } = usePricingTiers();
   const { convertPdfToImages } = usePdfUpload();
   const { generateReply } = useReplyGenerator();
-     const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
-   const caseHistory = getCaseHistory();
+  const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
+  const caseHistory = getCaseHistory();
+
   const t = useCallback(
     (key: string): string => {
       const lang = selectedLanguage === 'ru' ? 'ru' : 'de';
@@ -96,6 +99,26 @@ export default function App() {
       alert('Error processing file');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGenerateReply = async () => {
+    if (!analysisResult) return;
+
+    setReplyLoading(true);
+    try {
+      const reply = await generateReply({
+        summary: analysisResult.summary,
+        risk: analysisResult.riskLevel,
+        language: selectedLanguage,
+      });
+      setGeneratedReply(reply);
+      setShowReplyModal(true);
+    } catch (error) {
+      console.error('Reply generation error:', error);
+      alert('Error generating reply');
+    } finally {
+      setReplyLoading(false);
     }
   };
 
@@ -172,9 +195,10 @@ export default function App() {
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               className={styles.analyzeButton}
-              onClick={() => setShowReplyModal(true)}
+              onClick={handleGenerateReply}
+              disabled={replyLoading}
             >
-              ✉️ {t('generateReply')}
+              ✉️ {replyLoading ? t('processing') : t('generateReply')}
             </button>
             <button
               className={styles.analyzeButton}
@@ -208,7 +232,6 @@ export default function App() {
             <div key={idx} className={styles.chatMessage} style={{ marginBottom: '12px' }}>
               <p><strong>{case_.fileName}</strong></p>
               <p>{new Date(case_.date).toLocaleDateString()}</p>
-              
             </div>
           ))
         )}
@@ -225,13 +248,7 @@ export default function App() {
 
   // Render Reply Modal
   const renderReplyModal = () => {
-    if (!showReplyModal || !analysisResult) return null;
-
-    const reply = generateReply({
-      summary: analysisResult.summary,
-      risk: analysisResult.riskLevel,
-      language: selectedLanguage,
-    });
+    if (!showReplyModal || !generatedReply) return null;
 
     return (
       <div className={styles.modal}>
@@ -244,17 +261,17 @@ export default function App() {
           </button>
           <h2>{t('replyGenerator')}</h2>
           <div style={{ marginBottom: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}>
-            <p><strong>{t('subject')}:</strong> {reply.subject}</p>
-            <p style={{ marginTop: '12px', whiteSpace: 'pre-wrap' }}>{reply.body}</p>
-            {reply.tips && (
+            <p><strong>{t('subject')}:</strong> {generatedReply.subject}</p>
+            <p style={{ marginTop: '12px', whiteSpace: 'pre-wrap' }}>{generatedReply.body}</p>
+            {generatedReply.tips && (
               <div style={{ marginTop: '12px', padding: '8px', background: '#e3f2fd', borderRadius: '4px' }}>
                 <p><strong>{t('tips')}:</strong></p>
-                <p>{reply.tips}</p>
+                <p>{generatedReply.tips}</p>
               </div>
             )}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className={styles.analyzeButton} onClick={() => navigator.clipboard.writeText(reply.body)}>
+            <button className={styles.analyzeButton} onClick={() => navigator.clipboard.writeText(generatedReply.body)}>
               📋 {t('copy')}
             </button>
             <button className={styles.analyzeButton} style={{ background: '#666' }} onClick={() => setShowReplyModal(false)}>
@@ -270,7 +287,7 @@ export default function App() {
   const renderPricingModal = () => {
     if (!showPricingModal) return null;
 
-       const tiers = allTiers;
+    const tiers = allTiers;
 
     return (
       <div className={styles.modal}>
