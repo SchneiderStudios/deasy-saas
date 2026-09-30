@@ -14,36 +14,36 @@ export const translations = {
     startFree: "Kostenlos starten",
 
     // Landing Page - Hero
-    heroTitle: "Verstehe deine Behördenbriefe mit KI",
-    heroSubtitle: "DEASY hilft dir, deutsche Bürokratiebriefe in 30 Sekunden zu verstehen. Fristen, nächste Schritte, einfach erklärt.",
+    heroTitle: "Verstehe Behördenbriefe mit KI",
+    heroSubtitle: "DEASY hilft dir, deutsche Behördenbriefe in 30 Sekunden zu verstehen. Fristen, nächste Schritte, einfach erklärt.",
     analyzeButton: "Dokument analysieren →",
 
     // Landing Page - Features
-    featuresTitle: "Wie funktioniert's?",
+    featuresTitle: "Wie funktioniert es?",
     feature1Title: "1. Dokument hochladen",
     feature1Desc: "Fotografiere deinen Brief oder lade eine Datei hoch",
     feature2Title: "2. KI analysiert",
-    feature2Desc: "Claude Vision liest die Behörden-DNA in 30 Sekunden",
+    feature2Desc: "Claude Vision liest die Bürokratie in 30 Sekunden",
     feature3Title: "3. Ergebnisse",
-    feature3Desc: "Zusammenfassung, Fristen, Nächste Schritte, auf Deutsch",
+    feature3Desc: "Zusammenfassung, Fristen, nächste Schritte, auf Deutsch",
     feature4Title: "4. Chat mit KI",
-    feature4Desc: "Stelle Fragen zu deinem Brief, KI antwortet",
-    feature5Title: "5. Alle Fälle tracken",
-    feature5Desc: "Organisiere Dokumente in Cases (Pro+)",
+    feature4Desc: "Stelle Fragen zum Brief, KI antwortet",
+    feature5Title: "5. Alle Fälle verfolgen",
+    feature5Desc: "Organisiere Dokumente in Fällen (Pro+)",
     feature6Title: "6. Datenschutz",
-    feature6Desc: "DSGVO-konform, deine Daten sind sicher",
+    feature6Desc: "GDPR-konform, deine Daten sind sicher",
 
     // Analyzer
     uploadTitle: "Dokument hochladen",
-    uploadSubtitle: "Laden Sie einen Screenshot oder ein Foto Ihres Behördenbriefes hoch",
-    uploadPlaceholder: "Klicken Sie zum Hochladen oder ziehen Sie Ihre Datei hierher",
+    uploadSubtitle: "Lade einen Screenshot oder ein Foto deines Behördenbriefs hoch",
+    uploadPlaceholder: "Klick zum Hochladen oder Datei hierher ziehen",
     supportedFormats: "Unterstützte Formate: JPG, PNG, GIF, WebP, HEIC (iPhone)",
     analyzing: "Wird analysiert...",
     uploadError: "Fehler beim Hochladen",
     formatNotSupported: "Format nicht unterstützt. Bitte verwende JPG, PNG, GIF oder WebP",
 
     // Results
-    riskLevel: "Risiko-Level",
+    riskLevel: "Risikostufe",
     critical: "Kritisch",
     important: "Wichtig",
     low: "Niedrig",
@@ -52,42 +52,28 @@ export const translations = {
     nextSteps: "Nächste Schritte",
 
     // Chat
-    chatPlaceholder: "Stellen Sie eine Frage zum Brief...",
+    chatPlaceholder: "Frage zum Brief stellen...",
     send: "Senden",
     chatError: "Chat-Fehler",
-    
-    // Reply Generator
-    replyGeneratorTitle: "Antwort-Generator",
-    replyGeneratorDesc: "Generiere eine professionelle Antwort auf deinen Behördenbrief",
-    generateReply: "Antwort generieren",
-    copyReply: "Kopieren",
-    downloadReply: "PDF herunterladen",
-    replyGenerated: "Antwort wurde generiert",
-    generatingReply: "Generiere Antwort...",
 
-    // PDF Upload
-    pdfFormatSupported: "PDF wird unterstützt",
-    uploadPDF: "PDF hochladen",
-    pdfMaxSize: "Max. 10 MB",
-    
     // Landing Page - Pricing
-    pricingTitle: "Transparent Pricing",
-    planFree: "Free",
+    pricingTitle: "Transparente Preise",
+    planFree: "Kostenlos",
     planFreePrice: "€0",
     planFreePeriod: "/Monat",
     planFreeFeature1: "✓ 3 Dokumente kostenlos",
     planFreeFeature2: "✓ Unbegrenzter Chat",
-    planFreeFeature3: "✓ Basis-Analyse",
-    planFreeButton: "Jetzt starten",
+    planFreeFeature3: "✓ Grundlegende Analyse",
+    planFreeButton: "Starten",
 
-        planPlus: "Plus",
+    planPlus: "Plus",
     planPlusPrice: "€4,99",
     planPlusPeriod: "/Monat",
     planPlusFeature1: "✓ 50 Dokumente/Monat",
-    planPlusFeature2: "✓ PDF-Support",
+    planPlusFeature2: "✓ PDF-Unterstützung",
     planPlusFeature3: "✓ Antwort-Generator",
     planPlusButton: "Plus aktivieren",
-    
+
     planPro: "Pro",
     planProPrice: "€9,99",
     planProPeriod: "/Monat",
@@ -101,30 +87,30 @@ export const translations = {
     planBusiness: "Business",
     planBusinessPrice: "€49,99",
     planBusinessPeriod: "/Monat",
-    planBusinessFeature1: "✓ Unlimited Dokumente",
-    planBusinessFeature2: "✓ Team-Zugang (bis 5 User)",
+    planBusinessFeature1: "✓ Unbegrenzte Dokumente",
+    planBusinessFeature2: "✓ Team-Zugang (bis 5 Benutzer)",
     planBusinessFeature3: "✓ API-Zugang",
     planBusinessFeature4: "✓ White-Label-Option",
     planBusinessButton: "Business aktivieren",
 
     // Landing Page - FAQ
-    faqTitle: "Häufig gefragt",
+    faqTitle: "Häufig gestellte Fragen",
     faqQ1: "Welche Dateiformate werden unterstützt?",
-    faqA1: "JPG, PNG, GIF, WebP, PDF bis 10 MB. Neue Formate folgen bald.",
+    faqA1: "JPG, PNG, GIF, WebP, PDF bis 10 MB. Weitere Formate kommen bald.",
     faqQ2: "Ist mein Dokument sicher?",
-    faqA2: "Ja! Dein Brief wird verschlüsselt übertragen, einmal analysiert und nicht dauerhaft gespeichert. Details in unserer Datenschutzerklärung.",
+    faqA2: "Ja! Dein Brief wird verschlüsselt übertragen, einmal analysiert und nicht dauerhaft gespeichert. Mehr in unserer Datenschutzrichtlinie.",
     faqQ3: "Kann ich mein Abo kündigen?",
-    faqA3: "Ja, jederzeit ohne Kündigungsfrist. Deine Dokumente bleiben erhalten.",
-    faqQ4: "Gibt es eine kostenlosen Trial?",
-    faqA4: "Ja! Das Free-Plan ist zeitlich unbegrenzt (3 Dokumente kostenlos).",
+    faqA3: "Ja, jederzeit ohne Vorankündigung. Deine Dokumente bleiben.",
+    faqQ4: "Gibt es eine kostenlose Testphase?",
+    faqA4: "Ja! Der kostenlose Plan ist zeitlich unbegrenzt (3 Dokumente kostenlos).",
     faqQ5: "Wie viel kostet die API?",
-    faqA5: "Business-Kunden bekommen API-Zugang für €49,99/Monat. Maßgeschneiderte Enterprise-Lösungen auf Anfrage.",
+    faqA5: "Business-Kunden erhalten Zugang zur API für €49,99/Monat. Maßgeschneiderte Lösungen für Unternehmen auf Anfrage.",
     faqQ6: "Akzeptiert ihr internationale Briefe?",
-    faqA6: "Momentan nur deutsche Briefe (beste Qualität). Internationale Varianten folgen Anfang 2027.",
+    faqA6: "Bisher nur deutsche Briefe (beste Qualität). Internationale Optionen kommen Anfang 2027.",
 
     // Landing Page - CTA Footer
-    ctaTitle: "Bereit für weniger Bürokratie-Stress?",
-    ctaSubtitle: "Starte jetzt kostenlos. Kein Zahlungsmittel erforderlich.",
+    ctaTitle: "Bereit, Bürokratie-Stress zu vermeiden?",
+    ctaSubtitle: "Starten Sie jetzt kostenlos. Keine Zahlungsdaten erforderlich.",
     ctaButton: "Kostenlos starten →",
 
     // Footer
@@ -134,7 +120,7 @@ export const translations = {
     footerPrivacy: "Datenschutz",
     footerImprint: "Impressum",
     footerContact: "Kontakt",
-    footerSocialTitle: "Sozial",
+    footerSocialTitle: "Soziale Medien",
     footerTwitter: "Twitter",
     footerGithub: "GitHub",
     footerCopyright: "© 2024 DEASY. Alle Rechte vorbehalten.",
@@ -144,19 +130,33 @@ export const translations = {
     freeDescription: "3 Analysen",
     pro: "Pro",
     proDescription: "10 Analysen",
-    proMonthly: "Pro Monatsabo",
+    proMonthly: "Pro Abonnement",
     proMonthlyDescription: "100 Analysen/Monat",
     business: "Business",
-    businessDescription: "Unlimited Analysen",
-    upgradeButton: "Upgraden",
-    upgradeTitle: "Wählen Sie einen Plan",
-    upgradeSubtitle: "Sie haben Ihr kostenloses Limit (3 Analysen) erreicht",
+    businessDescription: "Unbegrenzt",
+    upgradeButton: "Upgrade",
+    upgradeTitle: "Wähle einen Plan",
+    upgradeSubtitle: "Du hast dein Limit erreicht (3 kostenlose Analysen)",
 
     // Action suggestions after analysis
     actionSuggestions: "Was möchten Sie tun?",
     actionReply: "✉️ Antwort schreiben",
     actionObjection: "⚖️ Einspruch einreichen",
     actionTemplate: "📋 Antwort-Vorlage",
+
+    // Reply Generator
+    replyGeneratorTitle: "Antwort-Generator",
+    replyGeneratorDesc: "Generiere eine professionelle Antwort auf deinen Behördenbrief",
+    generateReply: "Antwort generieren",
+    copyReply: "Kopieren",
+    downloadReply: "PDF herunterladen",
+    replyGenerated: "Antwort wurde generiert",
+    generatingReply: "Generiere Antwort...",
+
+    // PDF Upload
+    pdfFormatSupported: "PDF wird unterstützt",
+    uploadPDF: "PDF hochladen",
+    pdfMaxSize: "Max. 10 MB",
 
     // Messages
     analysisLimitReached: "Sie haben Ihr Limit erreicht. Bitte wählen Sie einen Plan.",
@@ -219,21 +219,7 @@ export const translations = {
     chatPlaceholder: "Задайте вопрос о письме...",
     send: "Отправить",
     chatError: "Ошибка чата",
-    
-    // Reply Generator
-    replyGeneratorTitle: "Генератор ответов",
-    replyGeneratorDesc: "Создайте профессиональный ответ на ваше официальное письмо",
-    generateReply: "Создать ответ",
-    copyReply: "Копировать",
-    downloadReply: "Скачать PDF",
-    replyGenerated: "Ответ создан",
-    generatingReply: "Создаю ответ...",
 
-    // PDF Upload
-    pdfFormatSupported: "Поддерживается PDF",
-    uploadPDF: "Загрузить PDF",
-    pdfMaxSize: "Макс. 10 МБ",
-    
     // Landing Page - Pricing
     pricingTitle: "Прозрачное ценообразование",
     planFree: "Бесплатно",
@@ -244,7 +230,7 @@ export const translations = {
     planFreeFeature3: "✓ Базовый анализ",
     planFreeButton: "Начать",
 
-        planPlus: "Плюс",
+    planPlus: "Плюс",
     planPlusPrice: "€4,99",
     planPlusPeriod: "/месяц",
     planPlusFeature1: "✓ 50 документов/месяц",
@@ -252,8 +238,6 @@ export const translations = {
     planPlusFeature3: "✓ Генератор ответов",
     planPlusButton: "Активировать Плюс",
 
-    planPro: "Про",
-    planProPrice: "€9,99",
     planPro: "Про",
     planProPrice: "€9,99",
     planProPeriod: "/месяц",
@@ -323,6 +307,20 @@ export const translations = {
     actionReply: "✉️ Написать ответ",
     actionObjection: "⚖️ Подать возражение",
     actionTemplate: "📋 Шаблон ответа",
+
+    // Reply Generator
+    replyGeneratorTitle: "Генератор ответов",
+    replyGeneratorDesc: "Создайте профессиональный ответ на ваше официальное письмо",
+    generateReply: "Создать ответ",
+    copyReply: "Копировать",
+    downloadReply: "Скачать PDF",
+    replyGenerated: "Ответ создан",
+    generatingReply: "Создаю ответ...",
+
+    // PDF Upload
+    pdfFormatSupported: "Поддерживается PDF",
+    uploadPDF: "Загрузить PDF",
+    pdfMaxSize: "Макс. 10 МБ",
 
     // Messages
     analysisLimitReached: "Вы достигли лимита. Выберите план.",
