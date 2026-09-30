@@ -304,7 +304,7 @@ export default function App() {
               <div key={tier.id} className={styles.planCard}>
                    <h3>{tier.name || tier.id}</h3>
                 <p className={styles.price}>{tier.price}</p>
-                <p>{tier.requests} {t('requestsPerMonth')}</p>
+                
                 <ul>
                   {tier.features.map((feature, i) => (
                     <li key={i}>✓ {feature}</li>
