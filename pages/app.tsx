@@ -494,9 +494,9 @@ export default function App() {
     </div>
   );
 
-  const currentTier = allTiers.find((t) => t.id === usageStats.currentTier) || allTiers[0];
-  const tierLimit = TIER_LIMITS[usageStats.currentTier as keyof typeof TIER_LIMITS] || 3;
-
+   const currentTierId = 'free'; // Default to free tier
+  const currentTier = allTiers.find((t) => t.id === currentTierId) || allTiers[0];
+  const tierLimit = TIER_LIMITS[currentTierId as keyof typeof TIER_LIMITS] || 3;
   return (
     <div className={styles.container}>
       <header className={styles.header}>
