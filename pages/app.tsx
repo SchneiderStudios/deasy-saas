@@ -302,7 +302,7 @@ export default function App() {
           <div className={styles.plans}>
             {tiers.map((tier) => (
               <div key={tier.id} className={styles.planCard}>
-                <h3>{t(tier.labelKey)}</h3>
+                   <h3>{tier.name || tier.id}</h3>
                 <p className={styles.price}>{tier.price}</p>
                 <p>{tier.requests} {t('requestsPerMonth')}</p>
                 <ul>
