@@ -270,7 +270,7 @@ export default function App() {
   const renderPricingModal = () => {
     if (!showPricingModal) return null;
 
-    const tiers = getPricingTiers();
+       const tiers = allTiers;
 
     return (
       <div className={styles.modal}>
