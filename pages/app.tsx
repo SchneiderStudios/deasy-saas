@@ -1,429 +1,564 @@
-'use client';
-
-import React, { useState, useEffect, useCallback } from 'react';
-import styles from '@/styles/App.module.css';
-import { translations } from '@/lib/translations';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePricingTiers } from '@/hooks/usePricingTiers';
 import { usePdfUpload } from '@/hooks/usePdfUpload';
-import { useReplyGenerator } from '@/hooks/useReplyGenerator';
 import { useDocumentHistory } from '@/hooks/useDocumentHistory';
+import styles from '@/styles/App.module.css';
 
 interface AnalysisResult {
   summary: string;
-  riskLevel: string;
-  keyPoints: string[];
+  risk: 'Gering' | 'Mittel' | 'Kritisch';
+  deadlines: string[];
+  actions: string[];
+  language: 'de' | 'ru';
 }
 
-type ViewType = 'upload' | 'results' | 'history';
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
 
-const TIER_LIMITS: { [key: string]: number } = {
-  free: 3,
-  plus: 50,
-  pro: 100,
-  business: 999,
+interface ReplyTemplate {
+  id: string;
+  title_de: string;
+  title_ru: string;
+  subject_de: string;
+  subject_ru: string;
+  body_de: string;
+  body_ru: string;
+  tips_de: string[];
+  tips_ru: string[];
+}
+
+const TEXTS_DE = {
+  title: 'DEASY – Deutsch-Bürokratie Assistent',
+  subtitle: 'Verstehe deutsche Behördenschreiben in Sekunden',
+  uploadTitle: 'Dokument hochladen',
+  uploadHint: 'PDF oder Bild hier ablegen oder klicken',
+  uploadFormats: 'Formate: PDF, JPG, PNG (max 10 MB)',
+  uploadInfo: 'DEASY analysiert automatisch jeden Brief, den du hochlädst und erklärt dir, was er bedeutet.',
+  analyzeBtn: 'Dokument analysieren',
+  analyzing: 'Analysieren...',
+  analysis: 'Analyse',
+  upgradeBtn: 'Auf Plus upgraden',
+  freePlan: 'Kostenlos: 3 Dokumente/Monat',
+  plusPlan: '€4,99: 50 Dokumente/Monat',
+  proPlan: '€9,99: 100 Dokumente/Monat',
+  businessPlan: '€49,99: Unbegrenzt',
+  myDocuments: 'Meine Dokumente',
+  language: 'Sprache',
+  logout: 'Abmelden',
+  summary: 'Zusammenfassung',
+  risk: 'Risiko-Niveau',
+  deadlines: 'Fristen',
+  actions: 'Empfohlene Aktionen',
+  askQuestion: 'Frage stellen',
+  generateReply: 'Antwort schreiben',
+  close: 'Schließen',
+  chat: 'Chat',
+  typeMessage: 'Deine Frage...',
+  send: 'Senden',
+  noMessages: 'Stelle eine Frage zum Dokument',
+  replyTemplates: 'Antwort-Vorlagen',
+  selectTemplate: 'Wähle eine Vorlage',
+  copyToClipboard: 'In Zwischenablage kopieren',
+  copied: 'Kopiert!',
+  download: 'Herunterladen',
+  back: 'Zurück',
+  caseHistory: 'Dokumentverlauf',
+  noCases: 'Keine Dokumente noch',
+  date: 'Datum',
+  file: 'Datei',
+  edit: 'Bearbeiten',
+  delete: 'Löschen',
+  usage: 'Nutzung',
+  error: 'Fehler bei der Analyse. Bitte versuche es erneut.',
+  loading: 'Lädt...',
 };
 
-const TIER_PRICES: { [key: string]: string } = {
-  free: '€0',
-  plus: '€4,99',
-  pro: '€9,99',
-  business: '€49,99',
+const TEXTS_RU = {
+  title: 'DEASY – Помощник по немецкой бюрократии',
+  subtitle: 'Разберись в немецких официальных письмах за секунды',
+  uploadTitle: 'Загрузить документ',
+  uploadHint: 'Перетащи PDF или изображение сюда или нажми',
+  uploadFormats: 'Форматы: PDF, JPG, PNG (макс 10 МБ)',
+  uploadInfo: 'DEASY автоматически анализирует каждое письмо, которое ты загружаешь, и объясняет тебе, что оно означает.',
+  analyzeBtn: 'Анализировать документ',
+  analyzing: 'Анализирование...',
+  analysis: 'Анализ',
+  upgradeBtn: 'Обновить на Plus',
+  freePlan: 'Бесплатно: 3 документа/месяц',
+  plusPlan: '€4,99: 50 документов/месяц',
+  proPlan: '€9,99: 100 документов/месяц',
+  businessPlan: '€49,99: Без ограничений',
+  myDocuments: 'Мои документы',
+  language: 'Язык',
+  logout: 'Выход',
+  summary: 'Резюме',
+  risk: 'Уровень риска',
+  deadlines: 'Сроки',
+  actions: 'Рекомендуемые действия',
+  askQuestion: 'Задать вопрос',
+  generateReply: 'Написать ответ',
+  close: 'Закрыть',
+  chat: 'Чат',
+  typeMessage: 'Твой вопрос...',
+  send: 'Отправить',
+  noMessages: 'Задай вопрос о документе',
+  replyTemplates: 'Шаблоны ответов',
+  selectTemplate: 'Выбрать шаблон',
+  copyToClipboard: 'Скопировать',
+  copied: 'Скопировано!',
+  download: 'Загрузить',
+  back: 'Назад',
+  caseHistory: 'История документов',
+  noCases: 'Документов ещё нет',
+  date: 'Дата',
+  file: 'Файл',
+  edit: 'Редактировать',
+  delete: 'Удалить',
+  usage: 'Использование',
+  error: 'Ошибка при анализе. Попробуй ещё раз.',
+  loading: 'Загрузка...',
 };
+
+const TIER_LIMITS = { free: 3, plus: 50, pro: 100, business: 999 };
+const TIER_PRICES = { free: '€0', plus: '€4,99', pro: '€9,99', business: '€49,99' };
+
+const REPLY_TEMPLATES: ReplyTemplate[] = [
+  {
+    id: 'reject_finanzamt',
+    title_de: 'Finanzamt-Einspruch',
+    title_ru: 'Возражение налоговой инспекции',
+    subject_de: 'Einspruch gegen Bescheid vom [DATUM]',
+    subject_ru: 'Возражение на решение от [ДАТА]',
+    body_de: `Sehr geehrte Damen und Herren,
+
+gegen Ihren Bescheid vom [DATUM] mit dem Aktenzeichen [AKTENZEICHEN] lege ich hiermit Einspruch ein.
+
+Begründung:
+[BEGRÜNDUNG EINFÜGEN]
+
+Ich bitte Sie, den Bescheid zu überprüfen und angepasst zu erlassen.
+
+Mit freundlichen Grüßen,
+[DEIN NAME]`,
+    subject_ru: 'Возражение на решение от [ДАТА]',
+    body_ru: `Уважаемые дамы и господа,
+
+против решения от [ДАТА] с номером дела [НОМЕР] я подаю возражение.
+
+Обоснование:
+[ОБОСНОВАНИЕ]
+
+Прошу пересмотреть решение и выдать исправленное.
+
+С уважением,
+[ТВОЁ ИМЯ]`,
+    tips_de: ['Aktennummer копировать', 'Конкретные основания', 'Приложить документы'],
+    tips_ru: ['Копировать номер дела', 'Указать конкретные причины', 'Приложить документы'],
+  },
+];
 
 export default function App() {
-  const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
-  const [currentView, setCurrentView] = useState<ViewType>('upload');
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string>('');
-  const [fileName, setFileName] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const [showReplyModal, setShowReplyModal] = useState(false);
-  const [generatedReply, setGeneratedReply] = useState<any>(null);
-  const [replyLoading, setReplyLoading] = useState(false);
-
   const { usageStats, canMakeRequest, incrementUsage, allTiers } = usePricingTiers();
   const { convertPdfToImages } = usePdfUpload();
-  const { generateReply } = useReplyGenerator();
-  const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
-  const caseHistory = getCaseHistory();
+  const { saveCaseToHistory } = useDocumentHistory();
 
-  const t = useCallback(
-    (key: string): string => {
-      const lang = selectedLanguage === 'ru' ? 'ru' : 'de';
-      return (translations[lang] as any)[key] || (translations.de as any)[key] || key;
-    },
-    [selectedLanguage]
-  );
+  const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
+  const TEXTS = selectedLanguage === 'ru' ? TEXTS_RU : TEXTS_DE;
 
-  useEffect(() => {
-    const browserLang = navigator.language.toLowerCase();
-    if (browserLang.includes('ru')) {
-      setSelectedLanguage('ru');
-    }
-  }, []);
+  const [currentView, setCurrentView] = useState<'upload' | 'analysis' | 'chat' | 'reply'>('upload');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<ReplyTemplate | null>(null);
+  const [generatedReply, setGeneratedReply] = useState<{ subject: string; body: string } | null>(null);
 
-  const handleFileUpload = async (file: File) => {
-    if (!canMakeRequest()) {
-      setShowPricingModal(true);
-      return;
-    }
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    setIsLoading(true);
-    setFileName(file.name);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    try {
-      let imagesToAnalyze: string[] = [];
+  // Handle file upload
+  const handleFileUpload = useCallback(
+    async (files: File[]) => {
+      if (!files.length) return;
 
-      if (file.type === 'application/pdf') {
-        const result = await convertPdfToImages(file);
-        imagesToAnalyze = result.base64Images;
-      } else if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        await new Promise((resolve) => {
-          reader.onload = (e) => {
-            if (e.target?.result) {
-              imagesToAnalyze = [e.target.result as string];
-            }
-            resolve(null);
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
-      if (imagesToAnalyze.length === 0) {
-        alert(t('invalidFile'));
-        setIsLoading(false);
+      const file = files[0];
+      if (file.size > 10 * 1024 * 1024) {
+        setError(selectedLanguage === 'de' ? 'Datei zu groß' : 'Файл слишком большой');
         return;
       }
 
-      setSelectedImage(imagesToAnalyze[0]);
+      if (!canMakeRequest()) {
+        setShowPricingModal(true);
+        return;
+      }
 
-      const response = await fetch('/api/analyze', {
+      setError(null);
+      setSelectedFile(file);
+      setIsLoading(true);
+
+      try {
+        const images = await convertPdfToImages(file);
+        setUploadedImages(images);
+
+        // Отправляем на анализ в API
+        if (images.length > 0) {
+          const response = await fetch('/api/analyze-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: images[0].split(',')[1],
+              language: selectedLanguage,
+            }),
+          });
+
+          if (!response.ok) throw new Error('Analysis failed');
+
+          const data = await response.json();
+          if (data.success) {
+            setAnalysis(data.analysis);
+            incrementUsage();
+            saveCaseToHistory(data.analysis, file.name);
+            setCurrentView('analysis');
+          }
+        }
+      } catch (err) {
+        setError(TEXTS.error);
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [canMakeRequest, incrementUsage, saveCaseToHistory, convertPdfToImages, selectedLanguage]
+  );
+
+  // Drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
+  };
+
+  // Chat
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !analysis) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: chatInput,
+    };
+
+    setChatMessages((prev) => [...prev, userMessage]);
+    setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: imagesToAnalyze[0],
+          messages: [
+            ...chatMessages.map((m) => ({ role: m.role, content: m.content })),
+            { role: 'user', content: chatInput },
+          ],
+          analysisSummary: analysis.summary,
           language: selectedLanguage,
         }),
       });
 
-      const result = await response.json();
-      setAnalysisResult(result);
-      incrementUsage();
-      saveCaseToHistory(result, file.name);
-      setCurrentView('results');
-    } catch (error) {
-      console.error('Analysis error:', error);
-      alert(t('error'));
+      if (!response.ok) throw new Error('Chat failed');
+
+      const data = await response.json();
+      if (data.success) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.message,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error(err);
     } finally {
-      setIsLoading(false);
+      setChatLoading(false);
     }
   };
 
-  const handleGenerateReply = async () => {
-    if (!analysisResult) return;
-
-    setReplyLoading(true);
-    try {
-      const reply = await generateReply({
-        summary: analysisResult.summary,
-        risk: analysisResult.riskLevel,
-        language: selectedLanguage,
-      });
-      setGeneratedReply(reply);
-      setShowReplyModal(true);
-    } catch (error) {
-      console.error('Reply generation error:', error);
-      alert(t('error'));
-    } finally {
-      setReplyLoading(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  // Upload View
   const renderUploadView = () => (
     <div className={styles.uploadSection}>
+      <h2>{TEXTS.uploadTitle}</h2>
+      <p style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
+        {TEXTS.uploadInfo}
+      </p>
+
       <div
         className={styles.uploadArea}
-        onDrop={handleDrop}
         onDragOver={handleDragOver}
+        onDragLeave={() => {}}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
       >
-        <div className={styles.uploadIcon}>📄</div>
-        <p className={styles.uploadText}>{t('uploadTitle')}</p>
-        <p className={styles.uploadSubtext}>{t('uploadSubtext')}</p>
+        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
+          <div style={{ fontSize: '48px', marginBottom: '10px' }}>📄</div>
+          <p className={styles.uploadText}>{TEXTS.uploadHint}</p>
+          <p className={styles.uploadSubtext}>{TEXTS.uploadFormats}</p>
+        </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
+        style={{ display: 'none' }}
+      />
+
+      {error && <div style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
+      {isLoading && <div style={{ marginTop: '10px', color: '#666' }}>{TEXTS.analyzing}</div>}
+    </div>
+  );
+
+  const renderAnalysisView = () => (
+    <div className={styles.analysisPanel}>
+      <button onClick={() => setCurrentView('upload')} style={{ marginBottom: '20px' }}>
+        ← {TEXTS.back}
+      </button>
+
+      {uploadedImages.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <h3>{selectedLanguage === 'de' ? 'Dokument' : 'Документ'}</h3>
+          <img src={uploadedImages[0]} alt="doc" style={{ maxHeight: '200px', borderRadius: '8px' }} />
+        </div>
+      )}
+
+      {analysis && (
+        <>
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f0f7ff', borderRadius: '8px' }}>
+            <h3>{TEXTS.summary}</h3>
+            <p>{analysis.summary}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff3cd', borderRadius: '8px' }}>
+            <h3>{TEXTS.risk}</h3>
+            <p>{analysis.risk === 'Kritisch' ? '🔴' : analysis.risk === 'Mittel' ? '🟡' : '🟢'} {analysis.risk}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '8px' }}>
+            <h3>{TEXTS.deadlines}</h3>
+            <ul>
+              {analysis.deadlines.map((d, i) => (
+                <li key={i}>{d}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ede7f6', borderRadius: '8px' }}>
+            <h3>{TEXTS.actions}</h3>
+            <ul>
+              {analysis.actions.map((a, i) => (
+                <li key={i}>{a}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <button className={styles.analyzeButton} onClick={() => setCurrentView('chat')} style={{ flex: 1 }}>
+              💬 {TEXTS.askQuestion}
+            </button>
+            <button className={styles.analyzeButton} onClick={() => setCurrentView('reply')} style={{ flex: 1 }}>
+              ✉️ {TEXTS.generateReply}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const renderChatView = () => (
+    <div className={styles.chatPanel}>
+      <button onClick={() => setCurrentView('analysis')} style={{ marginBottom: '20px' }}>
+        ← {TEXTS.back}
+      </button>
+
+      <h2>{TEXTS.chat}</h2>
+      <div style={{ height: '400px', overflowY: 'auto', marginBottom: '10px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+        {chatMessages.length === 0 && (
+          <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>{TEXTS.noMessages}</p>
+        )}
+        {chatMessages.map((msg) => (
+          <div
+            key={msg.id}
+            style={{
+              marginBottom: '10px',
+              padding: '10px',
+              backgroundColor: msg.role === 'user' ? '#007bff' : '#e9ecef',
+              color: msg.role === 'user' ? 'white' : 'black',
+              borderRadius: '8px',
+            }}
+          >
+            {msg.content}
+          </div>
+        ))}
+        {chatLoading && <div style={{ color: '#999' }}>{TEXTS.loading}</div>}
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
         <input
-          type="file"
-          id="fileInput"
-          style={{ display: 'none' }}
-          onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
-          accept=".pdf,.jpg,.jpeg,.png,.gif"
+          type="text"
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && !chatLoading && handleSendMessage()}
+          placeholder={TEXTS.typeMessage}
+          disabled={chatLoading}
+          style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
-        <button
-          className={styles.analyzeButton}
-          onClick={() => document.getElementById('fileInput')?.click()}
-          disabled={isLoading}
-        >
-          {isLoading ? t('processing') : t('uploadButton')}
+        <button onClick={handleSendMessage} disabled={chatLoading} className={styles.analyzeButton}>
+          {TEXTS.send}
         </button>
       </div>
     </div>
   );
 
-  // Results View
-  const renderResultsView = () => (
-    <div className={styles.analysisPanel}>
-      <div className={styles.analysisLayout}>
-        <div>
-          {selectedImage && (
-            <img
-              src={selectedImage}
-              alt="Analyzed document"
-              style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e0e0e0' }}
-            />
-          )}
-        </div>
-        <div className={styles.chatPanel}>
-          <div className={styles.chatMessages}>
-            {analysisResult && (
-              <div className={styles.chatMessage}>
-                <h3 style={{ marginTop: 0 }}>{t('analysis')}</h3>
-                <p>
-                  <strong>{t('summary')}:</strong>
-                </p>
-                <p style={{ fontSize: '14px', lineHeight: '1.6' }}>{analysisResult.summary}</p>
-                
-                <p style={{ marginTop: '16px' }}>
-                  <strong>{t('riskLevel')}:</strong>
-                  <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '4px', background: '#f5f5f5', fontSize: '12px' }}>
-                    {analysisResult.riskLevel}
-                  </span>
-                </p>
-
-                {analysisResult.keyPoints && analysisResult.keyPoints.length > 0 && (
-                  <div style={{ marginTop: '16px' }}>
-                    <p><strong>{t('keyPoints')}:</strong></p>
-                    <ul style={{ margin: '8px 0', paddingLeft: '20px', fontSize: '14px' }}>
-                      {analysisResult.keyPoints.map((point, i) => (
-                        <li key={i}>{point}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              className={styles.analyzeButton}
-              onClick={handleGenerateReply}
-              disabled={replyLoading}
-            >
-              ✉️ {replyLoading ? t('processing') : t('generateReply')}
-            </button>
-            <button
-              className={styles.analyzeButton}
-              onClick={() => setCurrentView('upload')}
-              style={{ background: '#666' }}
-            >
-              ↑ {t('uploadNew')}
-            </button>
-            <button
-              className={styles.analyzeButton}
-              onClick={() => setCurrentView('history')}
-              style={{ background: '#666' }}
-            >
-              📋 {t('history')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // History View
-  const renderHistoryView = () => (
+  const renderReplyView = () => (
     <div className={styles.chatPanel}>
-      <h3>{t('caseHistory')}</h3>
-      <div className={styles.chatMessages}>
-        {caseHistory.length === 0 ? (
-          <p>{t('noCases')}</p>
-        ) : (
-          caseHistory.map((case_, idx) => (
-            <div key={idx} className={styles.chatMessage} style={{ marginBottom: '12px' }}>
-              <p><strong>{case_.fileName}</strong></p>
-              <p style={{ fontSize: '12px', color: '#666' }}>{new Date(case_.date).toLocaleDateString()}</p>
-            </div>
-          ))
-        )}
-      </div>
-      <button
-        className={styles.analyzeButton}
-        onClick={() => setCurrentView('upload')}
-        style={{ marginTop: '16px', width: '100%' }}
-      >
-        ↑ {t('uploadNew')}
+      <button onClick={() => setCurrentView('analysis')} style={{ marginBottom: '20px' }}>
+        ← {TEXTS.back}
       </button>
+
+      <h2>{TEXTS.replyTemplates}</h2>
+
+      {!selectedTemplate && (
+        <div style={{ display: 'grid', gap: '10px', marginTop: '15px' }}>
+          {REPLY_TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              onClick={() => setSelectedTemplate(template)}
+              style={{
+                padding: '15px',
+                textAlign: 'left',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
+            >
+              <strong>{selectedLanguage === 'de' ? template.title_de : template.title_ru}</strong>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {selectedTemplate && (
+        <div>
+          <button onClick={() => setSelectedTemplate(null)} style={{ marginBottom: '15px' }}>
+            ← {TEXTS.back}
+          </button>
+          <textarea
+            defaultValue={selectedLanguage === 'de' ? selectedTemplate.body_de : selectedTemplate.body_ru}
+            style={{
+              width: '100%',
+              height: '400px',
+              padding: '10px',
+              borderRadius: '4px',
+              border: '1px solid #ddd',
+            }}
+          />
+          <button
+            onClick={() => {
+              const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+              navigator.clipboard.writeText(textarea?.value || '');
+              alert(TEXTS.copied);
+            }}
+            className={styles.analyzeButton}
+            style={{ marginTop: '10px', width: '100%' }}
+          >
+            {TEXTS.copyToClipboard}
+          </button>
+        </div>
+      )}
     </div>
   );
 
-  // Reply Modal
-  const renderReplyModal = () => {
-    if (!showReplyModal || !generatedReply) return null;
+  const currentTier = allTiers.find((t) => t.id === usageStats.currentTier) || allTiers[0];
+  const tierLimit = TIER_LIMITS[usageStats.currentTier as keyof typeof TIER_LIMITS] || 3;
 
-    return (
-      <div className={styles.modal}>
-        <div className={styles.modalContent}>
-          <button
-            onClick={() => setShowReplyModal(false)}
-            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: 0 }}
-          >
-            ✕
-          </button>
-          <h2>{t('replyGenerator')}</h2>
-          <div style={{ marginBottom: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '8px', maxHeight: '400px', overflowY: 'auto' }}>
-            <p><strong>{t('subject')}:</strong></p>
-            <p style={{ margin: '8px 0', color: '#1976d2', fontWeight: '500' }}>{generatedReply.subject || 'RE: Your letter'}</p>
-            
-            <p style={{ marginTop: '16px' }}><strong>{t('body')}:</strong></p>
-            <p style={{ margin: '8px 0', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>
-              {generatedReply.body}
+  return (
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>{TEXTS.title}</h1>
+            <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+              {usageStats.monthlyUsage}/{tierLimit} {TEXTS.usage}
             </p>
-
-            {generatedReply.tips && (
-              <div style={{ marginTop: '12px', padding: '8px', background: '#e3f2fd', borderRadius: '4px' }}>
-                <p><strong style={{ color: '#1976d2' }}>💡 {t('tips')}:</strong></p>
-                <p style={{ margin: '4px 0', fontSize: '13px' }}>{generatedReply.tips}</p>
-              </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
+              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            >
+              <option value="de">Deutsch</option>
+              <option value="ru">Русский</option>
+            </select>
+            {usageStats.currentTier === 'free' && (
+              <button onClick={() => setShowPricingModal(true)} className={styles.analyzeButton}>
+                {TEXTS.upgradeBtn}
+              </button>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              className={styles.analyzeButton} 
-              onClick={() => {
-                navigator.clipboard.writeText(generatedReply.body);
-                alert(t('copied'));
-              }}
-              style={{ flex: 1 }}
-            >
-              📋 {t('copy')}
-            </button>
-            <button 
-              className={styles.analyzeButton} 
-              onClick={() => setShowReplyModal(false)}
-              style={{ background: '#666', flex: 1 }}
-            >
-              {t('close')}
-            </button>
-          </div>
         </div>
-      </div>
-    );
-  };
+      </header>
 
-  // Pricing Modal
-  const renderPricingModal = () => {
-    if (!showPricingModal) return null;
+      <main className={styles.mainContent}>
+        {currentView === 'upload' && renderUploadView()}
+        {currentView === 'analysis' && renderAnalysisView()}
+        {currentView === 'chat' && renderChatView()}
+        {currentView === 'reply' && renderReplyView()}
+      </main>
 
-    return (
-      <div className={styles.modal}>
-        <div className={styles.modalContent}>
-          <button
-            onClick={() => setShowPricingModal(false)}
-            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: 0 }}
-          >
-            ✕
-          </button>
-          <h2>{t('upgradePlan')}</h2>
-          <div className={styles.plans}>
-            {allTiers && allTiers.map((tier: any) => {
-              const tierId = tier.id || 'free';
-              return (
-                <div key={tierId} className={styles.planCard}>
-                  <h3>{tier.name || tierId.toUpperCase()}</h3>
-                  <p className={styles.price}>{TIER_PRICES[tierId] || tier.price || '€0'}</p>
-                  <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-                    {TIER_LIMITS[tierId]} {t('documentsPerMonth')}
-                  </p>
-                  <ul style={{ textAlign: 'left', marginBottom: '12px' }}>
-                    {tier.features && tier.features.map((feature: string, i: number) => (
-                      <li key={i} style={{ fontSize: '13px', marginBottom: '4px' }}>✓ {feature}</li>
-                    ))}
-                  </ul>
+      {showPricingModal && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h2>{selectedLanguage === 'de' ? 'Pläne & Preise' : 'Планы и цены'}</h2>
+            <div className={styles.plans}>
+              {allTiers.map((tier) => (
+                <div key={tier.id} className={styles.planCard}>
+                  <h3>{tier.name}</h3>
+                  <p className={styles.price}>{TIER_PRICES[tier.id as keyof typeof TIER_PRICES] || '€0'}</p>
+                  <p>{TIER_LIMITS[tier.id as keyof typeof TIER_LIMITS] || 3}</p>
                   <button
-                    className={styles.analyzeButton}
                     onClick={() => {
-                      if (tier.stripeLink) {
-                        window.open(tier.stripeLink, '_blank');
-                      } else if (tierId !== 'free') {
-                        alert('Stripe link not configured');
-                      }
-                      setShowPricingModal(false);
+                      if (tier.id === 'free') setShowPricingModal(false);
+                      else window.open(`https://buy.stripe.com/${tier.id}`, '_blank');
                     }}
-                    style={{ width: '100%' }}
+                    className={styles.analyzeButton}
                   >
-                    {tierId === 'free' ? t('current') : t('select')}
+                    {tier.id === 'free' ? TEXTS.close : 'Upgrade'}
                   </button>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+            <button onClick={() => setShowPricingModal(false)} className={styles.analyzeButton}>
+              {TEXTS.close}
+            </button>
           </div>
         </div>
-      </div>
-    );
-  };
-
-   return (
-    <div className={styles.app}>
-      {/* Header */}
-      <div style={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9f9f9' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '22px' }}>DEASY</h1>
-          <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#666' }}>{t('appTitle')}</p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <div style={{ padding: '6px 12px', background: '#fff', borderRadius: '4px', border: '1px solid #ddd', fontSize: '12px' }}>
-            {usageStats.usedThisMonth}/{TIER_LIMITS[usageStats.tier]}
-          </div>
-          <button
-            onClick={() => setShowPricingModal(true)}
-            style={{ padding: '6px 12px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-          >
-            {t('upgrade')}
-          </button>
-          <select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
-            style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer', fontSize: '13px' }}
-          >
-            <option value="de">🇩🇪 DE</option>
-            <option value="ru">🇷🇺 RU</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
-        {currentView === 'upload' && renderUploadView()}
-        {currentView === 'results' && renderResultsView()}
-        {currentView === 'history' && renderHistoryView()}
-      </div>
-
-      {/* Modals */}
-      {renderPricingModal()}
-      {renderReplyModal()}
+      )}
     </div>
   );
 }
