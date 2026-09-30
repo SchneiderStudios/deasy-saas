@@ -1,510 +1,469 @@
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import styles from '@/styles/App.module.css';
+'use client';
+
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { translations, Language } from '@/lib/translations';
 import { useDocumentHistory } from '@/hooks/useDocumentHistory';
+import { usePricingTiers } from '@/hooks/usePricingTiers';
+import { usePdfUpload } from '@/hooks/usePdfUpload';
+import { useReplyGenerator } from '@/hooks/useReplyGenerator';
+import styles from '@/styles/app.module.css';
 
-interface AnalysisResult {
-  summary?: string;
-  risk?: string;
-  deadlines?: string[];
-  nextSteps?: string[];
-  actionSuggestions?: string[];
-  language?: string;
-  error?: string;
-}
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface UsageStats {
-  analysisUsed: number;
-  analysisPaid: number;
-  proMonthlyUntil: string | null;
-}
+type ViewType = 'upload' | 'results' | 'history' | 'reply';
 
 export default function App() {
+  const [currentView, setCurrentView] = useState<ViewType>('upload');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>('de');
+  const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [imageData, setImageData] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const [language, setLanguage] = useState<Language>('ru');
-  const [usage, setUsage] = useState<UsageStats>({ analysisUsed: 0, analysisPaid: 0, proMonthlyUntil: null });
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [error, setError] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState<Array<{ role: string; content: string }>>([]);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [caseHistory, setCaseHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
+  const { usageStats, getCurrentTier, getRemainingRequests, canMakeRequest, incrementUsage, allTiers } =
+    usePricingTiers();
+  const { isConverting, convertPdfToImages, convertFileToBase64 } = usePdfUpload();
+  const { isGenerating, generatedReply, generateReplyLocal } = useReplyGenerator();
 
-  const t = translations[language];
+  const t = (key: keyof typeof translations.de): string => {
+    return translations[selectedLanguage][key as keyof typeof translations[selectedLanguage]] ||
+      translations.de[key];
+  };
 
-  // Load usage and language from localStorage
+  // Load case history
   useEffect(() => {
-    const stored = localStorage.getItem('deasyUsage');
-    if (stored) setUsage(JSON.parse(stored));
-    const lang = (localStorage.getItem('deasyLanguage') as Language) || 'ru';
-    setLanguage(lang);
+    const history = getCaseHistory();
+    setCaseHistory(history);
+  }, [getCaseHistory]);
+
+  // Load language preference
+  useEffect(() => {
+    const saved = localStorage.getItem('deasyLanguage');
+    if (saved) {
+      setSelectedLanguage(saved as Language);
+    }
   }, []);
 
-  // Calculate available analyses
-  const getAvailableAnalyses = () => {
-    const isProMonthly = usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date();
-    if (isProMonthly) return 100;
-    if (usage.analysisPaid > 0) return usage.analysisPaid;
-    if (usage.analysisUsed < 3) return 3 - usage.analysisUsed;
-    return 0;
+  // Save language preference
+  const handleLanguageChange = (lang: Language) => {
+    setSelectedLanguage(lang);
+    localStorage.setItem('deasyLanguage', lang);
   };
 
-  const canAnalyze = usage.analysisUsed < 3 || usage.analysisPaid > 0 || (usage.proMonthlyUntil && new Date(usage.proMonthlyUntil) > new Date());
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    let selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    // Convert HEIC to JPEG if needed (iPhone support)
-    if (selectedFile.type === 'image/heic' || selectedFile.type === 'image/heif' || selectedFile.name.toLowerCase().endsWith('.heic')) {
-      try {
-        const heic2any = (await import('heic2any')).default;
-        const converted = await heic2any({
-          blob: selectedFile,
-          toType: 'image/jpeg',
-        });
-        const convertedBlob = Array.isArray(converted) ? converted[0] : converted;
-        selectedFile = new File([convertedBlob as Blob], selectedFile.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
-      } catch (error) {
-        console.warn('⚠️ HEIC conversion failed, trying original:', error);
-        // Continue with original file
-      }
-    }
-
+  const handleFileSelect = async (selectedFile: File) => {
+    setError('');
     setFile(selectedFile);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImageData(event.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
+    setUploadProgress(0);
+
+    if (selectedFile.type === 'application/pdf') {
+      // Handle PDF
+      if (!usageStats.tier.includes('plus') && usageStats.tier !== 'pro' && usageStats.tier !== 'business') {
+        setShowUpgradeModal(true);
+        setError(t('analysisLimitReached'));
+        return;
+      }
+    } else if (!selectedFile.type.startsWith('image/')) {
+      setError(t('formatNotSupported'));
+      return;
+    }
+
+    if (!canMakeRequest()) {
+      setShowUpgradeModal(true);
+      setError(t('analysisLimitReached'));
+      return;
+    }
+
+    await analyzeDocument(selectedFile);
   };
 
-  const handleAnalyze = async () => {
-    if (!imageData) return;
-    if (!canAnalyze) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
-    // Validate file format before analyzing
-    const supportedFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const mediaTypeMatch = imageData.match(/^data:([^;]+);base64,/);
-    const mediaType = mediaTypeMatch ? mediaTypeMatch[1].toLowerCase() : '';
-
-    if (!supportedFormats.includes(mediaType)) {
-      setAnalysis({
-        error: t.formatNotSupported,
-      });
-      return;
-    }
-
-    setLoading(true);
+  const analyzeDocument = async (documentFile: File) => {
     try {
+      setIsLoading(true);
+      let base64Data: string | string[];
+
+      if (documentFile.type === 'application/pdf') {
+        // Convert PDF to images
+        const result = await convertPdfToImages(documentFile);
+        base64Data = result.base64Images;
+      } else {
+        // Handle regular image
+        base64Data = await convertFileToBase64(documentFile);
+      }
+
+      const payload = {
+        image: Array.isArray(base64Data) ? base64Data[0] : base64Data, // Use first page for analysis
+        language: selectedLanguage,
+      };
+
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageData,
-          fileName: file?.name,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error(t('technicalError'));
+      }
 
       const data = await response.json();
+
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+
       setAnalysis(data);
-      setChatMessages([]);
+      setChatHistory([]);
+      setCurrentView('results');
+      incrementUsage();
 
-      // Save to case history
-      if (!data.error && file) {
-        saveCaseToHistory(data, file.name);
+      // Save to history
+      if (!documentFile.name.includes('.pdf') || usageStats.tier.includes('plus')) {
+        saveCaseToHistory(data, documentFile.name);
+        const updated = getCaseHistory();
+        setCaseHistory(updated);
       }
-
-      // Update usage
-      const newUsage = { ...usage, analysisUsed: usage.analysisUsed + 1 };
-      if (usage.analysisPaid > 0 && usage.analysisUsed >= 3) {
-        newUsage.analysisPaid = Math.max(0, usage.analysisPaid - 1);
-      }
-      setUsage(newUsage);
-      localStorage.setItem('deasyUsage', JSON.stringify(newUsage));
-    } catch (error) {
-      setAnalysis({
-        error: t.technicalError,
-      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('technicalError'));
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleChatSend = async () => {
-    if (!chatInput || !analysis) return;
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
-    const newMessage: ChatMessage = {
-      role: 'user',
-      content: chatInput,
-    };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length > 0) {
+      handleFileSelect(droppedFiles[0]);
+    }
+  };
 
-    setChatMessages([...chatMessages, newMessage]);
-    setChatInput('');
-    setChatLoading(true);
+  const handleSendChat = async () => {
+    if (!chatMessage.trim() || !analysis) return;
+
+    const newMessage = { role: 'user', content: chatMessage };
+    setChatHistory([...chatHistory, newMessage]);
+    setChatMessage('');
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: chatInput,
-          context: analysis.summary,
+          message: chatMessage,
+          analysis,
+          language: selectedLanguage,
+          chatHistory,
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) throw new Error(t('chatError'));
 
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: data.response || data.error || 'Fehler beim Chat',
-        },
-      ]);
-    } catch (error) {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Chat-Fehler',
-        },
-      ]);
-    } finally {
-      setChatLoading(false);
+      const data = await response.json();
+      setChatHistory((prev) => [...prev, { role: 'assistant', content: data.message }]);
+    } catch (err) {
+      setError(t('chatError'));
     }
   };
 
+  const handleGenerateReply = () => {
+    if (!analysis) return;
+
+    try {
+      const reply = generateReplyLocal({
+        summary: analysis.summary || '',
+        risk: analysis.risk || '',
+        deadlines: analysis.deadlines,
+        nextSteps: analysis.nextSteps,
+        language: selectedLanguage,
+      });
+      setCurrentView('reply');
+    } catch (err) {
+      setError('Failed to generate reply');
+    }
+  };
+
+  const handleCopyReply = async () => {
+    if (!generatedReply) return;
+    const text = `Subject: ${generatedReply.subject}\n\n${generatedReply.body}\n\n${generatedReply.signature}`;
+    const success = await navigator.clipboard.writeText(text);
+    if (success) {
+      alert(t('copyReply'));
+    }
+  };
+
+  const renderUploadView = () => (
+    <div className={styles.uploadContainer}>
+      <h2>{t('uploadTitle')}</h2>
+      <p>{t('uploadSubtitle')}</p>
+
+      <div
+        className={styles.dropZone}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <p>{t('uploadPlaceholder')}</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.pdf,image/heic,image/heif"
+          onChange={(e) => e.target.files && handleFileSelect(e.target.files[0])}
+          style={{ display: 'none' }}
+        />
+      </div>
+
+      <p className={styles.supportedFormats}>
+        {t('supportedFormats')} + {t('pdfFormatSupported')} ({t('pdfMaxSize')})
+      </p>
+
+      {error && <div className={styles.errorMessage}>{error}</div>}
+
+      {isLoading && (
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>{t('analyzing')}</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderResultsView = () => (
+    <div className={styles.resultsContainer}>
+      <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
+        ← {t('uploadTitle')}
+      </button>
+
+      {analysis && (
+        <>
+          <h2>{t('summary')}</h2>
+          <p>{analysis.summary}</p>
+
+          <div className={styles.riskLevel}>
+            <span className={styles[`risk-${analysis.risk?.toLowerCase()}`]}>
+              {t('riskLevel')}: {analysis.risk}
+            </span>
+          </div>
+
+          {analysis.deadlines && analysis.deadlines.length > 0 && (
+            <div>
+              <h3>{t('deadlines')}</h3>
+              <ul>
+                {analysis.deadlines.map((deadline: string, idx: number) => (
+                  <li key={idx}>{deadline}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {analysis.nextSteps && analysis.nextSteps.length > 0 && (
+            <div>
+              <h3>{t('nextSteps')}</h3>
+              <ul>
+                {analysis.nextSteps.map((step: string, idx: number) => (
+                  <li key={idx}>{step}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className={styles.actionButtonsContainer}>
+            <h3>{t('actionSuggestions')}</h3>
+            <div className={styles.actionButtons}>
+              <button onClick={handleGenerateReply} className={styles.actionButton}>
+                ✉️ {t('actionReply')}
+              </button>
+              <button className={styles.actionButton}>
+                ⚖️ {t('actionObjection')}
+              </button>
+              <button className={styles.actionButton}>
+                📋 {t('actionTemplate')}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.chatContainer}>
+            <h3>{t('chatPlaceholder')}</h3>
+            <div className={styles.chatMessages}>
+              {chatHistory.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`${styles.chatMessage} ${msg.role === 'assistant' ? styles.assistant : ''}`}
+                >
+                  {msg.content}
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.chatInputContainer}>
+              <input
+                type="text"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
+                placeholder={t('chatPlaceholder')}
+              />
+              <button onClick={handleSendChat}>{t('send')}</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const renderReplyView = () => (
+    <div className={styles.replyContainer}>
+      <button onClick={() => setCurrentView('results')} className={styles.backButton}>
+        ← Back
+      </button>
+
+      {generatedReply ? (
+        <>
+          <h2>{t('replyGeneratorTitle')}</h2>
+          <div className={styles.replyContent}>
+            <div>
+              <strong>Subject:</strong>
+              <p>{generatedReply.subject}</p>
+            </div>
+
+            <div>
+              <strong>Body:</strong>
+              <pre className={styles.replyBody}>{generatedReply.body}</pre>
+            </div>
+
+            <div className={styles.replyActions}>
+              <button onClick={handleCopyReply} className={styles.primaryButton}>
+                {t('copyReply')}
+              </button>
+            </div>
+
+            {generatedReply.tips && generatedReply.tips.length > 0 && (
+              <div className={styles.tipsContainer}>
+                <h4>Tips:</h4>
+                <ul>
+                  {generatedReply.tips.map((tip, idx) => (
+                    <li key={idx}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>{t('generatingReply')}</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderHistoryView = () => (
+    <div className={styles.historyContainer}>
+      <h2>My Cases</h2>
+      {caseHistory.length === 0 ? (
+        <p>No cases yet</p>
+      ) : (
+        <div className={styles.historyList}>
+          {caseHistory.map((caseItem) => (
+            <div key={caseItem.id} className={styles.historyItem}>
+              <div>
+                <strong>{caseItem.fileName}</strong>
+                <p>{caseItem.date}</p>
+                <p>{caseItem.summary?.substring(0, 100)}...</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className={styles.container}>
-      {/* Header */}
       <header className={styles.header}>
-        <Link href="/" className={styles.logo}>
-          ← DEASY
-        </Link>
-        <div className={styles.headerRight}>
-          <span className={styles.plan}>
-            {getAvailableAnalyses()} {t.freeDescription.toLowerCase()}
-          </span>
+        <h1>DEASY</h1>
+        <div className={styles.headerControls}>
+          <div className={styles.languageSelector}>
+            <button
+              onClick={() => handleLanguageChange('de')}
+              className={selectedLanguage === 'de' ? styles.active : ''}
+            >
+              🇩🇪 DE
+            </button>
+            <button
+              onClick={() => handleLanguageChange('ru')}
+              className={selectedLanguage === 'ru' ? styles.active : ''}
+            >
+              🇷🇺 RU
+            </button>
+          </div>
+
           <button
-            className={styles.upgradeButton}
-            onClick={() => {
-              setCaseHistory(getCaseHistory());
-              setShowHistory(true);
-            }}
-            title={language === 'de' ? 'Meine Fälle anzeigen' : 'Показать мои дела'}
+            onClick={() => setShowHistory(!showHistory)}
+            className={styles.historyButton}
+            title="My Cases"
           >
-            📋 {caseHistory.length}
+            📁 ({caseHistory.length})
           </button>
-          <button
-            className={styles.upgradeButton}
-            onClick={() => {
-              const newLang = language === 'de' ? 'ru' : 'de';
-              setLanguage(newLang);
-              localStorage.setItem('deasyLanguage', newLang);
-            }}
-          >
-            {language === 'de' ? '🇷🇺 РУ' : '🇩🇪 DE'}
-          </button>
+
+          <div className={styles.usageInfo}>
+            <span>{getRemainingRequests()} remaining</span>
+            <button onClick={() => setShowUpgradeModal(true)} className={styles.upgradeButton}>
+              {t('upgradeButton')}
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className={styles.content}>
-        {/* Upload Section */}
-        {!analysis ? (
-          <div className={styles.uploadSection}>
-            <h1>{t.uploadTitle}</h1>
-            <p>{t.uploadSubtitle}</p>
-            <div
-              className={styles.uploadArea}
-              onClick={() => document.getElementById('fileInput')?.click()}
-            >
-              <div className={styles.uploadIcon}>📄</div>
-              <p className={styles.uploadText}>
-                {t.uploadPlaceholder}
-              </p>
-              <input
-                id="fileInput"
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
-                onChange={handleFileChange}
-                hidden
-              />
-            </div>
+      {showHistory ? renderHistoryView() : null}
 
-            <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#4b4e5c', marginBottom: '1.5rem' }}>
-              ✅ {t.supportedFormats} | 📦 Max 25 MB
-            </div>
+      {currentView === 'upload' && renderUploadView()}
+      {currentView === 'results' && renderResultsView()}
+      {currentView === 'reply' && renderReplyView()}
 
-            {file && (
-              <div className={styles.filePreview}>
-                <p>📎 {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)</p>
-                {file.size > 25 * 1024 * 1024 && (
-                  <p style={{ color: '#dc2626', fontSize: '0.9rem' }}>
-                    ❌ Файл слишком большой (макс. 25 MB)
-                  </p>
-                )}
-                <button
-                  className={styles.analyzeButton}
-                  onClick={handleAnalyze}
-                  disabled={loading || !canAnalyze || file.size > 25 * 1024 * 1024}
-                >
-                  {loading ? `⏳ ${t.analyzing}` : `▶ ${t.analyzeButton}`}
-                </button>
-              </div>
-            )}
-
-            {usage.analysisUsed >= 3 && !canAnalyze && (
-              <div className={styles.upgradeSection}>
-                <p style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: '500' }}>
-                  {language === 'de'
-                    ? '🎉 Вы использовали все 3 бесплатные анализа!'
-                    : '🎉 Вы использовали все 3 бесплатные анализа!'}
-                </p>
-                <button
-                  onClick={() => setShowUpgradeModal(true)}
-                  className={styles.upgradePrompt}
-                  style={{ width: '100%', marginBottom: '0.5rem' }}
-                >
-                  ⬆️ {language === 'de' ? 'Обновить до Pro' : 'Обновить до Pro'}
-                </button>
-                <p style={{ fontSize: '0.85rem', color: '#4b4e5c', textAlign: 'center' }}>
-                  {language === 'de'
-                    ? 'Pro: €9,99/месяц • 100 анализов'
-                    : 'Pro: €9,99/месяц • 100 анализов'}
-                </p>
-              </div>
-            )}
-
-            <div className={styles.securityNote}>
-              🔒 {language === 'de'
-                ? 'Dein Dokument ist verschlüsselt und wird nach der Analyse nicht gespeichert.'
-                : 'Ваш документ зашифрован и не сохраняется после анализа.'}
-            </div>
-          </div>
-        ) : (
-          <div className={styles.analysisLayout}>
-            {/* Analysis Result */}
-            <div className={styles.analysisPanel}>
-              {analysis.error ? (
-                <div className={styles.errorBox}>
-                  <p>❌ {analysis.error}</p>
-                  <button
-                    className={styles.resetButton}
-                    onClick={() => {
-                      setAnalysis(null);
-                      setFile(null);
-                      setImageData(null);
-                    }}
-                  >
-                    ← Neues Dokument
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className={`${styles.riskBadge} ${styles[`risk${analysis.risk}`]}`}>
-                    {analysis.risk === 'Kritisch' && '🔴'}
-                    {analysis.risk === 'Wichtig' && '🟡'}
-                    {analysis.risk === 'Niedrig' && '🟢'}
-                    {analysis.risk}
-                  </div>
-
-                  <div className={styles.analysisContent}>
-                    <h2>Zusammenfassung</h2>
-                    <p>{analysis.summary}</p>
-
-                    {analysis.deadlines && analysis.deadlines.length > 0 && (
-                      <>
-                        <h3>⏰ Fristen</h3>
-                        <ul>
-                          {analysis.deadlines.map((deadline, i) => (
-                            <li key={i}>{deadline}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-
-                    {analysis.nextSteps && analysis.nextSteps.length > 0 && (
-                      <>
-                        <h3>👣 {language === 'de' ? 'Nächste Schritte' : 'Следующие шаги'}</h3>
-                        <ul>
-                          {analysis.nextSteps.map((step, i) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-
-                    {analysis.actionSuggestions && analysis.actionSuggestions.length > 0 && (
-                      <>
-                        <h3>{language === 'de' ? '🎯 Was möchten Sie tun?' : '🎯 Что вы хотите сделать?'}</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 0' }}>
-                          {analysis.actionSuggestions.map((action, i) => {
-                            let icon = '💡';
-                            const lowerAction = action.toLowerCase();
-                            if (lowerAction.includes('antwort') || lowerAction.includes('ответ')) icon = '✉️';
-                            if (lowerAction.includes('einspruch') || lowerAction.includes('возражение')) icon = '⚖️';
-                            if (lowerAction.includes('vorlage') || lowerAction.includes('шаблон')) icon = '📋';
-
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => setChatInput(action)}
-                                style={{
-                                  padding: '10px 12px',
-                                  border: '1px solid #007AFF',
-                                  borderRadius: '6px',
-                                  backgroundColor: '#f0f4ff',
-                                  color: '#007AFF',
-                                  cursor: 'pointer',
-                                  fontSize: '13px',
-                                  fontWeight: '500',
-                                }}
-                              >
-                                {icon} {action}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <button
-                    className={styles.resetButton}
-                    onClick={() => {
-                      setAnalysis(null);
-                      setFile(null);
-                      setImageData(null);
-                    }}
-                  >
-                    ← Neues Dokument
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Chat Section */}
-            {!analysis.error && (
-              <div className={styles.chatPanel}>
-                <h2>💬 {language === 'de' ? 'Fragen zum Brief?' : 'Вопросы к письму?'}</h2>
-
-                <div className={styles.chatMessages}>
-                  {chatMessages.length === 0 && (
-                    <p className={styles.chatPlaceholder}>
-                      {t.chatPlaceholder}
-                    </p>
-                  )}
-                  {chatMessages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`${styles.chatMessage} ${styles[msg.role]}`}
-                    >
-                      <p>{msg.content}</p>
-                    </div>
-                  ))}
-                  {chatLoading && (
-                    <div className={styles.chatMessage + ' ' + styles.assistant}>
-                      <p className={styles.typing}>⏳ {language === 'de' ? 'Antwortet...' : 'Отвечает...'}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.chatInput}>
-                  <input
-                    type="text"
-                    placeholder={t.chatPlaceholder}
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') handleChatSend();
-                    }}
-                    disabled={chatLoading}
-                  />
-                  <button
-                    onClick={handleChatSend}
-                    disabled={!chatInput || chatLoading}
-                  >
-                    📤
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <h2>{t.upgradeTitle}</h2>
-            <p>{t.upgradeSubtitle}</p>
+        <div className={styles.modalOverlay} onClick={() => setShowUpgradeModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2>{t('upgradeTitle')}</h2>
+            <p>{t('upgradeSubtitle')}</p>
 
-            <div className={styles.plans}>
-              {/* Once Payment */}
-              <div className={styles.planCard}>
-                <h3>$2.99</h3>
-                <p>{t.proDescription}</p>
-                <a
-                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_ONCE_LINK"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.planButton}
-                >
-                  {t.upgradeButton}
-                </a>
-              </div>
-
-              {/* Monthly Pro */}
-              <div className={styles.planCard}>
-                <h3>€9,99</h3>
-                <p>{t.proMonthlyDescription}</p>
-                <a
-                  href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.planButton}
-                >
-                  {t.upgradeButton}
-                </a>
-              </div>
-
-              {/* Business - Request only */}
-              <div className={styles.planCard}>
-                <h3>{language === 'de' ? 'Business' : 'Бизнес'}</h3>
-                <p>{t.businessDescription}</p>
-                <a
-                  href="mailto:info@deasy.de?subject=Business%20Plan%20Request%20-%20API%20Access"
-                  className={styles.planButton}
-                >
-                  {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
-                </a>
-                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
-                  {language === 'de' ? 'API + White-Label' : 'API + White-Label'}
-                </p>
-              </div>
+            <div className={styles.pricingGrid}>
+              {allTiers.map((tier) => (
+                <div key={tier.id} className={styles.pricingCard}>
+                  <h3>{tier.name}</h3>
+                  <p className={styles.price}>
+                    €{tier.price}
+                    <span>{t('planFreePeriod')}</span>
+                  </p>
+                  <ul>
+                    {tier.features.map((feature, idx) => (
+                      <li key={idx}>{feature}</li>
+                    ))}
+                  </ul>
+                  {tier.stripeLink && (
+                    <a href={tier.stripeLink} className={styles.buyButton}>
+                      {t('upgradeButton')}
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
 
-            <button
-              onClick={() => setShowUpgradeModal(false)}
-              className={styles.closeModal}
-            >
-              ✕
+            <button onClick={() => setShowUpgradeModal(false)} className={styles.closeButton}>
+              Close
             </button>
           </div>
         </div>
