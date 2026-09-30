@@ -219,7 +219,21 @@ export const translations = {
     chatPlaceholder: "Задайте вопрос о письме...",
     send: "Отправить",
     chatError: "Ошибка чата",
+    
+    // Reply Generator
+    replyGeneratorTitle: "Генератор ответов",
+    replyGeneratorDesc: "Создайте профессиональный ответ на ваше официальное письмо",
+    generateReply: "Создать ответ",
+    copyReply: "Копировать",
+    downloadReply: "Скачать PDF",
+    replyGenerated: "Ответ создан",
+    generatingReply: "Создаю ответ...",
 
+    // PDF Upload
+    pdfFormatSupported: "Поддерживается PDF",
+    uploadPDF: "Загрузить PDF",
+    pdfMaxSize: "Макс. 10 МБ",
+    
     // Landing Page - Pricing
     pricingTitle: "Прозрачное ценообразование",
     planFree: "Бесплатно",
