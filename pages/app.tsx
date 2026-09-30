@@ -122,9 +122,6 @@ const TEXTS_RU = {
   loading: 'Загрузка...',
 };
 
-const TIER_LIMITS = { free: 3, plus: 50, pro: 100, business: 999 };
-const TIER_PRICES = { free: '€0', plus: '€4,99', pro: '€9,99', business: '€49,99' };
-
 const REPLY_TEMPLATES: ReplyTemplate[] = [
   {
     id: 'reject_finanzamt',
@@ -143,7 +140,6 @@ Ich bitte Sie, den Bescheid zu überprüfen und angepasst zu erlassen.
 
 Mit freundlichen Grüßen,
 [DEIN NAME]`,
-    
     body_ru: `Уважаемые дамы и господа,
 
 против решения от [ДАТА] с номером дела [НОМЕР] я подаю возражение.
@@ -161,7 +157,7 @@ Mit freundlichen Grüßen,
 ];
 
 export default function App() {
-  const { usageStats, canMakeRequest, incrementUsage, allTiers } = usePricingTiers();
+  const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers } = usePricingTiers();
   const { convertPdfToImages } = usePdfUpload();
   const { saveCaseToHistory } = useDocumentHistory();
 
@@ -205,7 +201,7 @@ export default function App() {
       setIsLoading(true);
 
       try {
-                const result = await convertPdfToImages(file);
+        const result = await convertPdfToImages(file);
         const images = result.base64Images;
         setUploadedImages(images);
 
@@ -494,9 +490,9 @@ export default function App() {
     </div>
   );
 
-   const currentTierId = 'free'; // Default to free tier
-  const currentTier = allTiers.find((t) => t.id === currentTierId) || allTiers[0];
-  const tierLimit = TIER_LIMITS[currentTierId as keyof typeof TIER_LIMITS] || 3;
+  const currentTier = getCurrentTier();
+  const remainingRequests = getRemainingRequests();
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -504,7 +500,7 @@ export default function App() {
           <div>
             <h1>{TEXTS.title}</h1>
             <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-              {usageStats.monthlyUsage}/{tierLimit} {TEXTS.usage}
+              {usageStats.usedThisMonth}/{currentTier.monthlyLimit} {TEXTS.usage}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -516,7 +512,7 @@ export default function App() {
               <option value="de">Deutsch</option>
               <option value="ru">Русский</option>
             </select>
-                       {currentTierId === 'free' && (
+            {usageStats.tier === 'free' && (
               <button onClick={() => setShowPricingModal(true)} className={styles.analyzeButton}>
                 {TEXTS.upgradeBtn}
               </button>
@@ -540,12 +536,12 @@ export default function App() {
               {allTiers.map((tier) => (
                 <div key={tier.id} className={styles.planCard}>
                   <h3>{tier.name}</h3>
-                  <p className={styles.price}>{TIER_PRICES[tier.id as keyof typeof TIER_PRICES] || '€0'}</p>
-                  <p>{TIER_LIMITS[tier.id as keyof typeof TIER_LIMITS] || 3}</p>
+                  <p className={styles.price}>€{tier.price === 0 ? '0' : tier.price}</p>
+                  <p>{tier.monthlyLimit === Infinity ? '∞' : tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
                   <button
                     onClick={() => {
                       if (tier.id === 'free') setShowPricingModal(false);
-                      else window.open(`https://buy.stripe.com/${tier.id}`, '_blank');
+                      else window.open(tier.stripeLink || '#', '_blank');
                     }}
                     className={styles.analyzeButton}
                   >
