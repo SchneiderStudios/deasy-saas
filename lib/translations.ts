@@ -216,6 +216,16 @@ export const translations = {
     planFreeFeature3: "✓ Базовый анализ",
     planFreeButton: "Начать",
 
+        planPlus: "Плюс",
+    planPlusPrice: "€4,99",
+    planPlusPeriod: "/месяц",
+    planPlusFeature1: "✓ 50 документов/месяц",
+    planPlusFeature2: "✓ Поддержка PDF",
+    planPlusFeature3: "✓ Генератор ответов",
+    planPlusButton: "Активировать Плюс",
+
+    planPro: "Про",
+    planProPrice: "€9,99",
     planPro: "Про",
     planProPrice: "€9,99",
     planProPeriod: "/месяц",
