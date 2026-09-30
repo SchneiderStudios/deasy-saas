@@ -32,10 +32,9 @@ export default function App() {
   const { isConverting, convertPdfToImages, convertFileToBase64 } = usePdfUpload();
   const { isGenerating, generatedReply, generateReplyLocal } = useReplyGenerator();
 
-  const lang: Language = selectedLanguage;
-  const t = (key: keyof typeof translations.de): string => {
-    return translations[lang][key as keyof typeof translations[lang]] ||
-      translations.de[key];
+    const t = (key: keyof typeof translations.de): string => {
+    const lang = selectedLanguage === 'ru' ? 'ru' : 'de';
+    return (translations[lang] as any)[key] || translations.de[key];
   };
 
   // Load case history
