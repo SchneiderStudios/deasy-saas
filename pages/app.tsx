@@ -385,7 +385,45 @@ export default function App() {
     );
   };
 
-  return (
+   return (
     <div className={styles.app}>
       {/* Header */}
-      <div style={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent:
+      <div style={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f9f9f9' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '22px' }}>DEASY</h1>
+          <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#666' }}>{t('appTitle')}</p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ padding: '6px 12px', background: '#fff', borderRadius: '4px', border: '1px solid #ddd', fontSize: '12px' }}>
+            {usageStats.usedThisMonth}/{TIER_LIMITS[usageStats.tier]}
+          </div>
+          <button
+            onClick={() => setShowPricingModal(true)}
+            style={{ padding: '6px 12px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+          >
+            {t('upgrade')}
+          </button>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
+            style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer', fontSize: '13px' }}
+          >
+            <option value="de">🇩🇪 DE</option>
+            <option value="ru">🇷🇺 RU</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+        {currentView === 'upload' && renderUploadView()}
+        {currentView === 'results' && renderResultsView()}
+        {currentView === 'history' && renderHistoryView()}
+      </div>
+
+      {/* Modals */}
+      {renderPricingModal()}
+      {renderReplyModal()}
+    </div>
+  );
+}
