@@ -205,8 +205,8 @@ export default function App() {
       setIsLoading(true);
 
       try {
-          const result = await convertPdfToImages(file);
-           const images = (await convertPdfToImages(file)) as string[];
+                const result = await convertPdfToImages(file);
+        const images = result.base64Images;
         setUploadedImages(images);
 
         // Отправляем на анализ в API
