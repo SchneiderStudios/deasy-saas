@@ -114,13 +114,7 @@ export default function App() {
         setCurrentView('results');
         
         // Save to history
-        saveCaseToHistory({
-          id: Date.now().toString(),
-          date: new Date().toISOString(),
-          image: imageData,
-          analysis: result,
-          language: selectedLanguage,
-        });
+               saveCaseToHistory(result, file?.name || 'document');
       } else {
         setError(result.error || t('technicalError'));
       }
