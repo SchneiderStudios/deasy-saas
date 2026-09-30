@@ -355,7 +355,7 @@ const handleFileUpload = async (file: File) => {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
+         accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
         onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
         style={{ display: 'none' }}
       />
