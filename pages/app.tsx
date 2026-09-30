@@ -143,7 +143,7 @@ Ich bitte Sie, den Bescheid zu überprüfen und angepasst zu erlassen.
 
 Mit freundlichen Grüßen,
 [DEIN NAME]`,
-    subject_ru: 'Возражение на решение от [ДАТА]',
+    
     body_ru: `Уважаемые дамы и господа,
 
 против решения от [ДАТА] с номером дела [НОМЕР] я подаю возражение.
