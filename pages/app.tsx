@@ -26,7 +26,7 @@ export default function App() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showReplyModal, setShowReplyModal] = useState(false);
 
-  const { usageStats, canMakeRequest, incrementUsage, getPricingTiers } = usePricingTiers();
+  const { usageStats, canMakeRequest, incrementUsage, allTiers } = usePricingTiers();
   const { convertPdfToImages } = usePdfUpload();
   const { generateReply } = useReplyGenerator();
   const { cases: caseHistory, saveCaseToHistory } = useDocumentHistory();
