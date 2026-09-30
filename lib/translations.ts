@@ -55,7 +55,21 @@ export const translations = {
     chatPlaceholder: "Stellen Sie eine Frage zum Brief...",
     send: "Senden",
     chatError: "Chat-Fehler",
+    
+    // Reply Generator
+    replyGeneratorTitle: "Antwort-Generator",
+    replyGeneratorDesc: "Generiere eine professionelle Antwort auf deinen Behördenbrief",
+    generateReply: "Antwort generieren",
+    copyReply: "Kopieren",
+    downloadReply: "PDF herunterladen",
+    replyGenerated: "Antwort wurde generiert",
+    generatingReply: "Generiere Antwort...",
 
+    // PDF Upload
+    pdfFormatSupported: "PDF wird unterstützt",
+    uploadPDF: "PDF hochladen",
+    pdfMaxSize: "Max. 10 MB",
+    
     // Landing Page - Pricing
     pricingTitle: "Transparent Pricing",
     planFree: "Free",
