@@ -11,13 +11,39 @@ export function usePdfUpload() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Функция для конвертации HEIC в JPG
+  const convertHeicToJpeg = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0);
+          const jpeg = canvas.toDataURL('image/jpeg', 0.95).split(',')[1];
+          resolve(jpeg);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const convertFileToImages = useCallback(
     async (file: File): Promise<PdfConversionResult> => {
       setLoading(true);
       setError(null);
 
       try {
-        // Validate file
         if (!file) {
           throw new Error('No file provided');
         }
@@ -30,13 +56,26 @@ export function usePdfUpload() {
           throw new Error(`File is too large. Maximum size is 10MB, but your file is ${(fileSize / 1024 / 1024).toFixed(1)}MB`);
         }
 
-        // Handle image files (JPG, PNG, WebP, etc.) - iPhone photos
+        // Поддержка HEIC (iPhone фото)
+        if (file.type === 'image/heic' || file.type === 'image/heif' || fileName.toLowerCase().endsWith('.heic') || fileName.toLowerCase().endsWith('.heif')) {
+          const base64 = await convertHeicToJpeg(file);
+          setLoading(false);
+          return {
+            base64Images: [base64],
+            pageCount: 1,
+            fileName: fileName.replace(/\.(heic|heif)$/i, '.jpg'),
+            fileType: 'image',
+          };
+        }
+
+        // Поддержка обычных изображений (JPG, PNG, WebP и т.д.)
         if (file.type.startsWith('image/')) {
           const reader = new FileReader();
 
           return await new Promise((resolve, reject) => {
             reader.onload = () => {
               const base64 = (reader.result as string).split(',')[1];
+              setLoading(false);
               resolve({
                 base64Images: [base64],
                 pageCount: 1,
@@ -51,9 +90,8 @@ export function usePdfUpload() {
           });
         }
 
-        // Handle PDF files
-        if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
-          // Dynamically import PDF.js
+        // Поддержка PDF
+        if (file.type === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf')) {
           const pdfjs = await import('pdfjs-dist');
           pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -61,13 +99,11 @@ export function usePdfUpload() {
           const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
           
           const base64Images: string[] = [];
-          
-          // Convert first 5 pages to images
           const pagesToConvert = Math.min(5, pdf.numPages);
 
           for (let pageNum = 1; pageNum <= pagesToConvert; pageNum++) {
             const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 2 }); // 2x scale for quality
+            const viewport = page.getViewport({ scale: 2 });
             
             const canvas = document.createElement('canvas');
             canvas.width = viewport.width;
@@ -81,7 +117,6 @@ export function usePdfUpload() {
               viewport: viewport,
             }).promise;
 
-            // Convert canvas to base64 JPEG
             const base64 = canvas.toDataURL('image/jpeg', 0.95).split(',')[1];
             base64Images.push(base64);
           }
@@ -95,7 +130,7 @@ export function usePdfUpload() {
           };
         }
 
-        throw new Error('Please upload a PDF file or an image file (JPG, PNG, etc.)');
+        throw new Error('Пожалуйста загрузите PDF, фото JPG, PNG или HEIC с iPhone');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to process file';
         setError(errorMessage);
