@@ -14,7 +14,21 @@ interface AnalysisResult {
   keyPoints: string[];
 }
 
-type ViewType = 'upload' | 'results' | 'history' | 'reply';
+type ViewType = 'upload' | 'results' | 'history';
+
+const TIER_LIMITS: { [key: string]: number } = {
+  free: 3,
+  plus: 50,
+  pro: 100,
+  business: 999,
+};
+
+const TIER_PRICES: { [key: string]: string } = {
+  free: '€0',
+  plus: '€4,99',
+  pro: '€9,99',
+  business: '€49,99',
+};
 
 export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
@@ -42,7 +56,6 @@ export default function App() {
     [selectedLanguage]
   );
 
-  // Detect language on mount
   useEffect(() => {
     const browserLang = navigator.language.toLowerCase();
     if (browserLang.includes('ru')) {
@@ -65,21 +78,27 @@ export default function App() {
       if (file.type === 'application/pdf') {
         const result = await convertPdfToImages(file);
         imagesToAnalyze = result.base64Images;
-      } else {
+      } else if (file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            imagesToAnalyze = [e.target.result as string];
-          }
-        };
-        reader.readAsDataURL(file);
+        await new Promise((resolve) => {
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              imagesToAnalyze = [e.target.result as string];
+            }
+            resolve(null);
+          };
+          reader.readAsDataURL(file);
+        });
       }
 
-      if (imagesToAnalyze.length === 0) return;
+      if (imagesToAnalyze.length === 0) {
+        alert(t('invalidFile'));
+        setIsLoading(false);
+        return;
+      }
 
       setSelectedImage(imagesToAnalyze[0]);
 
-      // Call analyze API
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,7 +115,7 @@ export default function App() {
       setCurrentView('results');
     } catch (error) {
       console.error('Analysis error:', error);
-      alert('Error processing file');
+      alert(t('error'));
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +135,7 @@ export default function App() {
       setShowReplyModal(true);
     } catch (error) {
       console.error('Reply generation error:', error);
-      alert('Error generating reply');
+      alert(t('error'));
     } finally {
       setReplyLoading(false);
     }
@@ -134,7 +153,7 @@ export default function App() {
     e.preventDefault();
   };
 
-  // Render Upload View
+  // Upload View
   const renderUploadView = () => (
     <div className={styles.uploadSection}>
       <div
@@ -150,7 +169,7 @@ export default function App() {
           id="fileInput"
           style={{ display: 'none' }}
           onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
-          accept=".pdf,image/*"
+          accept=".pdf,.jpg,.jpeg,.png,.gif"
         />
         <button
           className={styles.analyzeButton}
@@ -163,7 +182,7 @@ export default function App() {
     </div>
   );
 
-  // Render Results View
+  // Results View
   const renderResultsView = () => (
     <div className={styles.analysisPanel}>
       <div className={styles.analysisLayout}>
@@ -172,7 +191,7 @@ export default function App() {
             <img
               src={selectedImage}
               alt="Analyzed document"
-              style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: '16px' }}
+              style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e0e0e0' }}
             />
           )}
         </div>
@@ -180,15 +199,29 @@ export default function App() {
           <div className={styles.chatMessages}>
             {analysisResult && (
               <div className={styles.chatMessage}>
-                <p><strong>{t('summary')}</strong></p>
-                <p>{analysisResult.summary}</p>
-                <p><strong>{t('riskLevel')}</strong> {analysisResult.riskLevel}</p>
-                <p><strong>{t('keyPoints')}</strong></p>
-                <ul>
-                  {analysisResult.keyPoints?.map((point, i) => (
-                    <li key={i}>{point}</li>
-                  ))}
-                </ul>
+                <h3 style={{ marginTop: 0 }}>{t('analysis')}</h3>
+                <p>
+                  <strong>{t('summary')}:</strong>
+                </p>
+                <p style={{ fontSize: '14px', lineHeight: '1.6' }}>{analysisResult.summary}</p>
+                
+                <p style={{ marginTop: '16px' }}>
+                  <strong>{t('riskLevel')}:</strong>
+                  <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '4px', background: '#f5f5f5', fontSize: '12px' }}>
+                    {analysisResult.riskLevel}
+                  </span>
+                </p>
+
+                {analysisResult.keyPoints && analysisResult.keyPoints.length > 0 && (
+                  <div style={{ marginTop: '16px' }}>
+                    <p><strong>{t('keyPoints')}:</strong></p>
+                    <ul style={{ margin: '8px 0', paddingLeft: '20px', fontSize: '14px' }}>
+                      {analysisResult.keyPoints.map((point, i) => (
+                        <li key={i}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -220,7 +253,7 @@ export default function App() {
     </div>
   );
 
-  // Render History View
+  // History View
   const renderHistoryView = () => (
     <div className={styles.chatPanel}>
       <h3>{t('caseHistory')}</h3>
@@ -231,7 +264,7 @@ export default function App() {
           caseHistory.map((case_, idx) => (
             <div key={idx} className={styles.chatMessage} style={{ marginBottom: '12px' }}>
               <p><strong>{case_.fileName}</strong></p>
-              <p>{new Date(case_.date).toLocaleDateString()}</p>
+              <p style={{ fontSize: '12px', color: '#666' }}>{new Date(case_.date).toLocaleDateString()}</p>
             </div>
           ))
         )}
@@ -239,14 +272,14 @@ export default function App() {
       <button
         className={styles.analyzeButton}
         onClick={() => setCurrentView('upload')}
-        style={{ marginTop: '16px' }}
+        style={{ marginTop: '16px', width: '100%' }}
       >
         ↑ {t('uploadNew')}
       </button>
     </div>
   );
 
-  // Render Reply Modal
+  // Reply Modal
   const renderReplyModal = () => {
     if (!showReplyModal || !generatedReply) return null;
 
@@ -255,26 +288,43 @@ export default function App() {
         <div className={styles.modalContent}>
           <button
             onClick={() => setShowReplyModal(false)}
-            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: 0 }}
           >
             ✕
           </button>
           <h2>{t('replyGenerator')}</h2>
-          <div style={{ marginBottom: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}>
-            <p><strong>{t('subject')}:</strong> {generatedReply.subject}</p>
-            <p style={{ marginTop: '12px', whiteSpace: 'pre-wrap' }}>{generatedReply.body}</p>
+          <div style={{ marginBottom: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '8px', maxHeight: '400px', overflowY: 'auto' }}>
+            <p><strong>{t('subject')}:</strong></p>
+            <p style={{ margin: '8px 0', color: '#1976d2', fontWeight: '500' }}>{generatedReply.subject || 'RE: Your letter'}</p>
+            
+            <p style={{ marginTop: '16px' }}><strong>{t('body')}:</strong></p>
+            <p style={{ margin: '8px 0', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>
+              {generatedReply.body}
+            </p>
+
             {generatedReply.tips && (
               <div style={{ marginTop: '12px', padding: '8px', background: '#e3f2fd', borderRadius: '4px' }}>
-                <p><strong>{t('tips')}:</strong></p>
-                <p>{generatedReply.tips}</p>
+                <p><strong style={{ color: '#1976d2' }}>💡 {t('tips')}:</strong></p>
+                <p style={{ margin: '4px 0', fontSize: '13px' }}>{generatedReply.tips}</p>
               </div>
             )}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className={styles.analyzeButton} onClick={() => navigator.clipboard.writeText(generatedReply.body)}>
+            <button 
+              className={styles.analyzeButton} 
+              onClick={() => {
+                navigator.clipboard.writeText(generatedReply.body);
+                alert(t('copied'));
+              }}
+              style={{ flex: 1 }}
+            >
               📋 {t('copy')}
             </button>
-            <button className={styles.analyzeButton} style={{ background: '#666' }} onClick={() => setShowReplyModal(false)}>
+            <button 
+              className={styles.analyzeButton} 
+              onClick={() => setShowReplyModal(false)}
+              style={{ background: '#666', flex: 1 }}
+            >
               {t('close')}
             </button>
           </div>
@@ -283,47 +333,52 @@ export default function App() {
     );
   };
 
-  // Render Pricing Modal
+  // Pricing Modal
   const renderPricingModal = () => {
     if (!showPricingModal) return null;
-
-    const tiers = allTiers;
 
     return (
       <div className={styles.modal}>
         <div className={styles.modalContent}>
           <button
             onClick={() => setShowPricingModal(false)}
-            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', padding: 0 }}
           >
             ✕
           </button>
           <h2>{t('upgradePlan')}</h2>
           <div className={styles.plans}>
-            {tiers.map((tier) => (
-              <div key={tier.id} className={styles.planCard}>
-                   <h3>{tier.name || tier.id}</h3>
-                <p className={styles.price}>{tier.price}</p>
-                
-                <ul>
-                  {tier.features.map((feature, i) => (
-                    <li key={i}>✓ {feature}</li>
-                  ))}
-                </ul>
-                <button
-                  className={styles.analyzeButton}
-                  onClick={() => {
-                    if (tier.stripeLink) {
-                      window.open(tier.stripeLink, '_blank');
-                    } else {
-                      alert(t('free'));
-                    }
-                  }}
-                >
-                  {t('select')}
-                </button>
-              </div>
-            ))}
+            {allTiers && allTiers.map((tier: any) => {
+              const tierId = tier.id || 'free';
+              return (
+                <div key={tierId} className={styles.planCard}>
+                  <h3>{tier.name || tierId.toUpperCase()}</h3>
+                  <p className={styles.price}>{TIER_PRICES[tierId] || tier.price || '€0'}</p>
+                  <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                    {TIER_LIMITS[tierId]} {t('documentsPerMonth')}
+                  </p>
+                  <ul style={{ textAlign: 'left', marginBottom: '12px' }}>
+                    {tier.features && tier.features.map((feature: string, i: number) => (
+                      <li key={i} style={{ fontSize: '13px', marginBottom: '4px' }}>✓ {feature}</li>
+                    ))}
+                  </ul>
+                  <button
+                    className={styles.analyzeButton}
+                    onClick={() => {
+                      if (tier.stripeLink) {
+                        window.open(tier.stripeLink, '_blank');
+                      } else if (tierId !== 'free') {
+                        alert('Stripe link not configured');
+                      }
+                      setShowPricingModal(false);
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    {tierId === 'free' ? t('current') : t('select')}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -333,37 +388,4 @@ export default function App() {
   return (
     <div className={styles.app}>
       {/* Header */}
-      <div style={{ padding: '16px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>{t('appTitle')}</h1>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span>{usageStats.usedThisMonth}/{usageStats.tier === 'free' ? 3 : usageStats.tier === 'plus' ? 50 : 100}</span>
-          <button
-            style={{ padding: '6px 12px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            onClick={() => setShowPricingModal(true)}
-          >
-            {t('upgrade')}
-          </button>
-          <select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
-            style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}
-          >
-            <option value="de">🇩🇪 DE</option>
-            <option value="ru">🇷🇺 RU</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div style={{ padding: '24px', flex: 1 }}>
-        {currentView === 'upload' && renderUploadView()}
-        {currentView === 'results' && renderResultsView()}
-        {currentView === 'history' && renderHistoryView()}
-      </div>
-
-      {/* Modals */}
-      {renderPricingModal()}
-      {renderReplyModal()}
-    </div>
-  );
-}
+      <div style={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent:
