@@ -6,7 +6,7 @@ import { useDocumentHistory } from '@/hooks/useDocumentHistory';
 import { usePricingTiers } from '@/hooks/usePricingTiers';
 import { usePdfUpload } from '@/hooks/usePdfUpload';
 import { useReplyGenerator } from '@/hooks/useReplyGenerator';
-import styles from '@/styles/app.module.css';
+import styles from '@/styles/App.module.css';
 
 type ViewType = 'upload' | 'results' | 'history' | 'reply';
 
