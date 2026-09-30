@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from '@/styles/App.module.css';
-import translations from '@/lib/translations';
+import { translations } from '@/lib/translations';
 import { usePricingTiers } from '@/hooks/usePricingTiers';
 import { usePdfUpload } from '@/hooks/usePdfUpload';
 import { useReplyGenerator } from '@/hooks/useReplyGenerator';
