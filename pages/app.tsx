@@ -516,7 +516,7 @@ export default function App() {
               <option value="de">Deutsch</option>
               <option value="ru">Русский</option>
             </select>
-            {usageStats.currentTier === 'free' && (
+                       {currentTierId === 'free' && (
               <button onClick={() => setShowPricingModal(true)} className={styles.analyzeButton}>
                 {TEXTS.upgradeBtn}
               </button>
