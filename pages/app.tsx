@@ -29,8 +29,8 @@ export default function App() {
   const { usageStats, canMakeRequest, incrementUsage, allTiers } = usePricingTiers();
   const { convertPdfToImages } = usePdfUpload();
   const { generateReply } = useReplyGenerator();
-  const { cases: caseHistory, saveCaseToHistory } = useDocumentHistory();
-
+     const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
+   const caseHistory = getCaseHistory();
   const t = useCallback(
     (key: string): string => {
       const lang = selectedLanguage === 'ru' ? 'ru' : 'de';
