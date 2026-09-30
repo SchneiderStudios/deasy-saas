@@ -23,6 +23,7 @@ export default function App() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [caseHistory, setCaseHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
@@ -31,8 +32,9 @@ export default function App() {
   const { isConverting, convertPdfToImages, convertFileToBase64 } = usePdfUpload();
   const { isGenerating, generatedReply, generateReplyLocal } = useReplyGenerator();
 
+  const lang: Language = selectedLanguage;
   const t = (key: keyof typeof translations.de): string => {
-    return translations[selectedLanguage][key as keyof typeof translations[selectedLanguage]] ||
+    return translations[lang][key as keyof typeof translations[lang]] ||
       translations.de[key];
   };
 
@@ -51,128 +53,110 @@ export default function App() {
   }, []);
 
   // Save language preference
-  const handleLanguageChange = (lang: Language) => {
-    setSelectedLanguage(lang);
-    localStorage.setItem('deasyLanguage', lang);
+  useEffect(() => {
+    localStorage.setItem('deasyLanguage', selectedLanguage);
+  }, [selectedLanguage]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+    setError('');
+
+    // For PDFs, convert to images
+    if (selectedFile.type === 'application/pdf') {
+      setIsLoading(true);
+      try {
+        const images = await convertPdfToImages(selectedFile);
+        if (images.base64Images && images.base64Images.length > 0) {
+          setAnalysis({ ...analysis, images: images.base64Images });
+          handleAnalyze(images.base64Images[0]);
+        }
+      } catch (err) {
+        setError(t('uploadError'));
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // For images, read directly
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        handleAnalyze(base64);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
   };
 
-  const handleFileSelect = async (selectedFile: File) => {
-    setError('');
-    setFile(selectedFile);
-    setUploadProgress(0);
-
-    if (selectedFile.type === 'application/pdf') {
-      // Handle PDF
-      if (!usageStats.tier.includes('plus') && usageStats.tier !== 'pro' && usageStats.tier !== 'business') {
-        setShowUpgradeModal(true);
-        setError(t('analysisLimitReached'));
-        return;
-      }
-    } else if (!selectedFile.type.startsWith('image/')) {
-      setError(t('formatNotSupported'));
-      return;
-    }
+  const handleAnalyze = async (imageData: string) => {
+    if (!imageData) return;
 
     if (!canMakeRequest()) {
       setShowUpgradeModal(true);
-      setError(t('analysisLimitReached'));
       return;
     }
 
-    await analyzeDocument(selectedFile);
-  };
-
-  const analyzeDocument = async (documentFile: File) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      let base64Data: string | string[];
-
-      if (documentFile.type === 'application/pdf') {
-        // Convert PDF to images
-        const result = await convertPdfToImages(documentFile);
-        base64Data = result.base64Images;
-      } else {
-        // Handle regular image
-        base64Data = await convertFileToBase64(documentFile);
-      }
-
-      const payload = {
-        image: Array.isArray(base64Data) ? base64Data[0] : base64Data, // Use first page for analysis
-        language: selectedLanguage,
-      };
-
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          image: imageData,
+          language: selectedLanguage,
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error(t('technicalError'));
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        setError(data.error);
-        return;
-      }
-
-      setAnalysis(data);
-      setChatHistory([]);
-      setCurrentView('results');
-      incrementUsage();
-
-      // Save to history
-      if (!documentFile.name.includes('.pdf') || usageStats.tier.includes('plus')) {
-        saveCaseToHistory(data, documentFile.name);
-        const updated = getCaseHistory();
-        setCaseHistory(updated);
+      const result = await response.json();
+      if (response.ok) {
+        setAnalysis(result);
+        incrementUsage();
+        setCurrentView('results');
+        
+        // Save to history
+        saveCaseToHistory({
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          image: imageData,
+          analysis: result,
+          language: selectedLanguage,
+        });
+      } else {
+        setError(result.error || t('technicalError'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('technicalError'));
+      setError(t('technicalError'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    if (droppedFiles.length > 0) {
-      handleFileSelect(droppedFiles[0]);
-    }
-  };
-
-  const handleSendChat = async () => {
+  const handleChat = async () => {
     if (!chatMessage.trim() || !analysis) return;
 
-    const newMessage = { role: 'user', content: chatMessage };
-    setChatHistory([...chatHistory, newMessage]);
+    const userMessage = chatMessage;
     setChatMessage('');
+    setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: chatMessage,
-          analysis,
+          message: userMessage,
+          context: analysis,
           language: selectedLanguage,
-          chatHistory,
+          history: chatHistory,
         }),
       });
 
-      if (!response.ok) throw new Error(t('chatError'));
-
-      const data = await response.json();
-      setChatHistory((prev) => [...prev, { role: 'assistant', content: data.message }]);
+      const result = await response.json();
+      if (response.ok) {
+        setChatHistory(prev => [...prev, { role: 'assistant', content: result.response }]);
+      } else {
+        setError(result.error || t('chatError'));
+      }
     } catch (err) {
       setError(t('chatError'));
     }
@@ -180,291 +164,275 @@ export default function App() {
 
   const handleGenerateReply = () => {
     if (!analysis) return;
-
-    try {
-      const reply = generateReplyLocal({
-        summary: analysis.summary || '',
-        risk: analysis.risk || '',
-        deadlines: analysis.deadlines,
-        nextSteps: analysis.nextSteps,
-        language: selectedLanguage,
-      });
-      setCurrentView('reply');
-    } catch (err) {
-      setError('Failed to generate reply');
-    }
+    const reply = generateReplyLocal({
+      summary: analysis.summary || '',
+      risk: analysis.risk || 'Важно',
+      language: selectedLanguage,
+    });
+    setShowReplyModal(true);
   };
 
-  const handleCopyReply = async () => {
-    if (!generatedReply) return;
-    const text = `Subject: ${generatedReply.subject}\n\n${generatedReply.body}\n\n${generatedReply.signature}`;
-    const success = await navigator.clipboard.writeText(text);
-    if (success) {
-      alert(t('copyReply'));
+  const handleUpgrade = () => {
+    const tier = allTiers[1]; // Plus tier
+    if (tier.stripeLink) {
+      window.location.href = tier.stripeLink;
     }
   };
-
-  const renderUploadView = () => (
-    <div className={styles.uploadContainer}>
-      <h2>{t('uploadTitle')}</h2>
-      <p>{t('uploadSubtitle')}</p>
-
-      <div
-        className={styles.dropZone}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <p>{t('uploadPlaceholder')}</p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.pdf,image/heic,image/heif"
-          onChange={(e) => e.target.files && handleFileSelect(e.target.files[0])}
-          style={{ display: 'none' }}
-        />
-      </div>
-
-      <p className={styles.supportedFormats}>
-        {t('supportedFormats')} + {t('pdfFormatSupported')} ({t('pdfMaxSize')})
-      </p>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
-
-      {isLoading && (
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>{t('analyzing')}</p>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderResultsView = () => (
-    <div className={styles.resultsContainer}>
-      <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
-        ← {t('uploadTitle')}
-      </button>
-
-      {analysis && (
-        <>
-          <h2>{t('summary')}</h2>
-          <p>{analysis.summary}</p>
-
-          <div className={styles.riskLevel}>
-            <span className={styles[`risk-${analysis.risk?.toLowerCase()}`]}>
-              {t('riskLevel')}: {analysis.risk}
-            </span>
-          </div>
-
-          {analysis.deadlines && analysis.deadlines.length > 0 && (
-            <div>
-              <h3>{t('deadlines')}</h3>
-              <ul>
-                {analysis.deadlines.map((deadline: string, idx: number) => (
-                  <li key={idx}>{deadline}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {analysis.nextSteps && analysis.nextSteps.length > 0 && (
-            <div>
-              <h3>{t('nextSteps')}</h3>
-              <ul>
-                {analysis.nextSteps.map((step: string, idx: number) => (
-                  <li key={idx}>{step}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className={styles.actionButtonsContainer}>
-            <h3>{t('actionSuggestions')}</h3>
-            <div className={styles.actionButtons}>
-              <button onClick={handleGenerateReply} className={styles.actionButton}>
-                ✉️ {t('actionReply')}
-              </button>
-              <button className={styles.actionButton}>
-                ⚖️ {t('actionObjection')}
-              </button>
-              <button className={styles.actionButton}>
-                📋 {t('actionTemplate')}
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.chatContainer}>
-            <h3>{t('chatPlaceholder')}</h3>
-            <div className={styles.chatMessages}>
-              {chatHistory.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`${styles.chatMessage} ${msg.role === 'assistant' ? styles.assistant : ''}`}
-                >
-                  {msg.content}
-                </div>
-              ))}
-            </div>
-
-            <div className={styles.chatInputContainer}>
-              <input
-                type="text"
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
-                placeholder={t('chatPlaceholder')}
-              />
-              <button onClick={handleSendChat}>{t('send')}</button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  const renderReplyView = () => (
-    <div className={styles.replyContainer}>
-      <button onClick={() => setCurrentView('results')} className={styles.backButton}>
-        ← Back
-      </button>
-
-      {generatedReply ? (
-        <>
-          <h2>{t('replyGeneratorTitle')}</h2>
-          <div className={styles.replyContent}>
-            <div>
-              <strong>Subject:</strong>
-              <p>{generatedReply.subject}</p>
-            </div>
-
-            <div>
-              <strong>Body:</strong>
-              <pre className={styles.replyBody}>{generatedReply.body}</pre>
-            </div>
-
-            <div className={styles.replyActions}>
-              <button onClick={handleCopyReply} className={styles.primaryButton}>
-                {t('copyReply')}
-              </button>
-            </div>
-
-            {generatedReply.tips && generatedReply.tips.length > 0 && (
-              <div className={styles.tipsContainer}>
-                <h4>Tips:</h4>
-                <ul>
-                  {generatedReply.tips.map((tip, idx) => (
-                    <li key={idx}>{tip}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>{t('generatingReply')}</p>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderHistoryView = () => (
-    <div className={styles.historyContainer}>
-      <h2>My Cases</h2>
-      {caseHistory.length === 0 ? (
-        <p>No cases yet</p>
-      ) : (
-        <div className={styles.historyList}>
-          {caseHistory.map((caseItem) => (
-            <div key={caseItem.id} className={styles.historyItem}>
-              <div>
-                <strong>{caseItem.fileName}</strong>
-                <p>{caseItem.date}</p>
-                <p>{caseItem.summary?.substring(0, 100)}...</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className={styles.container}>
+      {/* Header */}
       <header className={styles.header}>
-        <h1>DEASY</h1>
-        <div className={styles.headerControls}>
-          <div className={styles.languageSelector}>
-            <button
-              onClick={() => handleLanguageChange('de')}
-              className={selectedLanguage === 'de' ? styles.active : ''}
+        <div className={styles.headerContent}>
+          <h1>{t('appTitle')}</h1>
+          <div className={styles.headerActions}>
+            <button 
+              className={styles.langButton}
+              onClick={() => setSelectedLanguage(selectedLanguage === 'de' ? 'ru' : 'de')}
             >
-              🇩🇪 DE
+              {selectedLanguage === 'de' ? '🇷🇺 RU' : '🇩🇪 DE'}
             </button>
-            <button
-              onClick={() => handleLanguageChange('ru')}
-              className={selectedLanguage === 'ru' ? styles.active : ''}
+            <button 
+              className={styles.upgradeButton}
+              onClick={() => setShowUpgradeModal(true)}
             >
-              🇷🇺 RU
-            </button>
-          </div>
-
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className={styles.historyButton}
-            title="My Cases"
-          >
-            📁 ({caseHistory.length})
-          </button>
-
-          <div className={styles.usageInfo}>
-            <span>{getRemainingRequests()} remaining</span>
-            <button onClick={() => setShowUpgradeModal(true)} className={styles.upgradeButton}>
-              {t('upgradeButton')}
+              ⬆️ {t('upgradeButton')}
             </button>
           </div>
         </div>
+        <p className={styles.usageInfo}>
+          {t('planFree')}: {getRemainingRequests()} {t('planFreeFeature1')}
+        </p>
       </header>
 
-      {showHistory ? renderHistoryView() : null}
+      {/* Navigation */}
+      <nav className={styles.nav}>
+        <button 
+          className={currentView === 'upload' ? styles.navActive : ''}
+          onClick={() => setCurrentView('upload')}
+        >
+          📤 {t('uploadTitle')}
+        </button>
+        <button 
+          className={currentView === 'history' ? styles.navActive : ''}
+          onClick={() => setCurrentView('history')}
+        >
+          📋 {t('summary')}
+        </button>
+      </nav>
 
-      {currentView === 'upload' && renderUploadView()}
-      {currentView === 'results' && renderResultsView()}
-      {currentView === 'reply' && renderReplyView()}
+      {/* Main Content */}
+      <main className={styles.main}>
+        {error && <div className={styles.error}>{error}</div>}
 
+        {/* Upload View */}
+        {currentView === 'upload' && (
+          <div className={styles.uploadSection}>
+            <h2>{t('uploadTitle')}</h2>
+            <p>{t('uploadSubtitle')}</p>
+            <div 
+              className={styles.dropzone}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const files = e.dataTransfer.files;
+                if (files[0]) {
+                  const input = fileInputRef.current;
+                  if (input) {
+                    input.files = files;
+                    handleFileChange({ target: { files } } as any);
+                  }
+                }
+              }}
+            >
+              <p>{t('uploadPlaceholder')}</p>
+              <p className={styles.formatHint}>{t('supportedFormats')}</p>
+              {file && <p>✅ {file.name}</p>}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
+            {isLoading && <p className={styles.loading}>{t('analyzing')}</p>}
+          </div>
+        )}
+
+        {/* Results View */}
+        {currentView === 'results' && analysis && (
+          <div className={styles.resultsSection}>
+            <h2>{t('summary')}</h2>
+            <div className={styles.analysisCard}>
+              <div className={styles.riskBadge}>
+                {t('riskLevel')}: <strong>{analysis.risk}</strong>
+              </div>
+              <p>{analysis.summary}</p>
+              
+              {analysis.deadlines && analysis.deadlines.length > 0 && (
+                <div className={styles.section}>
+                  <h3>📅 {t('deadlines')}</h3>
+                  <ul>
+                    {analysis.deadlines.map((d: string, i: number) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {analysis.nextSteps && analysis.nextSteps.length > 0 && (
+                <div className={styles.section}>
+                  <h3>➡️ {t('nextSteps')}</h3>
+                  <ul>
+                    {analysis.nextSteps.map((s: string, i: number) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className={styles.actionButtons}>
+                <button 
+                  className={styles.actionBtn}
+                  onClick={handleGenerateReply}
+                  disabled={isGenerating}
+                >
+                  ✉️ {t('generateReply')}
+                </button>
+                <button 
+                  className={styles.actionBtn}
+                  onClick={() => setCurrentView('upload')}
+                >
+                  📤 {t('uploadTitle')}
+                </button>
+              </div>
+            </div>
+
+            {/* Chat */}
+            <div className={styles.chatSection}>
+              <h3>{t('chatPlaceholder')}</h3>
+              <div className={styles.chatMessages}>
+                {chatHistory.map((msg, i) => (
+                  <div key={i} className={msg.role === 'user' ? styles.userMsg : styles.assistantMsg}>
+                    {msg.content}
+                  </div>
+                ))}
+              </div>
+              <div className={styles.chatInput}>
+                <input
+                  type="text"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleChat()}
+                  placeholder={t('chatPlaceholder')}
+                />
+                <button onClick={handleChat} disabled={!chatMessage.trim()}>
+                  {t('send')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* History View */}
+        {currentView === 'history' && (
+          <div className={styles.historySection}>
+            <h2>{t('summary')}</h2>
+            {caseHistory.length === 0 ? (
+              <p>{t('uploadError')}</p>
+            ) : (
+              <div className={styles.historyList}>
+                {caseHistory.map((item: any) => (
+                  <div key={item.id} className={styles.historyItem}>
+                    <p className={styles.historyDate}>
+                      {new Date(item.date).toLocaleDateString(selectedLanguage === 'de' ? 'de-DE' : 'ru-RU')}
+                    </p>
+                    <p className={styles.historySummary}>{item.analysis?.summary}</p>
+                    <button
+                      onClick={() => {
+                        setAnalysis(item.analysis);
+                        setCurrentView('results');
+                      }}
+                    >
+                      {t('summary')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowUpgradeModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <button 
+              className={styles.closeBtn}
+              onClick={() => setShowUpgradeModal(false)}
+            >
+              ✕
+            </button>
             <h2>{t('upgradeTitle')}</h2>
             <p>{t('upgradeSubtitle')}</p>
-
+            
             <div className={styles.pricingGrid}>
-              {allTiers.map((tier) => (
-                <div key={tier.id} className={styles.pricingCard}>
+              {allTiers.map((tier: any) => (
+                <div key={tier.name} className={styles.pricingCard}>
                   <h3>{tier.name}</h3>
-                  <p className={styles.price}>
-                    €{tier.price}
-                    <span>{t('planFreePeriod')}</span>
-                  </p>
+                  <p className={styles.price}>{tier.price}</p>
                   <ul>
-                    {tier.features.map((feature, idx) => (
-                      <li key={idx}>{feature}</li>
+                    {tier.features.map((f: string, i: number) => (
+                      <li key={i}>{f}</li>
                     ))}
                   </ul>
                   {tier.stripeLink && (
-                    <a href={tier.stripeLink} className={styles.buyButton}>
-                      {t('upgradeButton')}
+                    <a href={tier.stripeLink} className={styles.upgradeBtn}>
+                      {t('planPlusButton')}
                     </a>
                   )}
                 </div>
               ))}
             </div>
-
-            <button onClick={() => setShowUpgradeModal(false)} className={styles.closeButton}>
-              Close
+            
+            <button 
+              className={styles.closeBtn}
+              onClick={() => setShowUpgradeModal(false)}
+            >
+              {t('send')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {showReplyModal && generatedReply && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <button 
+              className={styles.closeBtn}
+              onClick={() => setShowReplyModal(false)}
+            >
+              ✕
+            </button>
+            <h2>{t('replyGeneratorTitle')}</h2>
+            <div className={styles.replyBody}>
+              <h4>{generatedReply.subject}</h4>
+              <p>{generatedReply.body}</p>
+              <p className={styles.signature}>{generatedReply.signature}</p>
+            </div>
+            <div className={styles.replyActions}>
+              <button onClick={() => navigator.clipboard.writeText(generatedReply.body)}>
+                {t('copyReply')}
+              </button>
+              <button onClick={() => setShowReplyModal(false)}>
+                {t('send')}
+              </button>
+            </div>
           </div>
         </div>
       )}
