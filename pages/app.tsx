@@ -208,7 +208,7 @@ export default function App() {
             <div key={idx} className={styles.chatMessage} style={{ marginBottom: '12px' }}>
               <p><strong>{case_.fileName}</strong></p>
               <p>{new Date(case_.date).toLocaleDateString()}</p>
-              <p>{case_.analysis?.summary}</p>
+              
             </div>
           ))
         )}
