@@ -1,434 +1,352 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { translations, Language } from '@/lib/translations';
-import { useDocumentHistory } from '@/hooks/useDocumentHistory';
+import React, { useState, useEffect, useCallback } from 'react';
+import styles from '@/styles/App.module.css';
+import translations from '@/lib/translations';
 import { usePricingTiers } from '@/hooks/usePricingTiers';
 import { usePdfUpload } from '@/hooks/usePdfUpload';
 import { useReplyGenerator } from '@/hooks/useReplyGenerator';
-import styles from '@/styles/App.module.css';
+import { useDocumentHistory } from '@/hooks/useDocumentHistory';
+
+interface AnalysisResult {
+  summary: string;
+  riskLevel: string;
+  keyPoints: string[];
+}
 
 type ViewType = 'upload' | 'results' | 'history' | 'reply';
 
 export default function App() {
+  const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
   const [currentView, setCurrentView] = useState<ViewType>('upload');
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>('de');
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [fileName, setFileName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [analysis, setAnalysis] = useState<any>(null);
-  const [error, setError] = useState<string>('');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{ role: string; content: string }>>([]);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [caseHistory, setCaseHistory] = useState<any[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const [showReplyModal, setShowReplyModal] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { saveCaseToHistory, getCaseHistory } = useDocumentHistory();
-  const { usageStats, getCurrentTier, getRemainingRequests, canMakeRequest, incrementUsage, allTiers } =
-    usePricingTiers();
-  const { isConverting, convertPdfToImages, convertFileToBase64 } = usePdfUpload();
-  const { isGenerating, generatedReply, generateReplyLocal } = useReplyGenerator();
+  const { usageStats, canMakeRequest, incrementUsage, getPricingTiers } = usePricingTiers();
+  const { convertPdfToImages } = usePdfUpload();
+  const { generateReply } = useReplyGenerator();
+  const { cases: caseHistory, saveCaseToHistory } = useDocumentHistory();
 
-    const t = (key: keyof typeof translations.de): string => {
-    const lang = selectedLanguage === 'ru' ? 'ru' : 'de';
-    return (translations[lang] as any)[key] || translations.de[key];
-  };
+  const t = useCallback(
+    (key: string): string => {
+      const lang = selectedLanguage === 'ru' ? 'ru' : 'de';
+      return (translations[lang] as any)[key] || (translations.de as any)[key] || key;
+    },
+    [selectedLanguage]
+  );
 
-  // Load case history
+  // Detect language on mount
   useEffect(() => {
-    const history = getCaseHistory();
-    setCaseHistory(history);
-  }, [getCaseHistory]);
-
-  // Load language preference
-  useEffect(() => {
-    const saved = localStorage.getItem('deasyLanguage');
-    if (saved) {
-      setSelectedLanguage(saved as Language);
+    const browserLang = navigator.language.toLowerCase();
+    if (browserLang.includes('ru')) {
+      setSelectedLanguage('ru');
     }
   }, []);
 
-  // Save language preference
-  useEffect(() => {
-    localStorage.setItem('deasyLanguage', selectedLanguage);
-  }, [selectedLanguage]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    setFile(selectedFile);
-    setError('');
-
-    // For PDFs, convert to images
-    if (selectedFile.type === 'application/pdf') {
-      setIsLoading(true);
-      try {
-        const images = await convertPdfToImages(selectedFile);
-        if (images.base64Images && images.base64Images.length > 0) {
-          setAnalysis({ ...analysis, images: images.base64Images });
-          handleAnalyze(images.base64Images[0]);
-        }
-      } catch (err) {
-        setError(t('uploadError'));
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // For images, read directly
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        handleAnalyze(base64);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
-  };
-
-  const handleAnalyze = async (imageData: string) => {
-    if (!imageData) return;
-
+  const handleFileUpload = async (file: File) => {
     if (!canMakeRequest()) {
-      setShowUpgradeModal(true);
+      setShowPricingModal(true);
       return;
     }
 
     setIsLoading(true);
+    setFileName(file.name);
+
     try {
+      let imagesToAnalyze: string[] = [];
+
+      if (file.type === 'application/pdf') {
+        const result = await convertPdfToImages(file);
+        imagesToAnalyze = result.base64Images;
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            imagesToAnalyze = [e.target.result as string];
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      if (imagesToAnalyze.length === 0) return;
+
+      setSelectedImage(imagesToAnalyze[0]);
+
+      // Call analyze API
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: imageData,
+          image: imagesToAnalyze[0],
           language: selectedLanguage,
         }),
       });
 
       const result = await response.json();
-      if (response.ok) {
-        setAnalysis(result);
-        incrementUsage();
-        setCurrentView('results');
-        
-        // Save to history
-               saveCaseToHistory(result, file?.name || 'document');
-      } else {
-        setError(result.error || t('technicalError'));
-      }
-    } catch (err) {
-      setError(t('technicalError'));
+      setAnalysisResult(result);
+      incrementUsage();
+      saveCaseToHistory(result, file.name);
+      setCurrentView('results');
+    } catch (error) {
+      console.error('Analysis error:', error);
+      alert('Error processing file');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChat = async () => {
-    if (!chatMessage.trim() || !analysis) return;
-
-    const userMessage = chatMessage;
-    setChatMessage('');
-    setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          context: analysis,
-          language: selectedLanguage,
-          history: chatHistory,
-        }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        setChatHistory(prev => [...prev, { role: 'assistant', content: result.response }]);
-      } else {
-        setError(result.error || t('chatError'));
-      }
-    } catch (err) {
-      setError(t('chatError'));
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
     }
   };
 
-  const handleGenerateReply = () => {
-    if (!analysis) return;
-    const reply = generateReplyLocal({
-      summary: analysis.summary || '',
-      risk: analysis.risk || 'Важно',
-      language: selectedLanguage,
-    });
-    setShowReplyModal(true);
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
   };
 
-  const handleUpgrade = () => {
-    const tier = allTiers[1]; // Plus tier
-    if (tier.stripeLink) {
-      window.location.href = tier.stripeLink;
-    }
-  };
-
-  return (
-    <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <h1>{t('appTitle')}</h1>
-          <div className={styles.headerActions}>
-            <button 
-              className={styles.langButton}
-              onClick={() => setSelectedLanguage(selectedLanguage === 'de' ? 'ru' : 'de')}
-            >
-              {selectedLanguage === 'de' ? '🇷🇺 RU' : '🇩🇪 DE'}
-            </button>
-            <button 
-              className={styles.upgradeButton}
-              onClick={() => setShowUpgradeModal(true)}
-            >
-              ⬆️ {t('upgradeButton')}
-            </button>
-          </div>
-        </div>
-        <p className={styles.usageInfo}>
-          {t('planFree')}: {getRemainingRequests()} {t('planFreeFeature1')}
-        </p>
-      </header>
-
-      {/* Navigation */}
-      <nav className={styles.nav}>
-        <button 
-          className={currentView === 'upload' ? styles.navActive : ''}
-          onClick={() => setCurrentView('upload')}
+  // Render Upload View
+  const renderUploadView = () => (
+    <div className={styles.uploadSection}>
+      <div
+        className={styles.uploadArea}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      >
+        <div className={styles.uploadIcon}>📄</div>
+        <p className={styles.uploadText}>{t('uploadTitle')}</p>
+        <p className={styles.uploadSubtext}>{t('uploadSubtext')}</p>
+        <input
+          type="file"
+          id="fileInput"
+          style={{ display: 'none' }}
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
+          accept=".pdf,image/*"
+        />
+        <button
+          className={styles.analyzeButton}
+          onClick={() => document.getElementById('fileInput')?.click()}
+          disabled={isLoading}
         >
-          📤 {t('uploadTitle')}
+          {isLoading ? t('processing') : t('uploadButton')}
         </button>
-        <button 
-          className={currentView === 'history' ? styles.navActive : ''}
-          onClick={() => setCurrentView('history')}
-        >
-          📋 {t('summary')}
-        </button>
-      </nav>
+      </div>
+    </div>
+  );
 
-      {/* Main Content */}
-      <main className={styles.main}>
-        {error && <div className={styles.error}>{error}</div>}
-
-        {/* Upload View */}
-        {currentView === 'upload' && (
-          <div className={styles.uploadSection}>
-            <h2>{t('uploadTitle')}</h2>
-            <p>{t('uploadSubtitle')}</p>
-            <div 
-              className={styles.dropzone}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const files = e.dataTransfer.files;
-                if (files[0]) {
-                  const input = fileInputRef.current;
-                  if (input) {
-                    input.files = files;
-                    handleFileChange({ target: { files } } as any);
-                  }
-                }
-              }}
-            >
-              <p>{t('uploadPlaceholder')}</p>
-              <p className={styles.formatHint}>{t('supportedFormats')}</p>
-              {file && <p>✅ {file.name}</p>}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,.pdf"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
+  // Render Results View
+  const renderResultsView = () => (
+    <div className={styles.analysisPanel}>
+      <div className={styles.analysisLayout}>
+        <div>
+          {selectedImage && (
+            <img
+              src={selectedImage}
+              alt="Analyzed document"
+              style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: '16px' }}
             />
-            {isLoading && <p className={styles.loading}>{t('analyzing')}</p>}
-          </div>
-        )}
-
-        {/* Results View */}
-        {currentView === 'results' && analysis && (
-          <div className={styles.resultsSection}>
-            <h2>{t('summary')}</h2>
-            <div className={styles.analysisCard}>
-              <div className={styles.riskBadge}>
-                {t('riskLevel')}: <strong>{analysis.risk}</strong>
-              </div>
-              <p>{analysis.summary}</p>
-              
-              {analysis.deadlines && analysis.deadlines.length > 0 && (
-                <div className={styles.section}>
-                  <h3>📅 {t('deadlines')}</h3>
-                  <ul>
-                    {analysis.deadlines.map((d: string, i: number) => (
-                      <li key={i}>{d}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {analysis.nextSteps && analysis.nextSteps.length > 0 && (
-                <div className={styles.section}>
-                  <h3>➡️ {t('nextSteps')}</h3>
-                  <ul>
-                    {analysis.nextSteps.map((s: string, i: number) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className={styles.actionButtons}>
-                <button 
-                  className={styles.actionBtn}
-                  onClick={handleGenerateReply}
-                  disabled={isGenerating}
-                >
-                  ✉️ {t('generateReply')}
-                </button>
-                <button 
-                  className={styles.actionBtn}
-                  onClick={() => setCurrentView('upload')}
-                >
-                  📤 {t('uploadTitle')}
-                </button>
-              </div>
-            </div>
-
-            {/* Chat */}
-            <div className={styles.chatSection}>
-              <h3>{t('chatPlaceholder')}</h3>
-              <div className={styles.chatMessages}>
-                {chatHistory.map((msg, i) => (
-                  <div key={i} className={msg.role === 'user' ? styles.userMsg : styles.assistantMsg}>
-                    {msg.content}
-                  </div>
-                ))}
-              </div>
-              <div className={styles.chatInput}>
-                <input
-                  type="text"
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleChat()}
-                  placeholder={t('chatPlaceholder')}
-                />
-                <button onClick={handleChat} disabled={!chatMessage.trim()}>
-                  {t('send')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* History View */}
-        {currentView === 'history' && (
-          <div className={styles.historySection}>
-            <h2>{t('summary')}</h2>
-            {caseHistory.length === 0 ? (
-              <p>{t('uploadError')}</p>
-            ) : (
-              <div className={styles.historyList}>
-                {caseHistory.map((item: any) => (
-                  <div key={item.id} className={styles.historyItem}>
-                    <p className={styles.historyDate}>
-                      {new Date(item.date).toLocaleDateString(selectedLanguage === 'de' ? 'de-DE' : 'ru-RU')}
-                    </p>
-                    <p className={styles.historySummary}>{item.analysis?.summary}</p>
-                    <button
-                      onClick={() => {
-                        setAnalysis(item.analysis);
-                        setCurrentView('results');
-                      }}
-                    >
-                      {t('summary')}
-                    </button>
-                  </div>
-                ))}
+          )}
+        </div>
+        <div className={styles.chatPanel}>
+          <div className={styles.chatMessages}>
+            {analysisResult && (
+              <div className={styles.chatMessage}>
+                <p><strong>{t('summary')}</strong></p>
+                <p>{analysisResult.summary}</p>
+                <p><strong>{t('riskLevel')}</strong> {analysisResult.riskLevel}</p>
+                <p><strong>{t('keyPoints')}</strong></p>
+                <ul>
+                  {analysisResult.keyPoints?.map((point, i) => (
+                    <li key={i}>{point}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
+          <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              className={styles.analyzeButton}
+              onClick={() => setShowReplyModal(true)}
+            >
+              ✉️ {t('generateReply')}
+            </button>
+            <button
+              className={styles.analyzeButton}
+              onClick={() => setCurrentView('upload')}
+              style={{ background: '#666' }}
+            >
+              ↑ {t('uploadNew')}
+            </button>
+            <button
+              className={styles.analyzeButton}
+              onClick={() => setCurrentView('history')}
+              style={{ background: '#666' }}
+            >
+              📋 {t('history')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render History View
+  const renderHistoryView = () => (
+    <div className={styles.chatPanel}>
+      <h3>{t('caseHistory')}</h3>
+      <div className={styles.chatMessages}>
+        {caseHistory.length === 0 ? (
+          <p>{t('noCases')}</p>
+        ) : (
+          caseHistory.map((case_, idx) => (
+            <div key={idx} className={styles.chatMessage} style={{ marginBottom: '12px' }}>
+              <p><strong>{case_.fileName}</strong></p>
+              <p>{new Date(case_.date).toLocaleDateString()}</p>
+              <p>{case_.analysis?.summary}</p>
+            </div>
+          ))
         )}
-      </main>
+      </div>
+      <button
+        className={styles.analyzeButton}
+        onClick={() => setCurrentView('upload')}
+        style={{ marginTop: '16px' }}
+      >
+        ↑ {t('uploadNew')}
+      </button>
+    </div>
+  );
 
-      {/* Upgrade Modal */}
-      {showUpgradeModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <button 
-              className={styles.closeBtn}
-              onClick={() => setShowUpgradeModal(false)}
-            >
-              ✕
+  // Render Reply Modal
+  const renderReplyModal = () => {
+    if (!showReplyModal || !analysisResult) return null;
+
+    const reply = generateReply({
+      summary: analysisResult.summary,
+      risk: analysisResult.riskLevel,
+      language: selectedLanguage,
+    });
+
+    return (
+      <div className={styles.modal}>
+        <div className={styles.modalContent}>
+          <button
+            onClick={() => setShowReplyModal(false)}
+            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+          >
+            ✕
+          </button>
+          <h2>{t('replyGenerator')}</h2>
+          <div style={{ marginBottom: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}>
+            <p><strong>{t('subject')}:</strong> {reply.subject}</p>
+            <p style={{ marginTop: '12px', whiteSpace: 'pre-wrap' }}>{reply.body}</p>
+            {reply.tips && (
+              <div style={{ marginTop: '12px', padding: '8px', background: '#e3f2fd', borderRadius: '4px' }}>
+                <p><strong>{t('tips')}:</strong></p>
+                <p>{reply.tips}</p>
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className={styles.analyzeButton} onClick={() => navigator.clipboard.writeText(reply.body)}>
+              📋 {t('copy')}
             </button>
-            <h2>{t('upgradeTitle')}</h2>
-            <p>{t('upgradeSubtitle')}</p>
-            
-            <div className={styles.pricingGrid}>
-              {allTiers.map((tier: any) => (
-                <div key={tier.name} className={styles.pricingCard}>
-                  <h3>{tier.name}</h3>
-                  <p className={styles.price}>{tier.price}</p>
-                  <ul>
-                    {tier.features.map((f: string, i: number) => (
-                      <li key={i}>{f}</li>
-                    ))}
-                  </ul>
-                  {tier.stripeLink && (
-                    <a href={tier.stripeLink} className={styles.upgradeBtn}>
-                      {t('planPlusButton')}
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            <button 
-              className={styles.closeBtn}
-              onClick={() => setShowUpgradeModal(false)}
-            >
-              {t('send')}
+            <button className={styles.analyzeButton} style={{ background: '#666' }} onClick={() => setShowReplyModal(false)}>
+              {t('close')}
             </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  };
 
-      {/* Reply Modal */}
-      {showReplyModal && generatedReply && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <button 
-              className={styles.closeBtn}
-              onClick={() => setShowReplyModal(false)}
-            >
-              ✕
-            </button>
-            <h2>{t('replyGeneratorTitle')}</h2>
-            <div className={styles.replyBody}>
-              <h4>{generatedReply.subject}</h4>
-              <p>{generatedReply.body}</p>
-              <p className={styles.signature}>{generatedReply.signature}</p>
-            </div>
-            <div className={styles.replyActions}>
-              <button onClick={() => navigator.clipboard.writeText(generatedReply.body)}>
-                {t('copyReply')}
-              </button>
-              <button onClick={() => setShowReplyModal(false)}>
-                {t('send')}
-              </button>
-            </div>
+  // Render Pricing Modal
+  const renderPricingModal = () => {
+    if (!showPricingModal) return null;
+
+    const tiers = getPricingTiers();
+
+    return (
+      <div className={styles.modal}>
+        <div className={styles.modalContent}>
+          <button
+            onClick={() => setShowPricingModal(false)}
+            style={{ float: 'right', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+          >
+            ✕
+          </button>
+          <h2>{t('upgradePlan')}</h2>
+          <div className={styles.plans}>
+            {tiers.map((tier) => (
+              <div key={tier.id} className={styles.planCard}>
+                <h3>{t(tier.labelKey)}</h3>
+                <p className={styles.price}>{tier.price}</p>
+                <p>{tier.requests} {t('requestsPerMonth')}</p>
+                <ul>
+                  {tier.features.map((feature, i) => (
+                    <li key={i}>✓ {feature}</li>
+                  ))}
+                </ul>
+                <button
+                  className={styles.analyzeButton}
+                  onClick={() => {
+                    if (tier.stripeLink) {
+                      window.open(tier.stripeLink, '_blank');
+                    } else {
+                      alert(t('free'));
+                    }
+                  }}
+                >
+                  {t('select')}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
+    );
+  };
+
+  return (
+    <div className={styles.app}>
+      {/* Header */}
+      <div style={{ padding: '16px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>{t('appTitle')}</h1>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span>{usageStats.usedThisMonth}/{usageStats.tier === 'free' ? 3 : usageStats.tier === 'plus' ? 50 : 100}</span>
+          <button
+            style={{ padding: '6px 12px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            onClick={() => setShowPricingModal(true)}
+          >
+            {t('upgrade')}
+          </button>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
+            style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}
+          >
+            <option value="de">🇩🇪 DE</option>
+            <option value="ru">🇷🇺 RU</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div style={{ padding: '24px', flex: 1 }}>
+        {currentView === 'upload' && renderUploadView()}
+        {currentView === 'results' && renderResultsView()}
+        {currentView === 'history' && renderHistoryView()}
+      </div>
+
+      {/* Modals */}
+      {renderPricingModal()}
+      {renderReplyModal()}
     </div>
   );
 }
