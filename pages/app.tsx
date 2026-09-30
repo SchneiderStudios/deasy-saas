@@ -181,29 +181,65 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle file upload
-  const handleFileUpload = useCallback(
-    async (files: File[]) => {
-      if (!files.length) return;
+const handleFileUpload = async (file: File) => {
+  if (!canMakeRequest()) {
+    setShowPricingModal(true);
+    return;
+  }
 
-      const file = files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        setError(selectedLanguage === 'de' ? 'Datei zu groß' : 'Файл слишком большой');
-        return;
-      }
+  try {
+    setUploading(true);
+    setError(null);
+    
+    // Конвертируем файл (фото или PDF) в images
+    const result = await convertFileToImages(file);
+    
+    if (!result.base64Images || result.base64Images.length === 0) {
+      throw new Error('Failed to process file');
+    }
 
-      if (!canMakeRequest()) {
-        setShowPricingModal(true);
-        return;
-      }
+    // Берем первое изображение
+    const base64Image = result.base64Images[0];
+    
+    // Отправляем на анализ
+    const response = await fetch('/api/analyze-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: base64Image,
+        language: language,
+      }),
+    });
 
-      setError(null);
-      setSelectedFile(file);
-      setIsLoading(true);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Analysis failed (${response.status})`);
+    }
 
-      try {
-        const result = await convertPdfToImages(file);
-        const images = result.base64Images;
-        setUploadedImages(images);
+    const analysisData = await response.json();
+    
+    // Сохраняем результат анализа
+    setAnalysis(analysisData);
+    setCurrentView('analysis');
+    setCurrentFileName(file.name);
+    
+    // Увеличиваем счетчик использования
+    incrementUsage();
+    
+    // Очищаем чат и добавляем первое сообщение
+    setChatMessages([{
+      role: 'assistant',
+      content: `✅ Document analyzed!\n\n${analysisData.summary}`,
+    }]);
+    
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Upload failed. Please try again.';
+    setError(errorMessage);
+    console.error('Upload error:', err);
+  } finally {
+    setUploading(false);
+  }
+};
 
         // Отправляем на анализ в API
         if (images.length > 0) {
