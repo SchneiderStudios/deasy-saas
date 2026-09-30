@@ -66,6 +66,14 @@ export const translations = {
     planFreeFeature3: "✓ Basis-Analyse",
     planFreeButton: "Jetzt starten",
 
+        planPlus: "Plus",
+    planPlusPrice: "€4,99",
+    planPlusPeriod: "/Monat",
+    planPlusFeature1: "✓ 50 Dokumente/Monat",
+    planPlusFeature2: "✓ PDF-Support",
+    planPlusFeature3: "✓ Antwort-Generator",
+    planPlusButton: "Plus aktivieren",
+    
     planPro: "Pro",
     planProPrice: "€9,99",
     planProPeriod: "/Monat",
