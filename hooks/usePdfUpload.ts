@@ -1,112 +1,115 @@
 import { useState, useCallback } from 'react';
 
-interface PdfConversionResult {
+export interface PdfConversionResult {
   base64Images: string[];
   pageCount: number;
   fileName: string;
+  fileType: 'image' | 'pdf';
 }
 
 export function usePdfUpload() {
-  const [isConverting, setIsConverting] = useState(false);
-  const [conversionError, setConversionError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load PDF.js worker - use CDN fallback if needed
-  const initPdfJs = useCallback(async () => {
-    if (typeof window !== 'undefined') {
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-      return pdfjsLib;
-    }
-    return null;
-  }, []);
+  const convertFileToImages = useCallback(
+    async (file: File): Promise<PdfConversionResult> => {
+      setLoading(true);
+      setError(null);
 
-  const convertPdfToImages = useCallback(
-    async (pdfFile: File): Promise<PdfConversionResult> => {
       try {
-        setIsConverting(true);
-        setConversionError(null);
-
         // Validate file
-        if (pdfFile.type !== 'application/pdf') {
-          throw new Error('Invalid file type. Please upload a PDF file.');
+        if (!file) {
+          throw new Error('No file provided');
         }
 
-        if (pdfFile.size > 10 * 1024 * 1024) {
-          throw new Error('File too large. Maximum size is 10 MB.');
+        const fileName = file.name;
+        const fileSize = file.size;
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        if (fileSize > maxSize) {
+          throw new Error(`File is too large. Maximum size is 10MB, but your file is ${(fileSize / 1024 / 1024).toFixed(1)}MB`);
         }
 
-        // Initialize PDF.js
-        const pdfjsLib = await initPdfJs();
-        if (!pdfjsLib) {
+        // Handle image files (JPG, PNG, WebP, etc.) - iPhone photos
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+
+          return await new Promise((resolve, reject) => {
+            reader.onload = () => {
+              const base64 = (reader.result as string).split(',')[1];
+              resolve({
+                base64Images: [base64],
+                pageCount: 1,
+                fileName: fileName,
+                fileType: 'image',
+              });
+            };
+            reader.onerror = () => {
+              reject(new Error('Failed to read image file'));
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        // Handle PDF files
+        if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+          // Dynamically import PDF.js
           const pdfjs = await import('pdfjs-dist');
           pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-        }
 
-        // Read PDF file as ArrayBuffer
-        const arrayBuffer = await pdfFile.arrayBuffer();
-        const { getDocument } = await import('pdfjs-dist');
-        const pdf = await getDocument({ data: arrayBuffer }).promise;
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+          
+          const base64Images: string[] = [];
+          
+          // Convert first 5 pages to images
+          const pagesToConvert = Math.min(5, pdf.numPages);
 
-        const base64Images: string[] = [];
+          for (let pageNum = 1; pageNum <= pagesToConvert; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 2 }); // 2x scale for quality
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Failed to get canvas context');
 
-        // Convert each page to image
-        for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, 5); pageNum++) {
-          // Limit to first 5 pages for performance
-          const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 2 }); // 2x scale for better quality
+            await page.render({
+              canvasContext: context,
+              viewport: viewport,
+            }).promise;
 
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          if (!context) {
-            throw new Error('Failed to get canvas context');
+            // Convert canvas to base64 JPEG
+            const base64 = canvas.toDataURL('image/jpeg', 0.95).split(',')[1];
+            base64Images.push(base64);
           }
 
-          await page.render({
-            canvasContext: context,
-            viewport,
-          }).promise;
-
-          // Convert canvas to base64
-          const base64 = canvas.toDataURL('image/jpeg', 0.95);
-          base64Images.push(base64);
+          setLoading(false);
+          return {
+            base64Images,
+            pageCount: pdf.numPages,
+            fileName: fileName,
+            fileType: 'pdf',
+          };
         }
 
-        setIsConverting(false);
-        return {
-          base64Images,
-          pageCount: pdf.numPages,
-          fileName: pdfFile.name,
-        };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to convert PDF to images';
-        setConversionError(errorMessage);
-        setIsConverting(false);
-        throw error;
+        throw new Error('Please upload a PDF file or an image file (JPG, PNG, etc.)');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to process file';
+        setError(errorMessage);
+        setLoading(false);
+        throw new Error(errorMessage);
       }
     },
-    [initPdfJs]
+    []
   );
 
-  const convertFileToBase64 = useCallback((file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]); // Remove data:image/...;base64, prefix
-      };
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-  }, []);
-
   return {
-    isConverting,
-    conversionError,
-    convertPdfToImages,
-    convertFileToBase64,
+    convertFileToImages,
+    loading,
+    error,
+    clearError: () => setError(null),
   };
 }
