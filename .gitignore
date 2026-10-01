@@ -31,3 +31,6 @@ pids
 .npm
 *.tgz
 Thumbs.db
+
+# TypeScript build cache
+*.tsbuildinfo
