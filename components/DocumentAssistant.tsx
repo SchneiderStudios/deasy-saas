@@ -121,6 +121,34 @@ const T = {
   },
 };
 
+/** Лёгкий рендер ответов ИИ: **жирный**, `код`, заголовки #/##/### — без внешних библиотек и без HTML-инъекций. */
+function renderInline(text: string, keyBase: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={`${keyBase}-${i}`}>{part.slice(2, -2)}</strong>;
+    if (/^`[^`]+`$/.test(part)) return <span key={`${keyBase}-${i}`} style={{ fontWeight: 600 }}>{part.slice(1, -1)}</span>;
+    return <React.Fragment key={`${keyBase}-${i}`}>{part}</React.Fragment>;
+  });
+}
+
+function FormattedText({ text }: { text: string }) {
+  const lines = text.split('\n');
+  return (
+    <>
+      {lines.map((line, i) => {
+        const heading = line.match(/^#{1,4}\s+(.*)$/);
+        const content = heading ? <strong>{renderInline(heading[1], `h${i}`)}</strong> : renderInline(line.replace(/^\s*[-*]\s+/, '• '), `l${i}`);
+        return (
+          <React.Fragment key={i}>
+            {content}
+            {i < lines.length - 1 && '\n'}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
 const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 export default function DocumentAssistant({ analysis, images, language }: Props) {
@@ -274,7 +302,7 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
           <div className={styles.messages} ref={messagesRef}>
             {messages.map((m) => (
               <div key={m.id} className={`${styles.msg} ${m.role === 'user' ? styles.msgUser : styles.msgBot}`}>
-                {m.content}
+                {m.role === 'assistant' ? <FormattedText text={m.content} /> : m.content}
               </div>
             ))}
             {chatLoading && <div className={styles.typing}>{t.typing}</div>}
