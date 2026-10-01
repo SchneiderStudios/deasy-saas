@@ -244,6 +244,7 @@ export default function App() {
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
+    if (isLoading) return;
     const file = files[0]; // Берем первый файл
 
     if (!canMakeRequest()) {
@@ -262,30 +263,39 @@ export default function App() {
         throw new Error('Failed to process file');
       }
 
-      // Берем первое изображение
-      const base64Image = result.base64Images[0];
-
-      // Отправляем на анализ
+      // Отправляем на анализ все страницы (для PDF — до 3)
       const response = await fetch('/api/analyze-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: base64Image,
+          images: result.base64Images,
           language: selectedLanguage,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 413) {
+          throw new Error(selectedLanguage === 'de' ? 'Datei zu groß für die Analyse' : 'Файл слишком большой для анализа');
+        }
         throw new Error(errorData.error || `Analysis failed (${response.status})`);
       }
 
-      const analysisData = await response.json();
+      const data = await response.json();
+      const raw = data.analysis || data;
+      const analysisData: AnalysisResult = {
+        summary: raw.summary || '',
+        risk: raw.risk || 'Mittel',
+        deadlines: Array.isArray(raw.deadlines) ? raw.deadlines : [],
+        actions: Array.isArray(raw.actions) ? raw.actions : [],
+        language: raw.language || selectedLanguage,
+      };
 
       // Сохраняем результат анализа
       setAnalysis(analysisData);
-      setUploadedImages([base64Image]); // Сохраняем изображение
+      setUploadedImages(result.base64Images);
       setCurrentView('analysis');
+      saveCaseToHistory({ ...analysisData, nextSteps: analysisData.actions }, result.fileName);
 
       // Увеличиваем счетчик использования
       incrementUsage();
@@ -345,21 +355,27 @@ export default function App() {
         }),
       });
 
-      if (!response.ok) throw new Error('Chat failed');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) throw new Error(data.error || 'Chat failed');
 
-      const data = await response.json();
-      if (data.success) {
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: data.message,
-          },
-        ]);
-      }
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.message,
+        },
+      ]);
     } catch (err) {
       console.error(err);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `⚠️ ${err instanceof Error && err.message !== 'Chat failed' ? err.message : TEXTS.error}`,
+        },
+      ]);
     } finally {
       setChatLoading(false);
     }
@@ -390,7 +406,11 @@ export default function App() {
         ref={fileInputRef}
         type="file"
         accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
-        onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = ''; // позволяет выбрать тот же файл повторно
+          handleFileUpload(files);
+        }}
         style={{ display: 'none' }}
       />
 
@@ -421,7 +441,12 @@ export default function App() {
 
           <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff3cd', borderRadius: '8px' }}>
             <h3>{TEXTS.risk}</h3>
-            <p>{analysis.risk === 'Kritisch' ? '🔴' : analysis.risk === 'Mittel' ? '🟡' : '🟢'} {analysis.risk}</p>
+            <p>
+              {analysis.risk === 'Kritisch' ? '🔴' : analysis.risk === 'Mittel' ? '🟡' : '🟢'}{' '}
+              {selectedLanguage === 'ru'
+                ? { Kritisch: 'Критично', Mittel: 'Важно', Gering: 'Низкий' }[analysis.risk] || analysis.risk
+                : analysis.risk}
+            </p>
           </div>
 
           <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '8px' }}>
@@ -475,6 +500,7 @@ export default function App() {
               backgroundColor: msg.role === 'user' ? '#007bff' : '#e9ecef',
               color: msg.role === 'user' ? 'white' : 'black',
               borderRadius: '8px',
+              whiteSpace: 'pre-wrap',
             }}
           >
             {msg.content}
