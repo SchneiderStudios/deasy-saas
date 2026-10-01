@@ -3,6 +3,7 @@ import { usePricingTiers } from '@/hooks/usePricingTiers';
 import { usePdfUpload } from '@/hooks/usePdfUpload';
 import { useDocumentHistory } from '@/hooks/useDocumentHistory';
 import styles from '@/styles/App.module.css';
+import DocumentAssistant from '@/components/DocumentAssistant';
 
 interface AnalysisResult {
   summary: string;
@@ -10,24 +11,6 @@ interface AnalysisResult {
   deadlines: string[];
   actions: string[];
   language: 'de' | 'ru';
-}
-
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface ReplyTemplate {
-  id: string;
-  title_de: string;
-  title_ru: string;
-  subject_de: string;
-  subject_ru: string;
-  body_de: string;
-  body_ru: string;
-  tips_de: string[];
-  tips_ru: string[];
 }
 
 const TEXTS_DE = {
@@ -122,99 +105,6 @@ const TEXTS_RU = {
   loading: 'Загрузка...',
 };
 
-const REPLY_TEMPLATES: ReplyTemplate[] = [
-  {
-    id: 'reject_finanzamt',
-    title_de: 'Finanzamt-Einspruch',
-    title_ru: 'Возражение налоговой инспекции',
-    subject_de: 'Einspruch gegen Bescheid vom [DATUM]',
-    subject_ru: 'Возражение на решение от [ДАТА]',
-    body_de: `Sehr geehrte Damen und Herren,
-
-gegen Ihren Bescheid vom [DATUM] mit dem Aktenzeichen [AKTENZEICHEN] lege ich hiermit Einspruch ein.
-
-Begründung:
-[BEGRÜNDUNG EINFÜGEN]
-
-Ich bitte Sie, den Bescheid zu überprüfen und angepasst zu erlassen.
-
-Mit freundlichen Grüßen,
-[DEIN NAME]`,
-    body_ru: `Уважаемые дамы и господа,
-
-против решения от [ДАТА] с номером дела [НОМЕР] я подаю возражение.
-
-Обоснование:
-[ОБОСНОВАНИЕ]
-
-Прошу пересмотреть решение и выдать исправленное.
-
-С уважением,
-[ТВОЁ ИМЯ]`,
-    tips_de: ['Aktennummer kopieren', 'Konkrete Begründung', 'Dokumente anhängen'],
-    tips_ru: ['Копировать номер дела', 'Указать конкретные причины', 'Приложить документы'],
-  },
-  {
-    id: 'jobcenter_appeal',
-    title_de: 'Jobcenter Einspruch',
-    title_ru: 'Возражение на решение центра занятости',
-    subject_de: 'Widerspruch gegen Leistungsbescheid vom [DATUM]',
-    subject_ru: 'Возражение на решение от [ДАТА]',
-    body_de: `Sehr geehrte Damen und Herren,
-
-gegen den Leistungsbescheid vom [DATUM] lege ich Widerspruch ein.
-
-Begründung:
-[BEGRÜNDUNG]
-
-Ich bitte um Überprüfung und Gewährung der angeforderten Leistungen.
-
-Mit freundlichen Grüßen,
-[DEIN NAME]`,
-    body_ru: `Уважаемые дамы и господа,
-
-я подаю возражение на решение от [ДАТА] о размере пособия.
-
-Причина возражения:
-[ПРИЧИНА]
-
-Прошу пересчитать и выплатить необходимую сумму.
-
-С уважением,
-[ТВОЁ ИМЯ]`,
-    tips_de: ['Berechnung überprüfen', 'Nachweise einreichen', 'Fristen beachten'],
-    tips_ru: ['Проверить расчет', 'Отправить доказательства', 'Учесть сроки'],
-  },
-  {
-    id: 'landlord_response',
-    title_de: 'Vermieter Antwort',
-    title_ru: 'Ответ арендодателю',
-    subject_de: 'Antwort auf Schreiben vom [DATUM]',
-    subject_ru: 'Ответ на письмо от [ДАТА]',
-    body_de: `Sehr geehrte(r) [VERMIETER_NAME],
-
-bezüglich Ihres Schreibens vom [DATUM] möchte ich folgendes mitteilen:
-
-[ANTWORT EINFÜGEN]
-
-Ich hoffe auf Ihr Verständnis und stehe für weitere Klärungen zur Verfügung.
-
-Mit freundlichen Grüßen,
-[DEIN NAME]`,
-    body_ru: `Уважаемый(ая) [ИМЯ АРЕНДОДАТЕЛЯ],
-
-в ответ на ваше письмо от [ДАТА] сообщаю следующее:
-
-[ОТВЕТ]
-
-Надеюсь на вашу благодарность и готов(а) к дальнейшему обсуждению.
-
-С уважением,
-[ТВОЁ ИМЯ]`,
-    tips_de: ['Sachlich bleiben', 'Beweise anhängen', 'Beglaubigt verschicken'],
-    tips_ru: ['Оставаться вежливым', 'Приложить доказательства', 'Отправить заказным письмом'],
-  },
-];
 
 export default function App() {
   const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers } = usePricingTiers();
@@ -224,18 +114,14 @@ export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
   const TEXTS = selectedLanguage === 'ru' ? TEXTS_RU : TEXTS_DE;
 
-  const [currentView, setCurrentView] = useState<'upload' | 'analysis' | 'chat' | 'reply'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'analysis'>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<ReplyTemplate | null>(null);
-  const [generatedReply, setGeneratedReply] = useState<{ subject: string; body: string } | null>(null);
+  const [docKey, setDocKey] = useState(0);
 
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -300,12 +186,7 @@ export default function App() {
       // Увеличиваем счетчик использования
       incrementUsage();
 
-      // Очищаем чат и добавляем первое сообщение
-      setChatMessages([{
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `✅ ${selectedLanguage === 'de' ? 'Dokument analysiert!' : 'Документ проанализирован!'}\n\n${analysisData.summary}`,
-      }]);
+      setDocKey((k) => k + 1); // новый документ → новый чат
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : (selectedLanguage === 'de' ? 'Upload fehlgeschlagen' : 'Загрузка не удалась');
@@ -325,60 +206,6 @@ export default function App() {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     handleFileUpload(files);
-  };
-
-  // Chat
-  const handleSendMessage = async () => {
-    if (!chatInput.trim() || !analysis) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: chatInput,
-    };
-
-    setChatMessages((prev) => [...prev, userMessage]);
-    setChatInput('');
-    setChatLoading(true);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            ...chatMessages.map((m) => ({ role: m.role, content: m.content })),
-            { role: 'user', content: chatInput },
-          ],
-          analysisSummary: analysis.summary,
-          language: selectedLanguage,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.success) throw new Error(data.error || 'Chat failed');
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.message,
-        },
-      ]);
-    } catch (err) {
-      console.error(err);
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `⚠️ ${err instanceof Error && err.message !== 'Chat failed' ? err.message : TEXTS.error}`,
-        },
-      ]);
-    } finally {
-      setChatLoading(false);
-    }
   };
 
   const renderUploadView = () => (
@@ -421,15 +248,17 @@ export default function App() {
 
   const renderAnalysisView = () => (
     <div className={styles.analysisPanel}>
-      <button onClick={() => setCurrentView('upload')} style={{ marginBottom: '20px' }}>
-        ← {TEXTS.back}
+      <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
+        ← {selectedLanguage === 'ru' ? 'Новое письмо' : 'Neuer Brief'}
       </button>
 
       {uploadedImages.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <h3>{selectedLanguage === 'de' ? 'Dokument' : 'Документ'}</h3>
-          <img src={`data:image/jpeg;base64,${uploadedImages[0]}`} alt="doc" style={{ maxHeight: '200px', borderRadius: '8px' }} />
-        </div>
+        <details className={styles.docPreview}>
+          <summary>📄 {selectedLanguage === 'de' ? 'Dokument anzeigen' : 'Показать документ'}{uploadedImages.length > 1 ? ` (${uploadedImages.length})` : ''}</summary>
+          {uploadedImages.map((img, i) => (
+            <img key={i} src={`data:image/jpeg;base64,${img}`} alt={`Seite ${i + 1}`} />
+          ))}
+        </details>
       )}
 
       {analysis && (
@@ -467,121 +296,13 @@ export default function App() {
             </ul>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button className={styles.analyzeButton} onClick={() => setCurrentView('chat')} style={{ flex: 1 }}>
-              💬 {TEXTS.askQuestion}
-            </button>
-            <button className={styles.analyzeButton} onClick={() => setCurrentView('reply')} style={{ flex: 1 }}>
-              ✉️ {TEXTS.generateReply}
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  const renderChatView = () => (
-    <div className={styles.chatPanel}>
-      <button onClick={() => setCurrentView('analysis')} style={{ marginBottom: '20px' }}>
-        ← {TEXTS.back}
-      </button>
-
-      <h2>{TEXTS.chat}</h2>
-      <div style={{ height: '400px', overflowY: 'auto', marginBottom: '10px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-        {chatMessages.length === 0 && (
-          <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>{TEXTS.noMessages}</p>
-        )}
-        {chatMessages.map((msg) => (
-          <div
-            key={msg.id}
-            style={{
-              marginBottom: '10px',
-              padding: '10px',
-              backgroundColor: msg.role === 'user' ? '#007bff' : '#e9ecef',
-              color: msg.role === 'user' ? 'white' : 'black',
-              borderRadius: '8px',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {msg.content}
-          </div>
-        ))}
-        {chatLoading && <div style={{ color: '#999' }}>{TEXTS.loading}</div>}
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <input
-          type="text"
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !chatLoading && handleSendMessage()}
-          placeholder={TEXTS.typeMessage}
-          disabled={chatLoading}
-          style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-        />
-        <button onClick={handleSendMessage} disabled={chatLoading} className={styles.analyzeButton}>
-          {TEXTS.send}
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderReplyView = () => (
-    <div className={styles.chatPanel}>
-      <button onClick={() => setCurrentView('analysis')} style={{ marginBottom: '20px' }}>
-        ← {TEXTS.back}
-      </button>
-
-      <h2>{TEXTS.replyTemplates}</h2>
-
-      {!selectedTemplate && (
-        <div style={{ display: 'grid', gap: '10px', marginTop: '15px' }}>
-          {REPLY_TEMPLATES.map((template) => (
-            <button
-              key={template.id}
-              onClick={() => setSelectedTemplate(template)}
-              style={{
-                padding: '15px',
-                textAlign: 'left',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
-            >
-              <strong>{selectedLanguage === 'de' ? template.title_de : template.title_ru}</strong>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {selectedTemplate && (
-        <div>
-          <button onClick={() => setSelectedTemplate(null)} style={{ marginBottom: '15px' }}>
-            ← {TEXTS.back}
-          </button>
-          <textarea
-            defaultValue={selectedLanguage === 'de' ? selectedTemplate.body_de : selectedTemplate.body_ru}
-            style={{
-              width: '100%',
-              height: '400px',
-              padding: '10px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-            }}
+          <DocumentAssistant
+            key={docKey}
+            analysis={analysis}
+            images={uploadedImages}
+            language={selectedLanguage}
           />
-          <button
-            onClick={() => {
-              const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
-              navigator.clipboard.writeText(textarea?.value || '');
-              alert(TEXTS.copied);
-            }}
-            className={styles.analyzeButton}
-            style={{ marginTop: '10px', width: '100%' }}
-          >
-            {TEXTS.copyToClipboard}
-          </button>
-        </div>
+        </>
       )}
     </div>
   );
@@ -591,37 +312,34 @@ export default function App() {
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1>{TEXTS.title}</h1>
-            <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-              {usageStats.usedThisMonth}/{currentTier.monthlyLimit} {TEXTS.usage}
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
-              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-            >
-              <option value="de">Deutsch</option>
-              <option value="ru">Русский</option>
-            </select>
-            {usageStats.tier === 'free' && (
-              <button onClick={() => setShowPricingModal(true)} className={styles.analyzeButton}>
-                {TEXTS.upgradeBtn}
-              </button>
-            )}
-          </div>
+      <header className={styles.topBar}>
+        <div className={styles.brand}>
+          <a href="/" className={styles.logo}>DEASY</a>
+          <span className={styles.usagePill}>
+            {usageStats.usedThisMonth}/{currentTier.monthlyLimit === Infinity ? '∞' : currentTier.monthlyLimit} {selectedLanguage === 'ru' ? 'документов' : 'Dokumente'}
+          </span>
+        </div>
+        <div className={styles.topActions}>
+          <select
+            aria-label={TEXTS.language}
+            className={styles.langSelect}
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value as 'de' | 'ru')}
+          >
+            <option value="de">DE</option>
+            <option value="ru">RU</option>
+          </select>
+          {usageStats.tier === 'free' && (
+            <button onClick={() => setShowPricingModal(true)} className={styles.plusButton}>
+              Plus
+            </button>
+          )}
         </div>
       </header>
 
       <main className={styles.mainContent}>
         {currentView === 'upload' && renderUploadView()}
         {currentView === 'analysis' && renderAnalysisView()}
-        {currentView === 'chat' && renderChatView()}
-        {currentView === 'reply' && renderReplyView()}
       </main>
 
       {showPricingModal && (

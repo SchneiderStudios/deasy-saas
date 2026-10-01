@@ -1,7 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
 
+export const config = { api: { bodyParser: { sizeLimit: '4.5mb' } } };
+
 const CHAT_MODEL = 'claude-sonnet-5-5';
+const MAX_PAGES = 3;
 const MAX_HISTORY = 20;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -40,7 +43,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const language: 'de' | 'ru' = req.body?.language === 'ru' ? 'ru' : 'de';
-  const summary: string = String(req.body?.analysisSummary || req.body?.context || '').slice(0, 4000);
+  const a = req.body?.analysis || {};
+  const summary: string = [
+    String(a.summary || req.body?.analysisSummary || req.body?.context || ''),
+    Array.isArray(a.deadlines) && a.deadlines.length ? `Fristen/Сроки: ${a.deadlines.join('; ')}` : '',
+    Array.isArray(a.actions) && a.actions.length ? `Empfehlungen/Рекомендации: ${a.actions.join('; ')}` : '',
+    a.risk ? `Risiko/Риск: ${a.risk}` : '',
+  ].filter(Boolean).join('\n').slice(0, 4000);
+  const images: string[] = (Array.isArray(req.body?.images) ? req.body.images : [])
+    .filter((s: unknown) => typeof s === 'string' && s)
+    .slice(0, MAX_PAGES)
+    .map((s: string) => s.replace(/^data:[^;]+;base64,/, ''));
 
   // Новый формат: messages[]; старый: message (строка)
   let messages = sanitizeHistory(req.body?.messages);
@@ -57,18 +70,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 Пользователь загрузил письмо. Краткое содержание анализа:
 ${summary || '(нет данных)'}
 
+Само письмо приложено к первому сообщению пользователя — опирайся на него, не выдумывай данных.
 Отвечай на русском, коротко и понятно, с практическими шагами. Немецкие термины давай в оригинале с переводом.
+Если просят варианты ответа — перечисли 2–4 реальных варианта (например: Widerspruch, просьба продлить срок, рассрочка, досылка документов) с плюсами и рисками каждого.
+Если просят написать письмо — само письмо пиши на немецком (его отправляют в ведомство), а под ним дай краткий перевод на русский.
 Ты не адвокат: в сложных случаях (суд, крупные суммы, депортация) советуй обратиться в консультацию (Beratungsstelle, Mieterverein, адвокат).`
       : `Du bist der DEASY-Assistent. Du erklärst deutsche Behördenbriefe verständlich.
 Der Nutzer hat einen Brief hochgeladen. Zusammenfassung der Analyse:
 ${summary || '(keine Daten)'}
 
+Der Brief selbst ist der ersten Nutzernachricht beigefügt – stütze dich darauf und erfinde keine Daten.
 Antworte auf Deutsch, kurz, in einfacher Sprache und mit praktischen Schritten.
+Wenn nach Antwortmöglichkeiten gefragt wird, nenne 2–4 realistische Optionen (z. B. Widerspruch, Fristverlängerung, Ratenzahlung, Unterlagen nachreichen) mit Vor- und Nachteilen.
 Du bist kein Anwalt: bei ernsten Fällen (Gericht, hohe Beträge, Aufenthalt) empfiehl eine Beratungsstelle, den Mieterverein oder einen Anwalt.`;
+
+  // Изображения письма прикрепляем к первому сообщению пользователя
+  const apiMessages: any[] = messages.map((m, i) =>
+    i === 0 && images.length
+      ? {
+          role: 'user',
+          content: [
+            ...images.map((data) => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
+            { type: 'text', text: m.content },
+          ],
+        }
+      : m
+  );
 
   try {
     const response = await client.messages.create(
-      { model: CHAT_MODEL, max_tokens: 800, system, messages },
+      { model: CHAT_MODEL, max_tokens: 1500, system, messages: apiMessages },
       { timeout: 45000 }
     );
 

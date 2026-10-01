@@ -12,8 +12,13 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 2. `POST /api/analyze-document` тело `{ images: string[], language: 'de'|'ru' }`
    → `{ success: true, analysis: { summary, risk: 'Gering'|'Mittel'|'Kritisch', deadlines: string[], actions: string[], language } }`
    или `{ error }` с кодом 4xx/5xx.
-3. `POST /api/chat` тело `{ messages: {role, content}[], analysisSummary, language }`
-   → `{ success: true, message }` или `{ success: false, error }`.
+3. Экран анализа → `components/DocumentAssistant.tsx` (вкладки «Вопросы» и «Написать ответ»).
+4. `POST /api/chat` тело `{ messages: {role, content}[], analysis, images, language }`
+   → `{ success: true, message }` или `{ success: false, error }`. Картинки письма прикрепляются к первому сообщению пользователя.
+5. `POST /api/generate-reply` тело `{ replyType, notes, analysis, images, language }`
+   (`replyType`: widerspruch | fristverlaengerung | ratenzahlung | unterlagen | rueckfrage | bestaetigung | frei)
+   → `{ success: true, reply: { subject, body (немецкий), translation (рус., если language=ru), tips[], placeholders[] } }`.
+   Готовые шаблоны без ИИ — `lib/replyTemplates.ts`.
 
 Меняя одну сторону контракта — меняй и другую в том же коммите.
 
@@ -21,10 +26,11 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 - Vercel режет тело запроса на **4,5 МБ** → картинки обязательно сжимаются на клиенте.
 - HEIC: Safari декодирует сам, остальные браузеры — через `heic2any`.
 - PDF: только `pdfjs-dist/legacy/build/pdf.mjs` (совместимость со старыми iPhone), воркер — с unpkg той же версии.
-- Модели: анализ — `claude-opus-5-5`, чат — `claude-sonnet-5-5`.
+- Модели: анализ и письмо-ответ — `claude-opus-5-5`, чат — `claude-sonnet-5-5`.
+- Письмо в ведомство всегда на немецком; русскому пользователю — перевод рядом.
 
 ## Известные долги (не трогать без задачи)
-- `pages/api/analyze.ts`, `pages/api/generate-reply.ts`, `hooks/useReplyGenerator.ts` — сейчас не используются страницей.
+- `pages/api/analyze.ts` — старый, не используется страницей.
 - `prisma`, `next-auth` в зависимостях, но не подключены.
 - Ссылки Stripe в `hooks/usePricingTiers.ts` — заглушки; лимиты считаются в `localStorage` (обходятся очисткой браузера).
 - История (`useDocumentHistory`) сохраняется, но экрана «Мои документы» пока нет.
