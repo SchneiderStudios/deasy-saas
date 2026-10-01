@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { STRIPE_LINKS, BUSINESS_CONTACT_MAILTO, COMPANY } from '@/lib/siteConfig';
 import styles from '@/styles/Landing.module.css';
 import { translations, Language } from '@/lib/translations';
 
@@ -134,9 +135,15 @@ export default function Home() {
               <li>{t.planPlusFeature2}</li>
               <li>{t.planPlusFeature3}</li>
             </ul>
-            <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_PLUS_LINK" target="_blank" rel="noopener noreferrer" className={styles.pricingButton}>
-              {t.planPlusButton}
-            </a>
+            {STRIPE_LINKS.plus ? (
+              <a href={STRIPE_LINKS.plus} className={styles.pricingButton}>
+                {t.planPlusButton}
+              </a>
+            ) : (
+              <span className={styles.pricingButton} style={{ opacity: 0.55, cursor: 'default' }}>
+                {language === 'de' ? 'Bald verfügbar' : 'Скоро'}
+              </span>
+            )}
           </div>
 
           <div className={styles.pricingCard + ' ' + styles.featured}>
@@ -149,9 +156,15 @@ export default function Home() {
               <li>{t.planProFeature3}</li>
               <li>{t.planProFeature4}</li>
             </ul>
-            <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK" target="_blank" rel="noopener noreferrer" className={styles.pricingButton}>
-              {t.planProButton}
-            </a>
+            {STRIPE_LINKS.pro ? (
+              <a href={STRIPE_LINKS.pro} className={styles.pricingButton}>
+                {t.planProButton}
+              </a>
+            ) : (
+              <span className={styles.pricingButton} style={{ opacity: 0.55, cursor: 'default' }}>
+                {language === 'de' ? 'Bald verfügbar' : 'Скоро'}
+              </span>
+            )}
           </div>
 
           <div className={styles.pricingCard}>
@@ -163,7 +176,7 @@ export default function Home() {
               <li>{t.planBusinessFeature3}</li>
               <li>{t.planBusinessFeature4}</li>
             </ul>
-            <a href="mailto:info@deasy.de?subject=Business%20Plan%20Anfrage%20-%20API%20Zugang" className={styles.pricingButton}>
+            <a href={BUSINESS_CONTACT_MAILTO} className={styles.pricingButton}>
               {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
             </a>
             <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
@@ -230,22 +243,7 @@ export default function Home() {
                 <a href="/impressum">{t.footerImprint}</a>
               </li>
               <li>
-                <a href="mailto:info@deasy.de">{t.footerContact}</a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4>{t.footerSocialTitle}</h4>
-            <ul>
-              <li>
-                <a href="https://twitter.com/deasy_de" target="_blank">
-                  {t.footerTwitter}
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/deasy-ai" target="_blank">
-                  {t.footerGithub}
-                </a>
+                <a href={`mailto:${COMPANY.email}`}>{t.footerContact}</a>
               </li>
             </ul>
           </div>

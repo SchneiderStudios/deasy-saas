@@ -107,7 +107,7 @@ const TEXTS_RU = {
 
 
 export default function App() {
-  const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers } = usePricingTiers();
+  const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers, activation, activationError, dismissActivation } = usePricingTiers();
   const { convertFileToImages, error: pdfError, clearError } = usePdfUpload();
   const { saveCaseToHistory } = useDocumentHistory();
 
@@ -337,6 +337,32 @@ export default function App() {
         </div>
       </header>
 
+      {activation !== 'idle' && (
+        <div
+          role="status"
+          style={{
+            maxWidth: 760, margin: '16px auto 0', padding: '12px 16px', borderRadius: 12, fontSize: 15,
+            display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center',
+            background: activation === 'failed' ? '#fef3f2' : activation === 'activated' ? '#ecfdf3' : '#f5f3ff',
+            color: activation === 'failed' ? '#b42318' : activation === 'activated' ? '#067647' : '#3829a0',
+            border: '1px solid currentColor',
+          }}
+        >
+          <span>
+            {activation === 'checking' && (selectedLanguage === 'de' ? '⏳ Zahlung wird geprüft…' : '⏳ Проверяем оплату…')}
+            {activation === 'activated' && (selectedLanguage === 'de'
+              ? `✅ Danke! Ihr Plan ${currentTier.name} ist aktiv.`
+              : `✅ Спасибо! Тариф ${currentTier.name} активирован.`)}
+            {activation === 'failed' && (selectedLanguage === 'de'
+              ? `⚠️ Zahlung konnte nicht bestätigt werden (${activationError}). Schreiben Sie uns, wir helfen sofort.`
+              : `⚠️ Не удалось подтвердить оплату (${activationError}). Напишите нам — поможем сразу.`)}
+          </span>
+          {activation !== 'checking' && (
+            <button onClick={dismissActivation} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'inherit' }} aria-label="close">×</button>
+          )}
+        </div>
+      )}
+
       <main className={styles.mainContent}>
         {currentView === 'upload' && renderUploadView()}
         {currentView === 'analysis' && renderAnalysisView()}
@@ -352,15 +378,29 @@ export default function App() {
                   <h3>{tier.name}</h3>
                   <p className={styles.price}>€{tier.price === 0 ? '0' : tier.price}</p>
                   <p>{tier.monthlyLimit === Infinity ? '∞' : tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
-                  <button
-                    onClick={() => {
-                      if (tier.id === 'free') setShowPricingModal(false);
-                      else window.open(tier.stripeLink || '#', '_blank');
-                    }}
-                    className={styles.analyzeButton}
-                  >
-                    {tier.id === 'free' ? TEXTS.close : 'Upgrade'}
-                  </button>
+                  {tier.id === usageStats.tier ? (
+                    <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
+                      {selectedLanguage === 'de' ? '✓ Aktueller Plan' : '✓ Текущий тариф'}
+                    </button>
+                  ) : tier.id === 'free' ? (
+                    <button onClick={() => setShowPricingModal(false)} className={styles.analyzeButton}>
+                      {TEXTS.close}
+                    </button>
+                  ) : tier.stripeLink ? (
+                    <a
+                      href={tier.stripeLink}
+                      className={styles.analyzeButton}
+                      style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
+                    >
+                      {tier.id === 'business'
+                        ? selectedLanguage === 'de' ? 'Anfragen' : 'Запросить'
+                        : selectedLanguage === 'de' ? `${tier.name} buchen` : `Подключить ${tier.name}`}
+                    </a>
+                  ) : (
+                    <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
+                      {selectedLanguage === 'de' ? 'Bald verfügbar' : 'Скоро'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

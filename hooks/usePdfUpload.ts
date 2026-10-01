@@ -77,7 +77,8 @@ async function heicToJpeg(file: File): Promise<string> {
 async function pdfToJpegs(file: File): Promise<{ images: string[]; pageCount: number }> {
   // legacy-сборка работает и на старых iPhone/Android
   const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+  // Воркер копируется в public/ при сборке (scripts.prebuild) — та же версия, без сторонних CDN
+  pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjs.getDocument({ data }).promise;
