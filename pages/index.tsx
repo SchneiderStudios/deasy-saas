@@ -126,6 +126,19 @@ export default function Home() {
             </Link>
           </div>
 
+          <div className={styles.pricingCard}>
+            <h3>{t.planPlus}</h3>
+            <div className={styles.price}>{t.planPlusPrice}<span>{t.planPlusPeriod}</span></div>
+            <ul>
+              <li>{t.planPlusFeature1}</li>
+              <li>{t.planPlusFeature2}</li>
+              <li>{t.planPlusFeature3}</li>
+            </ul>
+            <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_PLUS_LINK" target="_blank" rel="noopener noreferrer" className={styles.pricingButton}>
+              {t.planPlusButton}
+            </a>
+          </div>
+
           <div className={styles.pricingCard + ' ' + styles.featured}>
             <div className={styles.badge}>{t.planProBadge}</div>
             <h3>{t.planPro}</h3>
@@ -143,7 +156,7 @@ export default function Home() {
 
           <div className={styles.pricingCard}>
             <h3>{t.planBusiness}</h3>
-            <div className={styles.price}>{language === 'de' ? 'Maßgeschneidert' : 'Индивидуально'}<span></span></div>
+            <div className={styles.price} style={{ fontSize: '1.6rem', overflowWrap: 'normal' }}>{language === 'de' ? 'Maßgeschneidert' : 'Индивидуально'}<span></span></div>
             <ul>
               <li>{t.planBusinessFeature1}</li>
               <li>{t.planBusinessFeature2}</li>

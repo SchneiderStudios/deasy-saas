@@ -190,8 +190,8 @@
 
 .pricingGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.5rem;
 }
 
 .pricingCard {
@@ -237,7 +237,7 @@
 }
 
 .price {
-  font-size: 2.5rem;
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
   font-weight: 900;
   color: #4338ca;
   margin-bottom: 1.5rem;
@@ -265,6 +265,7 @@
 .pricingButton {
   display: block;
   width: 100%;
+  box-sizing: border-box;
   background: #4338ca;
   color: white;
   padding: 1rem;
