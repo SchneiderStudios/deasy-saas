@@ -31,7 +31,6 @@ const TEXTS_DE = {
   freePlan: 'Kostenlos: 3 Dokumente/Monat',
   plusPlan: '€4,99: 50 Dokumente/Monat',
   proPlan: '€9,99: 100 Dokumente/Monat',
-  businessPlan: '€49,99: Unbegrenzt',
   myDocuments: 'Meine Dokumente',
   language: 'Sprache',
   logout: 'Abmelden',
@@ -77,7 +76,6 @@ const TEXTS_RU = {
   freePlan: 'Бесплатно: 3 документа/месяц',
   plusPlan: '€4,99: 50 документов/месяц',
   proPlan: '€9,99: 100 документов/месяц',
-  businessPlan: '€49,99: Без ограничений',
   myDocuments: 'Мои документы',
   language: 'Язык',
   logout: 'Выход',
@@ -461,7 +459,7 @@ export default function App() {
                 <div key={tier.id} className={styles.planCard}>
                   <h3>{tier.name}</h3>
                   <p className={styles.price}>€{tier.price === 0 ? '0' : tier.price}</p>
-                  <p>{tier.monthlyLimit === Infinity ? '∞' : tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
+                  <p>{tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
                   {tier.id === usageStats.tier ? (
                     <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
                       {selectedLanguage === 'de' ? '✓ Aktueller Plan' : '✓ Текущий тариф'}
@@ -476,9 +474,7 @@ export default function App() {
                       className={styles.analyzeButton}
                       style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
                     >
-                      {tier.id === 'business'
-                        ? selectedLanguage === 'de' ? 'Anfragen' : 'Запросить'
-                        : selectedLanguage === 'de' ? `${tier.name} buchen` : `Подключить ${tier.name}`}
+                      {selectedLanguage === 'de' ? `${tier.name} buchen` : `Подключить ${tier.name}`}
                     </a>
                   ) : (
                     <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { STRIPE_LINKS, BUSINESS_CONTACT_MAILTO, COMPANY } from '@/lib/siteConfig';
+import { STRIPE_LINKS, COMPANY } from '@/lib/siteConfig';
 import styles from '@/styles/Landing.module.css';
 import { translations, Language } from '@/lib/translations';
 
@@ -167,22 +167,6 @@ export default function Home() {
             )}
           </div>
 
-          <div className={styles.pricingCard}>
-            <h3>{t.planBusiness}</h3>
-            <div className={styles.price} style={{ fontSize: '1.6rem', overflowWrap: 'normal' }}>{language === 'de' ? 'Maßgeschneidert' : 'Индивидуально'}<span></span></div>
-            <ul>
-              <li>{t.planBusinessFeature1}</li>
-              <li>{t.planBusinessFeature2}</li>
-              <li>{t.planBusinessFeature3}</li>
-              <li>{t.planBusinessFeature4}</li>
-            </ul>
-            <a href={BUSINESS_CONTACT_MAILTO} className={styles.pricingButton}>
-              {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
-            </a>
-            <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
-              {language === 'de' ? 'Preis nach Vereinbarung' : 'Цена по договорённости'}
-            </p>
-          </div>
         </div>
         <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#4b4e5c', marginTop: '1.5rem', lineHeight: 1.6 }}>
           {language === 'de'

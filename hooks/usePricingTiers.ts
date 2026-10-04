@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import { STRIPE_LINKS, BUSINESS_CONTACT_MAILTO } from '@/lib/siteConfig';
+import { STRIPE_LINKS } from '@/lib/siteConfig';
 
 export interface PricingTier {
-  id: 'free' | 'plus' | 'pro' | 'business';
+  id: 'free' | 'plus' | 'pro';
   name: string;
   price: number;
   monthlyLimit: number;
@@ -11,7 +11,7 @@ export interface PricingTier {
 }
 
 export interface UsageStats {
-  tier: 'free' | 'plus' | 'pro' | 'business';
+  tier: 'free' | 'plus' | 'pro';
   usedThisMonth: number;
   lastResetDate: string;
   /** ISO-дата, до которой оплачен тариф (из Stripe) */
@@ -43,16 +43,8 @@ const PRICING_TIERS: Record<string, PricingTier> = {
     name: 'Pro',
     price: 9.99,
     monthlyLimit: 100,
-    features: ['100 Dokumente/Monat', 'Fälle-Tracking', 'Export in PDF', 'Priority Support'],
+    features: ['100 Dokumente/Monat', 'Chat und Antwortentwürfe', 'E-Mail-Support'],
     stripeLink: STRIPE_LINKS.pro,
-  },
-  business: {
-    id: 'business',
-    name: 'Business',
-    price: 49.99,
-    monthlyLimit: Infinity,
-    features: ['Unlimited Dokumente', 'Team-Zugang (bis 5 User)', 'API-Zugang', 'White-Label-Option'],
-    stripeLink: BUSINESS_CONTACT_MAILTO,
   },
 };
 
@@ -164,7 +156,7 @@ export function usePricingTiers() {
   // 2) Оплаченный период истёк → спрашиваем Stripe, продлена ли подписка
   useEffect(() => {
     const { tier, paidUntil, checkoutSession } = usageStats;
-    if (tier === 'free' || tier === 'business' || !paidUntil) return;
+    if (tier === 'free' || !paidUntil) return;
     if (new Date(paidUntil).getTime() > Date.now()) return;
 
     const downgrade = () => setUsageStats((prev) => ({ ...prev, tier: 'free', paidUntil: undefined, checkoutSession: undefined }));

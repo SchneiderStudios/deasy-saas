@@ -1,41 +1,72 @@
 import React from 'react';
 
 /**
- * Где получить настоящую консультацию. Без внешних ссылок — только названия организаций,
- * чтобы не было битых ссылок и передачи данных третьим лицам.
+ * Где получить настоящую консультацию — с официальными сайтами ведомств.
+ * Все ссылки проверены 04.10.2026. Внешние ссылки открываются только по клику (без передачи данных заранее).
  */
 
 type Lang = 'de' | 'ru';
 
-const GENERAL: Record<Lang, { title: string; intro: string; items: [string, string][]; outro: string }> = {
+interface Link {
+  label: string;
+  href: string;
+}
+interface Topic {
+  topic: string;
+  official?: Link[];
+  beratung: string;
+  beratungLinks?: Link[];
+}
+
+const L = {
+  behoerde115: { label: '115.de – Behördennummer', href: 'https://www.115.de' },
+  jobcenter: { label: 'arbeitsagentur.de/grundsicherung', href: 'https://www.arbeitsagentur.de/grundsicherung' },
+  familienkasse: { label: 'Familienkasse (arbeitsagentur.de)', href: 'https://www.arbeitsagentur.de/familie-und-kinder' },
+  bamfNavi: { label: 'BAMF-NAvI (Beratungsstellen-Suche)', href: 'https://bamf-navi.bamf.de' },
+  elster: { label: 'elster.de', href: 'https://www.elster.de' },
+  stbk: { label: 'Bundessteuerberaterkammer', href: 'https://www.bstbk.de' },
+  upd: { label: 'patientenberatung.de', href: 'https://www.patientenberatung.de' },
+  vz: { label: 'verbraucherzentrale.de', href: 'https://www.verbraucherzentrale.de' },
+  dmb: { label: 'mieterbund.de', href: 'https://www.mieterbund.de' },
+};
+
+const TEXT: Record<Lang, { title: string; intro: string; officialLabel: string; beratungLabel: string; topics: Topic[]; general: string; outro: string }> = {
   de: {
     title: 'Wo bekomme ich verbindliche Hilfe?',
     intro:
-      'DEASY hilft beim Verstehen. Eine Beratung zu Ihrem persönlichen Fall – etwa ob sich ein Widerspruch lohnt – dürfen nur Fachleute und anerkannte Beratungsstellen geben. Viele davon sind kostenlos:',
-    items: [
-      ['Jobcenter, Bürgergeld, Sozialleistungen', 'Sozialberatung (z. B. Caritas, Diakonie, AWO, Paritätischer)'],
-      ['Aufenthalt, Ausländerbehörde, Integration', 'Migrationsberatung für Erwachsene (MBE), Jugendmigrationsdienst'],
-      ['Miete, Nebenkosten, Kündigung der Wohnung', 'Örtlicher Mieterverein'],
-      ['Verträge, Rechnungen, Inkasso', 'Verbraucherzentrale'],
-      ['Krankenkasse, Pflege', 'Unabhängige Patientenberatung, Pflegestützpunkt'],
-      ['Steuern, Kindergeld', 'Lohnsteuerhilfeverein, Steuerberatung'],
-      ['Rechtliche Vertretung', 'Rechtsanwältin oder Rechtsanwalt – bei geringem Einkommen mit Beratungshilfeschein vom Amtsgericht'],
+      'DEASY hilft beim Verstehen. Verbindliche Auskünfte zu Ihrem Fall geben die Behörde selbst und anerkannte Beratungsstellen – viele davon kostenlos. Die erste Anlaufstelle ist immer der Absender: Telefonnummer und Ansprechperson stehen oben im Brief.',
+    officialLabel: 'Offiziell',
+    beratungLabel: 'Beratung',
+    topics: [
+      { topic: 'Jobcenter, Grundsicherung (früher Bürgergeld)', official: [L.jobcenter], beratung: 'Sozialberatung, z. B. Caritas, Diakonie, AWO' },
+      { topic: 'Aufenthalt, Ausländerbehörde, Integration', official: [L.bamfNavi], beratung: 'Migrationsberatung für Erwachsene (MBE), Jugendmigrationsdienst – über BAMF-NAvI zu finden; die Ausländerbehörde finden Sie auf der Website Ihrer Stadt' },
+      { topic: 'Kindergeld, Kinderzuschlag', official: [L.familienkasse], beratung: 'Familienkasse direkt oder Lohnsteuerhilfeverein' },
+      { topic: 'Steuern, Finanzamt', official: [L.elster], beratung: 'Lohnsteuerhilfeverein oder Steuerberatung', beratungLinks: [L.stbk] },
+      { topic: 'Krankenkasse, Pflege', beratung: 'Unabhängige Patientenberatung, Pflegestützpunkt', beratungLinks: [L.upd] },
+      { topic: 'Miete, Nebenkosten, Wohnung', beratung: 'Örtlicher Mieterverein', beratungLinks: [L.dmb] },
+      { topic: 'Verträge, Rechnungen, Inkasso', beratung: 'Verbraucherzentrale', beratungLinks: [L.vz] },
+      { topic: 'Anwaltliche Vertretung', beratung: 'Rechtsanwältin oder Rechtsanwalt – bei geringem Einkommen mit Beratungshilfeschein vom Amtsgericht Ihres Wohnorts' },
     ],
-    outro: 'Achten Sie auf Fristen im Brief und melden Sie sich rechtzeitig.',
+    general: 'Sie wissen nicht, welche Behörde zuständig ist? Die Behördennummer 115 hilft weiter:',
+    outro: 'Bitte achten Sie auf Fristen im Brief und melden Sie sich rechtzeitig.',
   },
   ru: {
-    title: 'Где получить настоящую консультацию?',
+    title: 'Где получить надёжную консультацию?',
     intro:
-      'DEASY помогает понять письмо. Консультировать по вашей личной ситуации — например, стоит ли подавать Widerspruch — вправе только специалисты и признанные консультационные службы. Многие из них бесплатны:',
-    items: [
-      ['Jobcenter, Bürgergeld, социальные пособия', 'Sozialberatung (например, Caritas, Diakonie, AWO, Paritätischer)'],
-      ['ВНЖ, Ausländerbehörde, интеграция', 'Migrationsberatung für Erwachsene (MBE), Jugendmigrationsdienst'],
-      ['Аренда, Nebenkosten, расторжение договора', 'Местный Mieterverein'],
-      ['Договоры, счета, коллекторы (Inkasso)', 'Verbraucherzentrale'],
-      ['Больничная касса, уход', 'Unabhängige Patientenberatung, Pflegestützpunkt'],
-      ['Налоги, Kindergeld', 'Lohnsteuerhilfeverein, Steuerberater'],
-      ['Юридическое представительство', 'Адвокат — при низком доходе по Beratungshilfeschein из Amtsgericht'],
+      'DEASY помогает понять письмо. Точный ответ по вашей ситуации дают само ведомство и признанные консультационные службы — многие бесплатно. Первым делом стоит обратиться к отправителю: телефон и контактное лицо указаны в шапке письма.',
+    officialLabel: 'Официально',
+    beratungLabel: 'Консультация',
+    topics: [
+      { topic: 'Jobcenter, Grundsicherung (раньше Bürgergeld)', official: [L.jobcenter], beratung: 'Sozialberatung, например Caritas, Diakonie, AWO' },
+      { topic: 'ВНЖ, Ausländerbehörde, интеграция', official: [L.bamfNavi], beratung: 'Migrationsberatung für Erwachsene (MBE), Jugendmigrationsdienst — ищите через BAMF-NAvI; Ausländerbehörde — на сайте вашего города' },
+      { topic: 'Kindergeld, Kinderzuschlag', official: [L.familienkasse], beratung: 'Сама Familienkasse или Lohnsteuerhilfeverein' },
+      { topic: 'Налоги, Finanzamt', official: [L.elster], beratung: 'Lohnsteuerhilfeverein или Steuerberater', beratungLinks: [L.stbk] },
+      { topic: 'Больничная касса, уход', beratung: 'Unabhängige Patientenberatung, Pflegestützpunkt', beratungLinks: [L.upd] },
+      { topic: 'Аренда, Nebenkosten, жильё', beratung: 'Местный Mieterverein', beratungLinks: [L.dmb] },
+      { topic: 'Договоры, счета, Inkasso', beratung: 'Verbraucherzentrale', beratungLinks: [L.vz] },
+      { topic: 'Помощь адвоката', beratung: 'Адвокат — при низком доходе по Beratungshilfeschein из Amtsgericht по месту жительства' },
     ],
+    general: 'Не знаете, какое ведомство отвечает за ваш вопрос? Поможет единый номер ведомств 115:',
     outro: 'Обратите внимание на сроки в письме и обращайтесь заранее.',
   },
 };
@@ -51,20 +82,49 @@ const box: React.CSSProperties = {
   color: '#3d4257',
 };
 
-export function BeratungHinweis({ language }: { language: Lang }) {
-  const t = GENERAL[language];
+const Ext = ({ link }: { link: Link }) => (
+  <a href={link.href} target="_blank" rel="noopener noreferrer" style={{ color: '#4338ca' }}>
+    {link.label} ↗
+  </a>
+);
+
+export function BeratungHinweis({ language, open = false }: { language: Lang; open?: boolean }) {
+  const t = TEXT[language];
   return (
-    <details style={box}>
+    <details style={box} open={open}>
       <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#1c2340' }}>🧭 {t.title}</summary>
       <p style={{ margin: '10px 0 8px' }}>{t.intro}</p>
       <ul style={{ margin: 0, paddingLeft: 18 }}>
-        {t.items.map(([topic, where]) => (
-          <li key={topic} style={{ marginBottom: 4 }}>
-            <strong>{topic}:</strong> {where}
+        {t.topics.map((x) => (
+          <li key={x.topic} style={{ marginBottom: 8 }}>
+            <strong>{x.topic}</strong>
+            {x.official && (
+              <div>
+                {t.officialLabel}:{' '}
+                {x.official.map((l, i) => (
+                  <React.Fragment key={l.href}>
+                    {i > 0 && ', '}
+                    <Ext link={l} />
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+            <div>
+              {t.beratungLabel}: {x.beratung}
+              {x.beratungLinks?.map((l) => (
+                <React.Fragment key={l.href}>
+                  {' – '}
+                  <Ext link={l} />
+                </React.Fragment>
+              ))}
+            </div>
           </li>
         ))}
       </ul>
-      <p style={{ margin: '8px 0 0' }}>{t.outro}</p>
+      <p style={{ margin: '8px 0 0' }}>
+        {t.general} <Ext link={L.behoerde115} />
+      </p>
+      <p style={{ margin: '6px 0 0' }}>{t.outro}</p>
     </details>
   );
 }
@@ -84,23 +144,34 @@ export function SteuerHinweis({ language, absender }: { language: Lang; absender
       )}
       <p style={{ margin: '0 0 8px' }}>
         {de
-          ? 'Hilfe in Steuersachen dürfen in Deutschland nur Steuerberaterinnen und Steuerberater, Lohnsteuerhilfevereine und einige weitere Stellen leisten. Damit Sie sich auf die Auskunft verlassen können, erklären wir Steuerschreiben deshalb nicht – auch nicht teilweise.'
+          ? 'Hilfe in Steuersachen dürfen in Deutschland nur Steuerberaterinnen und Steuerberater, Lohnsteuerhilfevereine und einige weitere Stellen leisten. Damit Sie sich auf die Auskunft verlassen können, erklären wir Steuerschreiben nicht – auch nicht teilweise.'
           : 'Помогать в налоговых делах в Германии вправе только Steuerberater, Lohnsteuerhilfeverein и некоторые другие организации. Чтобы вы получили надёжный ответ, налоговые письма мы не разбираем — даже частично.'}
       </p>
       <p style={{ margin: '0 0 6px', fontWeight: 600 }}>{de ? 'So bekommen Sie schnell Hilfe:' : 'Где быстро получить помощь:'}</p>
       <ul style={{ margin: 0, paddingLeft: 18 }}>
-        <li>
+        <li style={{ marginBottom: 4 }}>
           {de
-            ? 'Lohnsteuerhilfeverein – günstig für Arbeitnehmer, Rentner und bei Kindergeld'
-            : 'Lohnsteuerhilfeverein — недорого для работников по найму, пенсионеров и по Kindergeld'}
+            ? 'Beim Absender selbst – Telefonnummer und Ansprechperson stehen oben im Brief; Fragen zum Schreiben sind kostenlos.'
+            : 'У самого отправителя — телефон и контактное лицо указаны в шапке письма; вопросы по письму бесплатны.'}
         </li>
-        <li>{de ? 'Steuerberatung – z. B. über den Suchdienst der Steuerberaterkammer' : 'Steuerberater — например, через поиск Steuerberaterkammer'}</li>
-        <li>
+        <li style={{ marginBottom: 4 }}>
+          {de ? 'Offizielles Steuerportal der Finanzverwaltung: ' : 'Официальный налоговый портал: '}
+          <Ext link={L.elster} />
+        </li>
+        <li style={{ marginBottom: 4 }}>
+          {de ? 'Kindergeld: ' : 'Kindergeld: '}
+          <Ext link={L.familienkasse} />
+        </li>
+        <li style={{ marginBottom: 4 }}>
           {de
-            ? 'Das Finanzamt bzw. die Familienkasse selbst – die Telefonnummer steht oben im Brief; Fragen zum Schreiben sind dort kostenlos'
-            : 'Сам Finanzamt или Familienkasse — телефон указан в шапке письма; вопросы по письму там бесплатны'}
+            ? 'Lohnsteuerhilfeverein (günstig für Arbeitnehmer und Rentner) oder Steuerberatung – Verzeichnis über die '
+            : 'Lohnsteuerhilfeverein (недорого для работников и пенсионеров) или Steuerberater — реестр у '}
+          <Ext link={L.stbk} />
         </li>
-        <li>{de ? 'Migrationsberatung – hilft, die passende Stelle zu finden' : 'Migrationsberatung — поможет найти нужную службу'}</li>
+        <li>
+          {de ? 'Zuständige Stelle unklar? ' : 'Не знаете, куда обращаться? '}
+          <Ext link={L.behoerde115} />
+        </li>
       </ul>
       <p style={{ margin: '10px 0 0', fontSize: 13 }}>
         {de

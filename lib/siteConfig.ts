@@ -30,7 +30,6 @@ export const STRIPE_LINKS = {
   pro: '',
 };
 
-export const BUSINESS_CONTACT_MAILTO = `mailto:${COMPANY.email}?subject=${encodeURIComponent('Business-Plan Anfrage – DEASY')}`;
 
 export const LEGAL_UPDATED = 'Oktober 2026';
 

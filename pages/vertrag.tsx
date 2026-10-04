@@ -220,7 +220,6 @@ export default function Vertrag() {
                 <select value={form.tarif} onChange={set('tarif')} style={field}>
                   <option>DEASY Plus</option>
                   <option>DEASY Pro</option>
-                  <option>DEASY Business</option>
                 </select>
               </label>
 

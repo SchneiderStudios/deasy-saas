@@ -36,7 +36,8 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 - Перед загрузкой — чекбокс согласия (Art. 9/49 DSGVO), ключ `deasyConsent` в localStorage. Не загружать без него.
 - ИИ всегда помечен как ИИ (AI Act Art. 50, Anthropic AUP): «KI-Assistent», «KI-generiert». Промпты: общая информация, без индивидуальной правовой оценки и прогноза шансов (RDG/StBerG).
 - **Налоговые письма не разбираем (§ 2 StBerG):** Finanzamt, BZSt, Familienkasse (Kindergeld), Hauptzollamt, Gemeindesteuern. `/api/analyze-document` возвращает `analysis.restricted = 'steuer'` (KI-категория + регулярка `TAX_SENDER` по отправителю), UI показывает `SteuerHinweis`, лимит не списывается, `/api/chat` и `/api/generate-reply` отвечают 403. Шаблонов для налоговой нет.
-- Под каждым анализом — `BeratungHinweis` (куда обратиться за настоящей консультацией).
+- Под каждым анализом — `BeratungHinweis`: куда обратиться, с проверенными ссылками на официальные сайты ведомств (arbeitsagentur.de, bamf-navi.bamf.de, elster.de, 115.de …). Новые ссылки — только официальные и проверенные.
+- Тарифы только Free / Plus / Pro. Тарифа Business/API нет — не возвращать без решения владельца.
 - Нельзя обещать на сайте функции, которых нет (UWG). Никаких сторонних скриптов/шрифтов/трекинга без обновления Datenschutz.
 - Функции работают в регионе `fra1` (vercel.json).
 

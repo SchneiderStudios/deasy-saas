@@ -84,14 +84,6 @@ export const translations = {
     planProFeature4: "✓ Monatlich kündbar",
     planProButton: "Pro aktivieren",
 
-    planBusiness: "Business",
-    planBusinessPrice: "€49,99",
-    planBusinessPeriod: "/Monat",
-    planBusinessFeature1: "✓ Für Beratungsstellen und Teams",
-    planBusinessFeature2: "✓ Größere Dokument-Kontingente",
-    planBusinessFeature3: "✓ Individuelles Angebot",
-    planBusinessFeature4: "✓ Persönlicher Kontakt",
-    planBusinessButton: "Business aktivieren",
 
     // Landing Page - FAQ
     faqTitle: "Häufig gestellte Fragen",
@@ -132,8 +124,6 @@ export const translations = {
     proDescription: "10 Analysen",
     proMonthly: "Pro Abonnement",
     proMonthlyDescription: "100 Analysen/Monat",
-    business: "Business",
-    businessDescription: "Unbegrenzt",
     upgradeButton: "Upgrade",
     upgradeTitle: "Wähle einen Plan",
     upgradeSubtitle: "Du hast dein Limit erreicht (3 kostenlose Analysen)",
@@ -248,14 +238,6 @@ export const translations = {
     planProFeature4: "✓ Отмена в любой месяц",
     planProButton: "Активировать Про",
 
-    planBusiness: "Бизнес",
-    planBusinessPrice: "€49,99",
-    planBusinessPeriod: "/месяц",
-    planBusinessFeature1: "✓ Для консультационных центров и команд",
-    planBusinessFeature2: "✓ Больше документов",
-    planBusinessFeature3: "✓ Индивидуальное предложение",
-    planBusinessFeature4: "✓ Личный контакт",
-    planBusinessButton: "Активировать Бизнес",
 
     // Landing Page - FAQ
     faqTitle: "Часто задаваемые вопросы",
@@ -296,8 +278,6 @@ export const translations = {
     proDescription: "10 анализов",
     proMonthly: "Про подписка",
     proMonthlyDescription: "100 анализов/месяц",
-    business: "Бизнес",
-    businessDescription: "Неограниченно",
     upgradeButton: "Обновить",
     upgradeTitle: "Выберите план",
     upgradeSubtitle: "Вы достигли лимита (3 бесплатных анализа)",
