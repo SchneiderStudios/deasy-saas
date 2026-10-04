@@ -56,7 +56,8 @@ function buildPrompt(language: 'de' | 'ru', pageCount: number): string {
   "actions": ["конкретное действие на русском"]
 }
 Правила: risk = "Kritisch", если есть срок, штраф, отказ, взыскание или судебные последствия; "Mittel" — нужно действие без жёсткой угрозы; "Gering" — информационное письмо.
-Если сроков нет — пустой массив. Не придумывай даты, которых нет в письме.`;
+Если сроков нет — пустой массив. Не придумывай даты, которых нет в письме.
+Ты даёшь общую понятную информацию, а не юридическую консультацию: не оценивай, законно ли решение, и не прогнозируй шансы обжалования. В actions можно назвать общие варианты действий и где получить консультацию (Beratungsstelle, Mieterverein, Lohnsteuerhilfeverein, адвокат).`;
   }
 
   return `${pagesNote}Du hilfst Menschen, deutsche Behördenbriefe zu verstehen.
@@ -68,7 +69,8 @@ Analysiere den Brief und antworte NUR mit einem JSON-Objekt ohne Markdown:
   "actions": ["konkrete Handlung in einfacher Sprache"]
 }
 Regeln: risk = "Kritisch" bei Frist mit Sanktion, Ablehnung, Mahnung, Vollstreckung oder Gericht; "Mittel" wenn eine Handlung nötig ist; "Gering" bei reiner Information.
-Keine Fristen → leeres Array. Erfinde keine Daten, die nicht im Brief stehen.`;
+Keine Fristen → leeres Array. Erfinde keine Daten, die nicht im Brief stehen.
+Du gibst allgemeine, verständliche Informationen, keine Rechtsberatung: Bewerte nicht, ob der Bescheid rechtmäßig ist, und prognostiziere keine Erfolgsaussichten. In actions darfst du allgemeine Handlungsoptionen und Beratungsangebote nennen (Beratungsstelle, Mieterverein, Lohnsteuerhilfeverein, Anwalt).`;
 }
 
 function extractJson(text: string): any | null {

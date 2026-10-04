@@ -180,10 +180,17 @@ export default function Home() {
               {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
             </a>
             <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
-              {language === 'de' ? 'Mit API-Zugang & White-Label' : 'С API-доступом и White-Label'}
+              {language === 'de' ? 'Preis nach Vereinbarung' : 'Цена по договорённости'}
             </p>
           </div>
         </div>
+        <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#4b4e5c', marginTop: '1.5rem', lineHeight: 1.6 }}>
+          {language === 'de'
+            ? 'Alle Preise sind Endpreise. Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. Plus und Pro verlängern sich monatlich und sind jederzeit zum Ende des bezahlten Monats kündbar.'
+            : 'Все цены окончательные. Согласно § 19 UStG НДС не начисляется. Plus и Pro продлеваются ежемесячно, отменить можно в любой момент до конца оплаченного месяца.'}{' '}
+          <a href="/agb">{language === 'de' ? 'AGB' : 'Условия (AGB)'}</a> ·{' '}
+          <a href="/widerruf">{language === 'de' ? 'Widerrufsbelehrung' : 'Право отзыва'}</a>
+        </p>
       </section>
 
       {/* FAQ */}
@@ -244,6 +251,18 @@ export default function Home() {
               </li>
               <li>
                 <a href={`mailto:${COMPANY.email}`}>{t.footerContact}</a>
+              </li>
+              <li>
+                <a href="/agb">AGB</a>
+              </li>
+              <li>
+                <a href="/widerruf">Widerrufsbelehrung</a>
+              </li>
+              <li>
+                <a href="/vertrag?aktion=kuendigen">Verträge hier kündigen</a>
+              </li>
+              <li>
+                <a href="/vertrag?aktion=widerrufen">Vertrag widerrufen</a>
               </li>
             </ul>
           </div>

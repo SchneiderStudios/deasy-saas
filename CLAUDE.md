@@ -25,14 +25,22 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 ## Ограничения
 - Vercel режет тело запроса на **4,5 МБ** → картинки обязательно сжимаются на клиенте.
 - HEIC: Safari декодирует сам, остальные браузеры — через `heic2any`.
-- PDF: только `pdfjs-dist/legacy/build/pdf.mjs` (совместимость со старыми iPhone), воркер — с unpkg той же версии.
+- PDF: только `pdfjs-dist/legacy/build/pdf.mjs` (совместимость со старыми iPhone), воркер копируется в `public/` при сборке (`prebuild`) — никаких сторонних CDN.
 - Модели: анализ и письмо-ответ — `claude-opus-5-5`, чат — `claude-sonnet-5-5`.
 - Письмо в ведомство всегда на немецком; русскому пользователю — перевод рядом.
 
+## Юридические правила (Германия) — не ломать!
+- Данные владельца и ссылки Stripe — только в `lib/siteConfig.ts`.
+- На КАЖДОЙ странице футер `components/LegalLinks.tsx`: Impressum, Datenschutz, AGB, Widerrufsbelehrung, «Verträge hier kündigen» (§312k BGB), «Vertrag widerrufen» (§356a BGB). Подписи кнопок заданы законом.
+- `/vertrag` + `/api/vertrag`: кнопки «jetzt kündigen» / «Widerruf bestätigen», подтверждение по e-mail через Resend (env `RESEND_API_KEY`, `MAIL_FROM`, `OWNER_EMAIL`), отмена в Stripe.
+- Перед загрузкой — чекбокс согласия (Art. 9/49 DSGVO), ключ `deasyConsent` в localStorage. Не загружать без него.
+- ИИ всегда помечен как ИИ (AI Act Art. 50, Anthropic AUP): «KI-Assistent», «KI-generiert». Промпты: общая информация, без индивидуальной правовой оценки и прогноза шансов (RDG/StBerG).
+- Нельзя обещать на сайте функции, которых нет (UWG). Никаких сторонних скриптов/шрифтов/трекинга без обновления Datenschutz.
+- Функции работают в регионе `fra1` (vercel.json).
+
 ## Известные долги (не трогать без задачи)
-- `pages/api/analyze.ts` — старый, не используется страницей.
 - `prisma`, `next-auth` в зависимостях, но не подключены.
-- Ссылки Stripe в `hooks/usePricingTiers.ts` — заглушки; лимиты считаются в `localStorage` (обходятся очисткой браузера).
+- Лимиты и тариф хранятся в `localStorage` (тариф проверяется через `/api/verify-payment`); без аккаунтов.
 - История (`useDocumentHistory`) сохраняется, но экрана «Мои документы» пока нет.
 
 ## Правила работы

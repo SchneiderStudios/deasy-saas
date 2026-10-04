@@ -61,6 +61,8 @@ Anforderungen an den Brief:
 - Übernimm Behörde, Adresse, Aktenzeichen/Steuernummer/BG-Nummer und Datum des Schreibens aus dem Brief, wenn lesbar.
 - Alles, was du nicht weißt, als Platzhalter in eckigen Klammern, z. B. [Ihr Name], [Begründung]. Erfinde keine Fakten.
 - Keine Rechtsberatung vortäuschen, keine erfundenen Paragraphen.
+- Formuliere KEINE eigene juristische Begründung und bewerte nicht, ob der Bescheid rechtmäßig ist. Übernimm nur Fakten des Nutzers; fehlt die Begründung, setze den Platzhalter [Begründung in eigenen Worten].
+- Ein Tipp in tips soll darauf hinweisen, vor dem Absenden bei Unsicherheit eine Beratungsstelle zu fragen.
 
 Antworte NUR mit JSON ohne Markdown:
 {

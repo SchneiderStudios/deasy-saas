@@ -2,6 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import styles from '@/styles/Legal.module.css';
+import LegalLinks from '@/components/LegalLinks';
 import { COMPANY, LEGAL_UPDATED, companyComplete } from '@/lib/siteConfig';
 
 export default function Impressum() {
@@ -95,6 +96,7 @@ export default function Impressum() {
 
         <p className={styles.lastUpdated}>Stand: {LEGAL_UPDATED}</p>
       </article>
+      <LegalLinks compact />
     </div>
   );
 }

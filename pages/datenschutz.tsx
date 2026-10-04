@@ -2,6 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import styles from '@/styles/Legal.module.css';
+import LegalLinks from '@/components/LegalLinks';
 import { COMPANY, LEGAL_UPDATED, companyComplete } from '@/lib/siteConfig';
 
 export default function Datenschutz() {
@@ -48,8 +49,8 @@ export default function Datenschutz() {
           Aufruf verarbeitet Vercel technisch notwendige Daten (u. a. IP-Adresse, Datum und Uhrzeit, aufgerufene
           Seite, Browsertyp), um die Website auszuliefern und vor Missbrauch zu schützen. Rechtsgrundlage ist
           unser berechtigtes Interesse an einem sicheren und stabilen Betrieb (Art. 6 Abs. 1 lit. f DSGVO). Die
-          Übermittlung in die USA erfolgt auf Grundlage des EU-US Data Privacy Framework bzw. von
-          EU-Standardvertragsklauseln (Art. 45, 46 DSGVO).
+          Serverfunktionen laufen in der Region Frankfurt am Main. Soweit Daten in die USA übermittelt werden, erfolgt dies
+          auf Grundlage des EU-US Data Privacy Framework bzw. von EU-Standardvertragsklauseln (Art. 45, 46 DSGVO).
         </p>
 
         <h2>4. Analyse hochgeladener Dokumente (KI)</h2>
@@ -69,16 +70,18 @@ export default function Datenschutz() {
           Wir speichern Ihre Dokumente, Analysen und Chatnachrichten nicht auf unseren Servern. Rechtsgrundlage
           ist die Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Behördenbriefe können besondere
           Kategorien personenbezogener Daten enthalten (z. B. Gesundheitsdaten in Schreiben der Krankenkasse).
-          Mit dem Hochladen willigen Sie ausdrücklich in deren Verarbeitung zu diesem Zweck ein
-          (Art. 9 Abs. 2 lit. a DSGVO); die Einwilligung können Sie jederzeit für die Zukunft widerrufen, indem
-          Sie keine weiteren Dokumente hochladen. Die Übermittlung in die USA erfolgt auf Grundlage von
-          EU-Standardvertragsklauseln (Art. 46 DSGVO). Tipp: Schwärzen Sie Angaben, die für die Erklärung nicht
+          Vor dem ersten Hochladen holen wir per Kontrollkästchen Ihre ausdrückliche Einwilligung in diese
+          Verarbeitung und in die Übermittlung an Anthropic in die USA ein (Art. 6 Abs. 1 lit. a, Art. 9 Abs. 2 lit. a,
+          Art. 49 Abs. 1 lit. a DSGVO); die Übermittlung ist zusätzlich durch die Datenschutzvereinbarung von Anthropic
+          mit EU-Standardvertragsklauseln abgesichert (Art. 46 DSGVO). Sie können die Einwilligung jederzeit mit Wirkung
+          für die Zukunft widerrufen, indem Sie das Häkchen entfernen; die bis dahin erfolgte Verarbeitung bleibt
+          rechtmäßig. Ohne Einwilligung ist eine Analyse nicht möglich. Tipp: Schwärzen Sie Angaben, die für die Erklärung nicht
           nötig sind (z. B. Kontonummern).
         </p>
 
         <h2>5. Speicherung in Ihrem Browser</h2>
         <p>
-          Ihr Dokumentverlauf (Zusammenfassungen, Fristen), Ihre Sprachauswahl, der Nutzungszähler und ein
+          Ihr Dokumentverlauf (Zusammenfassungen, Fristen), Ihre Einwilligung (Abschnitt 4), Ihre Sprachauswahl, der Nutzungszähler und ein
           gebuchter Tarif werden im lokalen Speicher (localStorage) Ihres Browsers abgelegt. Diese Daten
           verlassen Ihr Gerät nicht und sind für die von Ihnen gewünschte Funktion unbedingt erforderlich
           (§ 25 Abs. 2 Nr. 2 TDDDG). Sie können sie jederzeit löschen, indem Sie die Websitedaten in Ihrem
@@ -98,14 +101,24 @@ export default function Datenschutz() {
           .
         </p>
 
-        <h2>7. Kontakt per E-Mail</h2>
+        <h2>7. Kündigung und Widerruf über die Website</h2>
+        <p>
+          Wenn Sie über „Verträge hier kündigen“ oder „Vertrag widerrufen“ eine Erklärung abgeben, verarbeiten wir Ihren
+          Namen, Ihre E-Mail-Adresse, den Vertrag und den Zeitpunkt des Eingangs, um die Erklärung umzusetzen, Ihr Abo bei
+          Stripe zu beenden und Ihnen den Eingang zu bestätigen (Art. 6 Abs. 1 lit. b und c DSGVO, §§ 312k, 356a BGB).
+          Die Bestätigungs-E-Mails versenden wir über Resend (Plus Five Five, Inc., 2261 Market Street #5039,
+          San Francisco, CA 94114, USA) als Auftragsverarbeiter auf Grundlage von EU-Standardvertragsklauseln. Wir bewahren
+          die Erklärungen bis zum Ablauf der gesetzlichen Verjährungs- und Aufbewahrungsfristen auf.
+        </p>
+
+        <h2>8. Kontakt per E-Mail</h2>
         <p>
           Wenn Sie uns per E-Mail schreiben, verarbeiten wir Ihre Angaben zur Bearbeitung der Anfrage
           (Art. 6 Abs. 1 lit. b bzw. f DSGVO) und löschen sie, sobald sie nicht mehr erforderlich sind und keine
           Aufbewahrungspflichten bestehen.
         </p>
 
-        <h2>8. Ihre Rechte</h2>
+        <h2>9. Ihre Rechte</h2>
         <p>
           Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung
           der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO) sowie das
@@ -117,7 +130,7 @@ export default function Datenschutz() {
           Bundesland Ihres Wohnorts oder des Sitzes des Verantwortlichen.
         </p>
 
-        <h2>9. Automatisierte Ergebnisse</h2>
+        <h2>10. Automatisierte Ergebnisse</h2>
         <p>
           Analysen und Antwortentwürfe werden von einer KI erzeugt (Art. 50 KI-Verordnung). Sie dienen nur der
           Orientierung; es findet keine automatisierte Entscheidung mit rechtlicher Wirkung für Sie statt
@@ -126,6 +139,7 @@ export default function Datenschutz() {
 
         <p className={styles.lastUpdated}>Stand: {LEGAL_UPDATED}</p>
       </article>
+      <LegalLinks compact />
     </div>
   );
 }

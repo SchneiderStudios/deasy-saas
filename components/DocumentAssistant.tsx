@@ -32,11 +32,11 @@ interface Reply {
 
 const T = {
   de: {
-    title: 'DEASY-Assistent',
-    subtitle: 'Fragen zum Brief stellen oder eine Antwort schreiben lassen',
+    title: 'DEASY KI-Assistent',
+    subtitle: 'Antworten erzeugt eine KI (Claude) – ohne Gewähr, keine Rechtsberatung',
     tabChat: '💬 Fragen',
     tabReply: '✉️ Antwort schreiben',
-    welcome: 'Ich habe Ihren Brief gelesen. Fragen Sie mich alles dazu – oder wählen Sie unten eine Frage aus.',
+    welcome: 'Hallo! Ich bin ein KI-Assistent (kein Mensch). Ich habe Ihren Brief gelesen und erkläre ihn allgemein verständlich. Meine Antworten können Fehler enthalten und ersetzen keine Beratung. Was möchten Sie wissen?',
     chips: [
       'Was muss ich jetzt tun?',
       'Welche Antwortmöglichkeiten habe ich?',
@@ -53,7 +53,7 @@ const T = {
     notesPlaceholder: 'z. B. „Ich habe die Rechnung bereits am 3.9. bezahlt“ oder „Ich bin bis 20.10. im Urlaub“',
     generate: 'Antwort mit KI erstellen',
     generating: 'Brief wird erstellt… (ca. 20–40 Sek.)',
-    yourLetter: 'Ihr Antwortschreiben (bearbeitbar)',
+    yourLetter: 'KI-Entwurf Ihres Antwortschreibens – bitte prüfen und anpassen',
     copy: '📋 Kopieren',
     copied: '✓ Kopiert',
     download: '⬇️ Als Datei',
@@ -76,11 +76,11 @@ const T = {
     } as Record<string, [string, string]>,
   },
   ru: {
-    title: 'Ассистент DEASY',
-    subtitle: 'Задайте вопрос по письму или попросите составить ответ',
+    title: 'ИИ-ассистент DEASY',
+    subtitle: 'Ответы создаёт ИИ (Claude) — без гарантий, не юридическая консультация',
     tabChat: '💬 Вопросы',
     tabReply: '✉️ Написать ответ',
-    welcome: 'Я прочитал ваше письмо. Спрашивайте что угодно — или выберите вопрос ниже.',
+    welcome: 'Здравствуйте! Я ИИ-ассистент (не человек). Я прочитал ваше письмо и объясню его простыми словами. В ответах возможны ошибки, они не заменяют консультацию. Что хотите узнать?',
     chips: [
       'Что мне сейчас делать?',
       'Какие у меня варианты ответа?',
@@ -97,7 +97,7 @@ const T = {
     notesPlaceholder: 'Например: «Я уже оплатил счёт 3 сентября» или «Я в отпуске до 20 октября»',
     generate: 'Составить ответ с ИИ',
     generating: 'Составляю письмо… (20–40 сек.)',
-    yourLetter: 'Ваше письмо на немецком (можно редактировать)',
+    yourLetter: 'Черновик письма от ИИ на немецком — проверьте и поправьте перед отправкой',
     copy: '📋 Копировать',
     copied: '✓ Скопировано',
     download: '⬇️ Скачать',
