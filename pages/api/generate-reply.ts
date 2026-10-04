@@ -38,6 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const language: 'de' | 'ru' = req.body?.language === 'ru' ? 'ru' : 'de';
+  if (req.body?.analysis?.restricted === 'steuer') {
+    return res.status(403).json({
+      success: false,
+      error:
+        language === 'ru'
+          ? 'По налоговым вопросам DEASY не консультирует. Обратитесь в Lohnsteuerhilfeverein или к Steuerberater.'
+          : 'Zu Steuersachen berät DEASY nicht. Bitte wenden Sie sich an einen Lohnsteuerhilfeverein oder eine Steuerberatung.',
+    });
+  }
   const replyType: string = REPLY_TYPES[req.body?.replyType] ? req.body.replyType : 'frei';
   const notes = String(req.body?.notes || '').slice(0, 2000);
   const analysis = req.body?.analysis || {};
@@ -58,10 +67,11 @@ Bisherige Analyse: ${analysis.summary || '-'} | Fristen: ${(analysis.deadlines |
 
 Anforderungen an den Brief:
 - Auf Deutsch, sachlich und höflich, formeller deutscher Briefaufbau (Absender, Empfänger, Ort/Datum, Betreff mit Aktenzeichen, Anrede, Text, Grußformel).
-- Übernimm Behörde, Adresse, Aktenzeichen/Steuernummer/BG-Nummer und Datum des Schreibens aus dem Brief, wenn lesbar.
+- Übernimm Behörde, Adresse, Aktenzeichen/BG-Nummer/Versichertennummer und Datum des Schreibens aus dem Brief, wenn lesbar.
 - Alles, was du nicht weißt, als Platzhalter in eckigen Klammern, z. B. [Ihr Name], [Begründung]. Erfinde keine Fakten.
 - Keine Rechtsberatung vortäuschen, keine erfundenen Paragraphen.
 - Formuliere KEINE eigene juristische Begründung und bewerte nicht, ob der Bescheid rechtmäßig ist. Übernimm nur Fakten des Nutzers; fehlt die Begründung, setze den Platzhalter [Begründung in eigenen Worten].
+- Betrifft das Schreiben eine Steuersache (Finanzamt, Familienkasse, Hauptzollamt, Gemeindesteuer), erstelle KEINEN Brief: body = "" und tips = [Hinweis auf Lohnsteuerhilfeverein/Steuerberatung].
 - Ein Tipp in tips soll darauf hinweisen, vor dem Absenden bei Unsicherheit eine Beratungsstelle zu fragen.
 
 Antworte NUR mit JSON ohne Markdown:

@@ -5,6 +5,7 @@ import { useDocumentHistory } from '@/hooks/useDocumentHistory';
 import styles from '@/styles/App.module.css';
 import DocumentAssistant from '@/components/DocumentAssistant';
 import LegalLinks from '@/components/LegalLinks';
+import { BeratungHinweis, SteuerHinweis } from '@/components/BeratungHinweis';
 
 interface AnalysisResult {
   summary: string;
@@ -12,6 +13,8 @@ interface AnalysisResult {
   deadlines: string[];
   actions: string[];
   language: 'de' | 'ru';
+  absender?: string;
+  restricted?: 'steuer';
 }
 
 const TEXTS_DE = {
@@ -199,16 +202,20 @@ export default function App() {
         deadlines: Array.isArray(raw.deadlines) ? raw.deadlines : [],
         actions: Array.isArray(raw.actions) ? raw.actions : [],
         language: raw.language || selectedLanguage,
+        absender: raw.absender || '',
+        restricted: raw.restricted === 'steuer' ? 'steuer' : undefined,
       };
 
       // Сохраняем результат анализа
       setAnalysis(analysisData);
       setUploadedImages(result.base64Images);
       setCurrentView('analysis');
-      saveCaseToHistory({ ...analysisData, nextSteps: analysisData.actions }, result.fileName);
 
-      // Увеличиваем счетчик использования
-      incrementUsage();
+      // Налоговые письма не разбираем (§ 2 StBerG): не сохраняем и не списываем лимит
+      if (!analysisData.restricted) {
+        saveCaseToHistory({ ...analysisData, nextSteps: analysisData.actions }, result.fileName);
+        incrementUsage();
+      }
 
       setDocKey((k) => k + 1); // новый документ → новый чат
 
@@ -241,8 +248,8 @@ export default function App() {
 
       <p style={{ margin: '0 0 16px', padding: '10px 12px', background: '#f5f3ff', borderRadius: 10, fontSize: 13, color: '#3829a0' }}>
         🤖 {selectedLanguage === 'de'
-          ? 'DEASY nutzt künstliche Intelligenz (Claude von Anthropic). Ergebnisse werden automatisch erzeugt, können Fehler enthalten und sind keine Rechtsberatung.'
-          : 'DEASY работает на искусственном интеллекте (Claude от Anthropic). Результаты создаются автоматически, могут содержать ошибки и не являются юридической консультацией.'}
+          ? 'DEASY nutzt künstliche Intelligenz (Claude von Anthropic). Ergebnisse werden automatisch erzeugt, können Fehler enthalten und ersetzen keine Beratung durch Fachleute. Steuerschreiben (z. B. Finanzamt, Familienkasse) erklären wir nicht.'
+          : 'DEASY работает на искусственном интеллекте (Claude от Anthropic). Результаты создаются автоматически, могут содержать ошибки и не заменяют консультацию специалиста. Налоговые письма (например, от Finanzamt или Familienkasse) мы не разбираем.'}
       </p>
 
       <div
@@ -324,7 +331,14 @@ export default function App() {
         </details>
       )}
 
-      {analysis && (
+      {analysis?.restricted === 'steuer' && (
+        <>
+          <SteuerHinweis language={selectedLanguage} absender={analysis.absender} />
+          <BeratungHinweis language={selectedLanguage} />
+        </>
+      )}
+
+      {analysis && !analysis.restricted && (
         <>
           <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f0f7ff', borderRadius: '8px' }}>
             <h3>{TEXTS.summary}</h3>
@@ -368,6 +382,8 @@ export default function App() {
             images={uploadedImages}
             language={selectedLanguage}
           />
+
+          <BeratungHinweis language={selectedLanguage} />
         </>
       )}
     </div>

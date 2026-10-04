@@ -104,9 +104,9 @@ export const translations = {
     faqQ4: "Gibt es eine kostenlose Testphase?",
     faqA4: "Ja! Der kostenlose Plan ist zeitlich unbegrenzt (3 Dokumente kostenlos).",
     faqQ5: "Ist DEASY eine Rechtsberatung?",
-    faqA5: "Nein. DEASY erklärt Behördenbriefe allgemein verständlich und hilft beim Formulieren. Die Ergebnisse erzeugt eine KI; sie können Fehler enthalten und ersetzen keine Rechts-, Steuer- oder Sozialberatung. Bei wichtigen Entscheidungen helfen Beratungsstellen, Mietervereine, Steuerberatung oder Anwaltskanzleien.",
-    faqQ6: "Akzeptiert ihr internationale Briefe?",
-    faqA6: "Bisher nur deutsche Briefe (beste Qualität). Internationale Optionen kommen Anfang 2027.",
+    faqA5: "Nein. DEASY erklärt Behördenbriefe allgemein verständlich und hilft beim Formulieren. Die Ergebnisse erzeugt eine KI; sie können Fehler enthalten und ersetzen keine Rechts-, Steuer- oder Sozialberatung. Ob sich in Ihrem Fall z. B. ein Widerspruch lohnt, kann Ihnen nur eine Fachperson sagen – etwa eine Beratungsstelle, der Mieterverein, die Verbraucherzentrale oder eine Anwaltskanzlei (bei geringem Einkommen mit Beratungshilfeschein).",
+    faqQ6: "Hilft DEASY bei Briefen vom Finanzamt?",
+    faqA6: "Nein. Hilfe in Steuersachen dürfen in Deutschland nur Steuerberatungen, Lohnsteuerhilfevereine und einige weitere Stellen leisten. Schreiben vom Finanzamt, zum Kindergeld der Familienkasse, zur Kfz-Steuer oder zu Gemeindesteuern erklären wir daher nicht – DEASY zeigt Ihnen stattdessen, wo Sie Hilfe bekommen. Solche Dokumente werden nicht auf Ihr Kontingent angerechnet.",
 
     // Landing Page - CTA Footer
     ctaTitle: "Bereit, Bürokratie-Stress zu vermeiden?",
@@ -268,9 +268,9 @@ export const translations = {
     faqQ4: "Есть ли бесплатный пробный период?",
     faqA4: "Да! Бесплатный план неограничен по времени (3 документа бесплатно).",
     faqQ5: "DEASY — это юридическая консультация?",
-    faqA5: "Нет. DEASY простыми словами объясняет официальные письма и помогает сформулировать ответ. Результаты создаёт ИИ: в них возможны ошибки, и они не заменяют юридическую, налоговую или социальную консультацию. При важных решениях обращайтесь в Beratungsstellen, Mieterverein, к Steuerberater или адвокату.",
-    faqQ6: "Вы принимаете международные письма?",
-    faqA6: "Пока только немецкие письма (лучшее качество). Международные варианты появятся в начале 2027 года.",
+    faqA5: "Нет. DEASY простыми словами объясняет официальные письма и помогает сформулировать ответ. Результаты создаёт ИИ: в них возможны ошибки, и они не заменяют юридическую, налоговую или социальную консультацию. Стоит ли в вашем случае, например, подавать Widerspruch, может сказать только специалист — Beratungsstelle, Mieterverein, Verbraucherzentrale или адвокат (при низком доходе — по Beratungshilfeschein).",
+    faqQ6: "Помогает ли DEASY с письмами из Finanzamt?",
+    faqA6: "Нет. Помогать в налоговых делах в Германии вправе только Steuerberater, Lohnsteuerhilfeverein и некоторые другие организации. Поэтому письма из Finanzamt, по Kindergeld от Familienkasse, по Kfz-Steuer или местным налогам мы не разбираем — вместо этого DEASY подскажет, куда обратиться. Такие документы не засчитываются в лимит.",
 
     // Landing Page - CTA Footer
     ctaTitle: "Готов избавиться от бюрократического стресса?",

@@ -43,6 +43,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const language: 'de' | 'ru' = req.body?.language === 'ru' ? 'ru' : 'de';
+  if (req.body?.analysis?.restricted === 'steuer') {
+    return res.status(403).json({
+      success: false,
+      error:
+        language === 'ru'
+          ? 'По налоговым вопросам DEASY не консультирует. Обратитесь в Lohnsteuerhilfeverein или к Steuerberater.'
+          : 'Zu Steuersachen berät DEASY nicht. Bitte wenden Sie sich an einen Lohnsteuerhilfeverein oder eine Steuerberatung.',
+    });
+  }
   const a = req.body?.analysis || {};
   const summary: string = [
     String(a.summary || req.body?.analysisSummary || req.body?.context || ''),
@@ -78,6 +87,7 @@ ${summary || '(нет данных)'}
 - Ты ИИ-помощник для понимания писем, а не адвокат и не налоговый консультант. Объясняй, что написано в письме, термины, общие правила и типичные варианты действий.
 - Не давай индивидуальную юридическую оценку: не утверждай, что решение незаконно или ошибочно, не прогнозируй шансы обжалования и не говори «вам нужно обязательно подать Widerspruch». Вместо этого объясни, когда люди обычно рассматривают такой вариант и какие сроки действуют.
 - Перед важным решением (оспорить, не платить, суд, крупные суммы, налоги, вопросы ВНЖ) советуй бесплатную или недорогую консультацию: Migrationsberatung, Sozialberatung, Verbraucherzentrale, Mieterverein, Lohnsteuerhilfeverein, адвокат (Beratungshilfeschein).
+- Налоговые вопросы (Finanzamt, налоговая декларация или решение, Kindergeld от Familienkasse, Kfz-Steuer, Grundsteuer и т. п.) ты не разбираешь по существу: вежливо объясни, что помощь в налоговых делах в Германии вправе оказывать только Steuerberater, Lohnsteuerhilfeverein и некоторые другие, и предложи обратиться туда или напрямую в Finanzamt.
 - Если не уверен — так и скажи.`
       : `Du bist der DEASY-Assistent. Du erklärst deutsche Behördenbriefe verständlich.
 Der Nutzer hat einen Brief hochgeladen. Zusammenfassung der Analyse:
@@ -90,6 +100,7 @@ Wichtige Grenzen (Rechtsdienstleistungsgesetz, Steuerberatungsgesetz):
 - Du bist ein KI-Assistent zum Verstehen von Briefen, kein Anwalt und keine Steuerberatung. Erkläre, was im Brief steht, Fachbegriffe, allgemeine Regeln und typische Handlungsmöglichkeiten.
 - Keine rechtliche Einzelfallprüfung: Behaupte nicht, ein Bescheid sei rechtswidrig oder falsch, prognostiziere keine Erfolgsaussichten und sage nicht „Sie müssen Widerspruch einlegen“. Erkläre stattdessen, wann Menschen diese Möglichkeit üblicherweise nutzen und welche Fristen gelten.
 - Vor wichtigen Entscheidungen (Widerspruch, nicht zahlen, Gericht, hohe Beträge, Steuern, Aufenthalt) empfiehl Beratung: Migrationsberatung, Sozialberatung, Verbraucherzentrale, Mieterverein, Lohnsteuerhilfeverein, Anwalt (Beratungshilfeschein).
+- Steuerfragen (Finanzamt, Steuererklärung oder -bescheid, Kindergeld der Familienkasse, Kfz-Steuer, Grundsteuer usw.) beantwortest du nicht inhaltlich: Erkläre freundlich, dass Hilfe in Steuersachen in Deutschland nur Steuerberatungen, Lohnsteuerhilfevereine und einige andere Stellen leisten dürfen, und verweise dorthin oder direkt an das Finanzamt.
 - Wenn du unsicher bist, sag es.`;
 
   // Изображения письма прикрепляем к первому сообщению пользователя

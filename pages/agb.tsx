@@ -44,7 +44,14 @@ export default function AGB() {
           Aufenthaltsfragen, sollte eine Beratungsstelle oder eine zugelassene Fachperson hinzugezogen werden.
         </p>
         <p>
-          (3) Wir bemühen uns um eine hohe Verfügbarkeit, schulden aber keine bestimmte Verfügbarkeit des Dienstes.
+          (3) Schreiben in Steuersachen (insbesondere vom Finanzamt, vom Bundeszentralamt für Steuern, von der
+          Familienkasse zum Kindergeld, vom Hauptzollamt sowie zu Gemeindesteuern) werden nicht inhaltlich ausgewertet,
+          da Hilfe in Steuersachen nur durch die nach dem Steuerberatungsgesetz befugten Personen und Stellen geleistet
+          werden darf. In diesen Fällen weist {COMPANY.brand} lediglich auf geeignete Beratungsstellen hin; das Dokument
+          wird nicht auf das Kontingent angerechnet.
+        </p>
+        <p>
+          (4) Wir bemühen uns um eine hohe Verfügbarkeit, schulden aber keine bestimmte Verfügbarkeit des Dienstes.
           Wartungen und Störungen bei Dienstleistern (Hosting, KI-Anbieter, Zahlungsdienst) können zu Unterbrechungen
           führen.
         </p>
