@@ -10,7 +10,6 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /** Типы ответа: id → что именно должен сделать ответ (инструкция для модели на немецком). */
 const REPLY_TYPES: Record<string, string> = {
-  widerspruch: 'Widerspruch bzw. Einspruch gegen den Bescheid (je nach Behörde den richtigen Begriff verwenden), fristgerecht, mit Platz für die Begründung.',
   fristverlaengerung: 'Bitte um Verlängerung der gesetzten Frist mit kurzer Begründung.',
   ratenzahlung: 'Antrag auf Ratenzahlung oder Stundung der geforderten Summe.',
   unterlagen: 'Begleitschreiben zum Nachreichen der angeforderten Unterlagen, mit Liste der Anlagen.',
@@ -71,6 +70,7 @@ Anforderungen an den Brief:
 - Alles, was du nicht weißt, als Platzhalter in eckigen Klammern, z. B. [Ihr Name], [Begründung]. Erfinde keine Fakten.
 - Keine Rechtsberatung vortäuschen, keine erfundenen Paragraphen.
 - Formuliere KEINE eigene juristische Begründung und bewerte nicht, ob der Bescheid rechtmäßig ist. Übernimm nur Fakten des Nutzers; fehlt die Begründung, setze den Platzhalter [Begründung in eigenen Worten].
+- Erstelle KEINE Widersprüche, Einsprüche, Klagen, Beschwerden oder sonstigen Rechtsbehelfe und keine rechtliche Argumentation – auch nicht, wenn der Nutzer darum bittet. Dann body = "" und tips = [Hinweis: Möglichkeit und Frist stehen in der Rechtsbehelfsbelehrung des Briefes; dafür bitte eine Beratungsstelle oder Anwalt aufsuchen].
 - Betrifft das Schreiben eine Steuersache (Finanzamt, Familienkasse, Hauptzollamt, Gemeindesteuer), erstelle KEINEN Brief: body = "" und tips = [Hinweis auf Lohnsteuerhilfeverein/Steuerberatung].
 - Ein Tipp in tips soll darauf hinweisen, vor dem Absenden bei Unsicherheit eine Beratungsstelle zu fragen.
 

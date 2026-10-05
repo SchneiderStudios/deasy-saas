@@ -26,6 +26,38 @@ export interface Analysis {
   absender?: string;
   /** 'steuer' = Steuersache → keine inhaltliche Analyse (Hilfeleistung in Steuersachen nur durch Befugte, § 2 StBerG) */
   restricted?: 'steuer';
+  aktenzeichen?: string;
+  briefdatum?: string;
+  telefon?: string;
+  /** Fristen mit ISO-Datum für den Kalender-Export */
+  fristen?: { datum: string; was: string }[];
+  unterlagen?: string[];
+  echtheit?: 'unauffaellig' | 'pruefen';
+  betrugsHinweise?: string[];
+}
+
+const clip = (v: unknown, n = 200) => String(v ?? '').trim().slice(0, n);
+
+function toFristen(v: unknown): { datum: string; was: string }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((f: any) => ({ datum: clip(f?.datum, 10), was: clip(f?.was, 200) }))
+    .filter((f) => /^\d{4}-\d{2}-\d{2}$/.test(f.datum) && !Number.isNaN(Date.parse(f.datum)))
+    .slice(0, 10);
+}
+
+/** Поля, которые возвращаем всегда (и для налоговых писем): проверка на мошенничество и реквизиты для звонка */
+function extras(parsed: any) {
+  const hinweise = toStringArray(parsed?.betrugsHinweise).slice(0, 8);
+  return {
+    aktenzeichen: clip(parsed?.aktenzeichen, 80),
+    briefdatum: clip(parsed?.briefdatum, 20),
+    telefon: clip(parsed?.telefon, 40),
+    echtheit: (hinweise.length || String(parsed?.echtheit).toLowerCase().startsWith('pr') ? 'pruefen' : 'unauffaellig') as
+      | 'pruefen'
+      | 'unauffaellig',
+    betrugsHinweise: hinweise,
+  };
 }
 
 /**
@@ -51,44 +83,42 @@ function normalizeRisk(v: unknown): Risk {
 }
 
 function buildPrompt(language: 'de' | 'ru', pageCount: number): string {
+  const ru = language === 'ru';
   const pagesNote =
     pageCount > 1
-      ? language === 'ru'
+      ? ru
         ? `Письмо состоит из ${pageCount} страниц (изображения по порядку). `
         : `Der Brief besteht aus ${pageCount} Seiten (Bilder in Reihenfolge). `
       : '';
+  const L = ru ? 'на русском' : 'auf Deutsch';
 
-  if (language === 'ru') {
-    return `${pagesNote}Ты помощник, который объясняет немецкие официальные письма людям, плохо знающим немецкий язык.
-Проанализируй письмо и ответь ТОЛЬКО JSON-объектом без markdown:
-{
-  "absender": "кто отправил письмо (ведомство или организация), как указано в письме",
-  "kategorie": "steuer" | "sonstige",
-  "summary": "2-4 простых предложения на русском: кто пишет, что хочет, что будет, если ничего не делать",
-  "risk": "Gering" | "Mittel" | "Kritisch",
-  "deadlines": ["конкретная дата и что к ней сделать"],
-  "actions": ["конкретное действие на русском"]
-}
-Правила: risk = "Kritisch", если есть срок, штраф, отказ, взыскание или судебные последствия; "Mittel" — нужно действие без жёсткой угрозы; "Gering" — информационное письмо.
-Если сроков нет — пустой массив. Не придумывай даты, которых нет в письме.
-Ты даёшь общую понятную информацию, а не юридическую консультацию: не оценивай, законно ли решение, и не прогнозируй шансы обжалования. В actions можно назвать общие варианты действий и где получить консультацию (Beratungsstelle, Mieterverein, Lohnsteuerhilfeverein, адвокат).
-kategorie = "steuer", wenn das Schreiben eine Steuersache betrifft: Finanzamt, Bundeszentralamt für Steuern, Steuerbescheid, Steuererklärung, Steuernummer/Steuer-ID-Anfrage, Kindergeld der Familienkasse, Kfz-Steuer oder Zoll (Hauptzollamt), Grund-, Hunde- oder Zweitwohnungsteuer. In diesem Fall lass summary, deadlines und actions LEER. Sonst kategorie = "sonstige".`;
+  // Схема одна; тексты для пользователя — на выбранном языке
+  return `${pagesNote}${
+    ru
+      ? 'Ты помогаешь людям, плохо знающим немецкий, понять официальное письмо: что в нём написано, какие сроки и куда обратиться.'
+      : 'Du hilfst Menschen, einen offiziellen Brief zu verstehen: was drinsteht, welche Fristen gelten und an wen man sich wenden kann.'
   }
-
-  return `${pagesNote}Du hilfst Menschen, deutsche Behördenbriefe zu verstehen.
-Analysiere den Brief und antworte NUR mit einem JSON-Objekt ohne Markdown:
+Antworte NUR mit einem JSON-Objekt ohne Markdown:
 {
-  "absender": "Absender (Behörde oder Organisation) wie im Brief angegeben",
+  "absender": "Absender (Behörde/Organisation) wie im Brief",
   "kategorie": "steuer" | "sonstige",
-  "summary": "2-4 einfache Sätze: wer schreibt, was wird verlangt, was passiert, wenn man nichts tut",
+  "aktenzeichen": "Aktenzeichen/Kundennummer/BG-Nummer aus dem Brief oder leer",
+  "briefdatum": "Datum des Briefes als TT.MM.JJJJ oder leer",
+  "telefon": "Telefonnummer des Absenders laut Brief oder leer",
+  "summary": "2–4 einfache Sätze ${L}: wer schreibt, was steht im Brief, was passiert laut Brief, wenn man nichts tut",
   "risk": "Gering" | "Mittel" | "Kritisch",
-  "deadlines": ["konkretes Datum und was bis dahin zu tun ist"],
-  "actions": ["konkrete Handlung in einfacher Sprache"]
+  "fristen": [{"datum": "JJJJ-MM-TT", "was": "was bis dahin laut Brief zu tun ist, ${L}"}],
+  "unterlagen": ["Unterlagen, die der Brief ausdrücklich anfordert, ${L}"],
+  "actions": ["nächster praktischer Schritt ${L}"],
+  "echtheit": "unauffaellig" | "pruefen",
+  "betrugsHinweise": ["konkretes Warnzeichen aus dem Brief ${L}"]
 }
-Regeln: risk = "Kritisch" bei Frist mit Sanktion, Ablehnung, Mahnung, Vollstreckung oder Gericht; "Mittel" wenn eine Handlung nötig ist; "Gering" bei reiner Information.
-Keine Fristen → leeres Array. Erfinde keine Daten, die nicht im Brief stehen.
-Du gibst allgemeine, verständliche Informationen, keine Rechtsberatung: Bewerte nicht, ob der Bescheid rechtmäßig ist, und prognostiziere keine Erfolgsaussichten. In actions darfst du allgemeine Handlungsoptionen und Beratungsangebote nennen (Beratungsstelle, Mieterverein, Lohnsteuerhilfeverein, Anwalt).
-kategorie = "steuer", wenn das Schreiben eine Steuersache betrifft: Finanzamt, Bundeszentralamt für Steuern, Steuerbescheid, Steuererklärung, Steuernummer/Steuer-ID-Anfrage, Kindergeld der Familienkasse, Kfz-Steuer oder Zoll (Hauptzollamt), Grund-, Hunde- oder Zweitwohnungsteuer. In diesem Fall lass summary, deadlines und actions LEER. Sonst kategorie = "sonstige".`;
+Regeln:
+- risk = "Kritisch" bei Frist mit Sanktion, Mahnung, Vollstreckung oder Gericht; "Mittel" wenn etwas zu tun ist; "Gering" bei reiner Information.
+- Nur Daten, die im Brief stehen. Keine erfundenen Fristen. Relative Fristen („innerhalb eines Monats nach Zugang“) nur als Text in actions, nicht in fristen.
+- actions beschränken sich auf: Frist einhalten, angeforderte Unterlagen schicken, beim Absender nachfragen, eine passende Beratungsstelle aufsuchen. KEINE rechtliche Bewertung, keine Empfehlung für oder gegen Widerspruch/Klage, keine Erfolgsprognose.
+- echtheit = "pruefen", wenn Warnzeichen für Betrug vorliegen, z. B.: Zahlung auf ein privates/ausländisches Konto, Gutscheinkarten oder Krypto, ungewöhnlicher Zeitdruck oder Drohungen, fehlendes Aktenzeichen bei einer Behörde, Kontakt nur per WhatsApp/Messenger, Absender-E-Mail mit Gmail/Outlook statt Behördendomain, Rechtschreibfehler im Briefkopf, Links zu fremden Websites. Liste nur Warnzeichen auf, die wirklich vorkommen; sonst leeres Array und "unauffaellig".
+- kategorie = "steuer", wenn das Schreiben eine Steuersache betrifft: Finanzamt, Bundeszentralamt für Steuern, Steuerbescheid, Steuererklärung, Steuer-ID, Kindergeld der Familienkasse, Kfz-Steuer oder Zoll (Hauptzollamt), Grund-, Hunde- oder Zweitwohnungsteuer. Dann lass summary, fristen, unterlagen und actions LEER – echtheit und betrugsHinweise trotzdem ausfüllen.`;
 }
 
 function extractJson(text: string): any | null {
@@ -177,10 +207,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Keine inhaltliche Auswertung von Steuersachen — nur Hinweis auf befugte Stellen (UI)
       return res.status(200).json({
         success: true,
-        analysis: { summary: '', risk: 'Mittel', deadlines: [], actions: [], language, absender, restricted: 'steuer' },
+        analysis: {
+          summary: '',
+          risk: 'Mittel',
+          deadlines: [],
+          actions: [],
+          language,
+          absender,
+          restricted: 'steuer',
+          ...extras(parsed),
+          telefon: '', // для налоговых — номер берём только с официального сайта
+        },
       });
     }
     analysis.absender = absender;
+    if (parsed) {
+      const fristen = toFristen(parsed.fristen);
+      Object.assign(analysis, extras(parsed), { fristen, unterlagen: toStringArray(parsed.unterlagen).slice(0, 10) });
+      // Совместимость: deadlines (строки) строим из fristen, если модель не вернула их
+      if (!analysis.deadlines.length && fristen.length) {
+        analysis.deadlines = fristen.map((f) => `${f.datum.split('-').reverse().join('.')} – ${f.was}`);
+      }
+    }
 
     if (!analysis.summary) {
       return res.status(502).json({

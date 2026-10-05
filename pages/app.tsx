@@ -6,6 +6,9 @@ import styles from '@/styles/App.module.css';
 import DocumentAssistant from '@/components/DocumentAssistant';
 import LegalLinks from '@/components/LegalLinks';
 import { BeratungHinweis, SteuerHinweis } from '@/components/BeratungHinweis';
+import { FristenKarte, EchtheitCheck, AnrufVorbereitung } from '@/components/LetterTools';
+import HistoryView from '@/components/HistoryView';
+import type { SavedCase } from '@/hooks/useDocumentHistory';
 
 interface AnalysisResult {
   summary: string;
@@ -15,6 +18,13 @@ interface AnalysisResult {
   language: 'de' | 'ru';
   absender?: string;
   restricted?: 'steuer';
+  aktenzeichen?: string;
+  briefdatum?: string;
+  telefon?: string;
+  fristen?: { datum: string; was: string }[];
+  unterlagen?: string[];
+  echtheit?: 'unauffaellig' | 'pruefen';
+  betrugsHinweise?: string[];
 }
 
 const TEXTS_DE = {
@@ -111,12 +121,12 @@ const TEXTS_RU = {
 export default function App() {
   const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers, activation, activationError, dismissActivation } = usePricingTiers();
   const { convertFileToImages, error: pdfError, clearError } = usePdfUpload();
-  const { saveCaseToHistory } = useDocumentHistory();
+  const { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone } = useDocumentHistory();
 
   const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
   const TEXTS = selectedLanguage === 'ru' ? TEXTS_RU : TEXTS_DE;
 
-  const [currentView, setCurrentView] = useState<'upload' | 'analysis'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'analysis' | 'history'>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -202,6 +212,13 @@ export default function App() {
         language: raw.language || selectedLanguage,
         absender: raw.absender || '',
         restricted: raw.restricted === 'steuer' ? 'steuer' : undefined,
+        aktenzeichen: raw.aktenzeichen || '',
+        briefdatum: raw.briefdatum || '',
+        telefon: raw.telefon || '',
+        fristen: Array.isArray(raw.fristen) ? raw.fristen : [],
+        unterlagen: Array.isArray(raw.unterlagen) ? raw.unterlagen : [],
+        echtheit: raw.echtheit === 'pruefen' ? 'pruefen' : 'unauffaellig',
+        betrugsHinweise: Array.isArray(raw.betrugsHinweise) ? raw.betrugsHinweise : [],
       };
 
       // Сохраняем результат анализа
@@ -211,7 +228,7 @@ export default function App() {
 
       // Налоговые письма не разбираем (§ 2 StBerG): не сохраняем и не списываем лимит
       if (!analysisData.restricted) {
-        saveCaseToHistory({ ...analysisData, nextSteps: analysisData.actions }, result.fileName);
+        saveCaseToHistory(analysisData, result.fileName);
         incrementUsage();
       }
 
@@ -224,6 +241,29 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Открыть письмо из истории (без повторного анализа и без списания лимита)
+  const openCase = (c: SavedCase) => {
+    setAnalysis({
+      summary: c.summary || '',
+      risk: (c.risk as AnalysisResult['risk']) || 'Mittel',
+      deadlines: c.deadlines || [],
+      actions: c.actions || [],
+      language: (c.language as 'de' | 'ru') || selectedLanguage,
+      absender: c.absender,
+      aktenzeichen: c.aktenzeichen,
+      briefdatum: c.briefdatum,
+      telefon: c.telefon,
+      fristen: c.fristen || [],
+      unterlagen: c.unterlagen || [],
+      echtheit: c.echtheit === 'pruefen' ? 'pruefen' : 'unauffaellig',
+      betrugsHinweise: c.betrugsHinweise || [],
+    });
+    setUploadedImages([]);
+    setDocKey((k) => k + 1);
+    setCurrentView('analysis');
+    window.scrollTo({ top: 0 });
   };
 
   // Drag and drop
@@ -332,6 +372,8 @@ export default function App() {
       {analysis?.restricted === 'steuer' && (
         <>
           <SteuerHinweis language={selectedLanguage} absender={analysis.absender} />
+          <div style={{ height: 16 }} />
+          <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
           <BeratungHinweis language={selectedLanguage} />
         </>
       )}
@@ -356,23 +398,36 @@ export default function App() {
             </p>
           </div>
 
-          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '8px' }}>
-            <h3>{TEXTS.deadlines}</h3>
-            <ul>
-              {analysis.deadlines.map((d, i) => (
-                <li key={i}>{d}</li>
-              ))}
-            </ul>
-          </div>
+          <FristenKarte
+            fristen={analysis.fristen}
+            deadlines={analysis.deadlines}
+            absender={analysis.absender}
+            aktenzeichen={analysis.aktenzeichen}
+            language={selectedLanguage}
+          />
 
-          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#ede7f6', borderRadius: '8px' }}>
-            <h3>{TEXTS.actions}</h3>
-            <ul>
-              {analysis.actions.map((a, i) => (
-                <li key={i}>{a}</li>
-              ))}
-            </ul>
-          </div>
+          {analysis.actions.length > 0 && (
+            <div style={{ marginBottom: '16px', padding: '14px 16px', backgroundColor: '#ede7f6', borderRadius: '12px' }}>
+              <h3 style={{ margin: '0 0 8px' }}>{selectedLanguage === 'de' ? '👣 Nächste Schritte' : '👣 Что сделать'}</h3>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {analysis.actions.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
+
+          <AnrufVorbereitung
+            absender={analysis.absender}
+            aktenzeichen={analysis.aktenzeichen}
+            briefdatum={analysis.briefdatum}
+            telefon={analysis.telefon}
+            unterlagen={analysis.unterlagen}
+            verdacht={analysis.echtheit === 'pruefen'}
+            language={selectedLanguage}
+          />
 
           <DocumentAssistant
             key={docKey}
@@ -409,6 +464,15 @@ export default function App() {
             <option value="de">DE</option>
             <option value="ru">RU</option>
           </select>
+          <button
+            onClick={() => setCurrentView('history')}
+            className={styles.langSelect}
+            style={{ cursor: 'pointer' }}
+            aria-label={selectedLanguage === 'de' ? 'Meine Briefe' : 'Мои письма'}
+            title={selectedLanguage === 'de' ? 'Meine Briefe' : 'Мои письма'}
+          >
+            📁{cases.length > 0 ? ` ${cases.length}` : ''}
+          </button>
           {usageStats.tier === 'free' && (
             <button onClick={() => setShowPricingModal(true)} className={styles.plusButton}>
               Plus
@@ -446,6 +510,16 @@ export default function App() {
       <main className={styles.mainContent}>
         {currentView === 'upload' && renderUploadView()}
         {currentView === 'analysis' && renderAnalysisView()}
+        {currentView === 'history' && (
+          <HistoryView
+            cases={cases}
+            language={selectedLanguage}
+            onOpen={openCase}
+            onDelete={deleteCaseFromHistory}
+            onToggleDone={toggleDone}
+            onBack={() => setCurrentView(analysis ? 'analysis' : 'upload')}
+          />
+        )}
       </main>
 
       <LegalLinks compact />

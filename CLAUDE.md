@@ -10,13 +10,15 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 1. `pages/app.tsx` → `hooks/usePdfUpload.ts` `convertFileToImages(file)`
    → `{ base64Images: string[] }` — JPEG без префикса `data:`, длинная сторона ≤ 1800 px, PDF ≤ 3 стр.
 2. `POST /api/analyze-document` тело `{ images: string[], language: 'de'|'ru' }`
-   → `{ success: true, analysis: { summary, risk: 'Gering'|'Mittel'|'Kritisch', deadlines: string[], actions: string[], language } }`
+   → `{ success: true, analysis: { summary, risk: 'Gering'|'Mittel'|'Kritisch', deadlines: string[], actions: string[], language,
+      absender, aktenzeichen, briefdatum, telefon, fristen: {datum:'YYYY-MM-DD', was}[], unterlagen: string[], echtheit: 'unauffaellig'|'pruefen', betrugsHinweise: string[] } }`
+   UI: `components/LetterTools.tsx` (сроки + .ics, Echtheits-Check, подготовка к звонку), `components/HistoryView.tsx` («Мои письма»).
    или `{ error }` с кодом 4xx/5xx.
 3. Экран анализа → `components/DocumentAssistant.tsx` (вкладки «Вопросы» и «Написать ответ»).
 4. `POST /api/chat` тело `{ messages: {role, content}[], analysis, images, language }`
    → `{ success: true, message }` или `{ success: false, error }`. Картинки письма прикрепляются к первому сообщению пользователя.
 5. `POST /api/generate-reply` тело `{ replyType, notes, analysis, images, language }`
-   (`replyType`: widerspruch | fristverlaengerung | ratenzahlung | unterlagen | rueckfrage | bestaetigung | frei)
+   (`replyType`: fristverlaengerung | ratenzahlung | unterlagen | rueckfrage | bestaetigung | frei — **без Widerspruch/Einspruch/Klage**)
    → `{ success: true, reply: { subject, body (немецкий), translation (рус., если language=ru), tips[], placeholders[] } }`.
    Готовые шаблоны без ИИ — `lib/replyTemplates.ts`.
 
@@ -30,6 +32,7 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 - Письмо в ведомство всегда на немецком; русскому пользователю — перевод рядом.
 
 ## Юридические правила (Германия) — не ломать!
+- **Продукт = перевод + сроки + куда идти.** Никаких писем-возражений (Widerspruch/Einspruch/Klage), никакой правовой оценки. Простые письма (продление срока, досылка документов, вопрос) — можно.
 - Данные владельца и ссылки Stripe — только в `lib/siteConfig.ts`.
 - На КАЖДОЙ странице футер `components/LegalLinks.tsx`: Impressum, Datenschutz, AGB, Widerrufsbelehrung, «Verträge hier kündigen» (§312k BGB), «Vertrag widerrufen» (§356a BGB). Подписи кнопок заданы законом.
 - `/vertrag` + `/api/vertrag`: кнопки «jetzt kündigen» / «Widerruf bestätigen», подтверждение по e-mail через Resend (env `RESEND_API_KEY`, `MAIL_FROM`, `OWNER_EMAIL`), отмена в Stripe.
@@ -44,7 +47,6 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 ## Известные долги (не трогать без задачи)
 - `prisma`, `next-auth` в зависимостях, но не подключены.
 - Лимиты и тариф хранятся в `localStorage` (тариф проверяется через `/api/verify-payment`); без аккаунтов.
-- История (`useDocumentHistory`) сохраняется, но экрана «Мои документы» пока нет.
 
 ## Правила работы
 - Никаких прямых коммитов в `main`: ветка → Pull Request → проверка на Vercel Preview → Merge.
