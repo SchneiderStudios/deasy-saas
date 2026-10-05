@@ -1,62 +1,93 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+
+/**
+ * История писем — только в браузере пользователя (localStorage), без сервера.
+ * Сами изображения писем не сохраняем: только результат анализа.
+ */
 
 export interface SavedCase {
   id: string;
-  date: string;
+  date: string; // ISO — когда загружено
   fileName: string;
   language: string;
+  absender?: string;
   summary?: string;
   risk?: string;
   deadlines?: string[];
-  nextSteps?: string[];
-  actionSuggestions?: string[];
+  actions?: string[];
+  fristen?: { datum: string; was: string }[];
+  aktenzeichen?: string;
+  briefdatum?: string;
+  telefon?: string;
+  unterlagen?: string[];
+  echtheit?: string;
+  betrugsHinweise?: string[];
+  erledigt?: boolean;
 }
 
+const KEY = 'deasyCases';
+const MAX_CASES = 50;
+
+const read = (): SavedCase[] => {
+  try {
+    const list = JSON.parse(localStorage.getItem(KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+};
+const write = (list: SavedCase[]) => {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(list.slice(-MAX_CASES)));
+  } catch (e) {
+    console.error('History speichern fehlgeschlagen', e);
+  }
+};
+
 export function useDocumentHistory() {
-  const saveCaseToHistory = useCallback((analysis: any, fileName: string) => {
-    try {
-      const cases = JSON.parse(localStorage.getItem('deasyCases') || '[]');
+  const [cases, setCases] = useState<SavedCase[]>([]);
 
-      const newCase: SavedCase = {
-        id: Date.now().toString(),
-        date: new Date().toLocaleDateString('de-DE'),
-        fileName: fileName,
-        language: analysis.language || 'de',
-        summary: analysis.summary,
-        risk: analysis.risk,
-        deadlines: analysis.deadlines,
-        nextSteps: analysis.nextSteps,
-        actionSuggestions: analysis.actionSuggestions,
-      };
-
-      cases.push(newCase);
-
-      // Keep only last 50 cases
-      const trimmedCases = cases.slice(-50);
-      localStorage.setItem('deasyCases', JSON.stringify(trimmedCases));
-    } catch (error) {
-      console.error('Error saving case to history:', error);
-    }
+  useEffect(() => {
+    setCases(read());
   }, []);
 
-  const getCaseHistory = useCallback((): SavedCase[] => {
-    try {
-      return JSON.parse(localStorage.getItem('deasyCases') || '[]');
-    } catch (error) {
-      console.error('Error retrieving case history:', error);
-      return [];
-    }
+  const saveCaseToHistory = useCallback((analysis: any, fileName: string): string => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const entry: SavedCase = {
+      id,
+      date: new Date().toISOString(),
+      fileName,
+      language: analysis.language || 'de',
+      absender: analysis.absender,
+      summary: analysis.summary,
+      risk: analysis.risk,
+      deadlines: analysis.deadlines,
+      actions: analysis.actions,
+      fristen: analysis.fristen,
+      aktenzeichen: analysis.aktenzeichen,
+      briefdatum: analysis.briefdatum,
+      telefon: analysis.telefon,
+      unterlagen: analysis.unterlagen,
+      echtheit: analysis.echtheit,
+      betrugsHinweise: analysis.betrugsHinweise,
+    };
+    const next = [...read(), entry];
+    write(next);
+    setCases(next.slice(-MAX_CASES));
+    return id;
   }, []);
 
-  const deleteCaseFromHistory = useCallback((caseId: string) => {
-    try {
-      const cases = JSON.parse(localStorage.getItem('deasyCases') || '[]');
-      const filtered = cases.filter((c: SavedCase) => c.id !== caseId);
-      localStorage.setItem('deasyCases', JSON.stringify(filtered));
-    } catch (error) {
-      console.error('Error deleting case from history:', error);
-    }
+  const deleteCaseFromHistory = useCallback((id: string) => {
+    const next = read().filter((c) => c.id !== id);
+    write(next);
+    setCases(next);
   }, []);
 
-  return { saveCaseToHistory, getCaseHistory, deleteCaseFromHistory };
+  const toggleDone = useCallback((id: string) => {
+    const next = read().map((c) => (c.id === id ? { ...c, erledigt: !c.erledigt } : c));
+    write(next);
+    setCases(next);
+  }, []);
+
+  return { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone };
 }

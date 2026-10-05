@@ -9,35 +9,6 @@ export interface ReplyTemplate {
 /** Готовые шаблоны без ИИ — запасной вариант. Письмо в ведомство всегда на немецком, body_ru — перевод для понимания. */
 export const REPLY_TEMPLATES: ReplyTemplate[] = [
   {
-    id: 'widerspruch_jobcenter',
-    title_de: 'Widerspruch beim Jobcenter',
-    title_ru: 'Возражение в Jobcenter (Widerspruch)',
-    body_de: `[Ihr Name]
-[Ihre Adresse]
-
-Jobcenter [Ort]
-[Adresse]
-
-[Ort], [Datum]
-
-BG-Nummer: [Nummer der Bedarfsgemeinschaft]
-Widerspruch gegen den Bescheid vom [Datum des Bescheids]
-
-Sehr geehrte Damen und Herren,
-
-gegen den oben genannten Bescheid lege ich hiermit Widerspruch ein.
-
-Begründung:
-[Begründung einfügen]
-
-Ich bitte um Überprüfung des Bescheids und um eine schriftliche Eingangsbestätigung.
-
-Mit freundlichen Grüßen
-
-[Ihr Name]`,
-    body_ru: `Перевод: подаю возражение против решения от [дата]. Обоснование: [...]. Прошу пересмотреть решение и письменно подтвердить получение.`,
-  },
-  {
     id: 'fristverlaengerung',
     title_de: 'Bitte um Fristverlängerung',
     title_ru: 'Просьба продлить срок',

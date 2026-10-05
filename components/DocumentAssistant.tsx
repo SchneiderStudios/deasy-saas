@@ -39,7 +39,7 @@ const T = {
     welcome: 'Hallo! Ich bin ein KI-Assistent (kein Mensch). Ich habe Ihren Brief gelesen und erkläre ihn allgemein verständlich. Meine Antworten können Fehler enthalten und ersetzen keine Beratung. Was möchten Sie wissen?',
     chips: [
       'Was muss ich jetzt tun?',
-      'Welche Antwortmöglichkeiten habe ich?',
+      'An wen kann ich mich wenden?',
       'Erkläre die Fachbegriffe',
       'Was passiert, wenn ich nichts tue?',
       'Welche Unterlagen brauche ich?',
@@ -67,7 +67,6 @@ const T = {
     replyError: 'Brief konnte nicht erstellt werden. Bitte erneut versuchen.',
     askAboutLetter: '❓ Frage zum Brief',
     types: {
-      widerspruch: ['Widerspruch / Einspruch', 'Ich bin nicht einverstanden'],
       fristverlaengerung: ['Fristverlängerung', 'Ich brauche mehr Zeit'],
       ratenzahlung: ['Ratenzahlung', 'Ich kann nicht alles zahlen'],
       unterlagen: ['Unterlagen nachreichen', 'Dokumente schicken'],
@@ -83,7 +82,7 @@ const T = {
     welcome: 'Здравствуйте! Я ИИ-ассистент (не человек). Я прочитал ваше письмо и объясню его простыми словами. В ответах возможны ошибки, они не заменяют консультацию. Что хотите узнать?',
     chips: [
       'Что мне сейчас делать?',
-      'Какие у меня варианты ответа?',
+      'Куда мне обратиться?',
       'Объясни немецкие термины',
       'Что будет, если ничего не делать?',
       'Какие документы нужны?',
@@ -111,7 +110,6 @@ const T = {
     replyError: 'Не удалось составить письмо. Попробуйте ещё раз.',
     askAboutLetter: '❓ Спросить про письмо',
     types: {
-      widerspruch: ['Возражение', 'Widerspruch / Einspruch'],
       fristverlaengerung: ['Продлить срок', 'Fristverlängerung'],
       ratenzahlung: ['Рассрочка', 'Не могу оплатить сразу'],
       unterlagen: ['Досылаю документы', 'Unterlagen nachreichen'],
@@ -202,7 +200,7 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
   };
 
   // ---------- Reply ----------
-  const [replyType, setReplyType] = useState<string>('widerspruch');
+  const [replyType, setReplyType] = useState<string>('fristverlaengerung');
   const [notes, setNotes] = useState('');
   const [reply, setReply] = useState<Reply | null>(null);
   const [letter, setLetter] = useState('');
