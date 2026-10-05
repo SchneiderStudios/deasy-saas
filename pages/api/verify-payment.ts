@@ -1,25 +1,32 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 /**
- * Проверка оплаты через Stripe после возврата с Payment Link.
+ * Проверка разовой оплаты пакета после возврата с Stripe Payment Link.
  * GET /api/verify-payment?session_id=cs_...
- * → { success: true, plan: 'plus'|'pro', paidUntil: ISO } или { success: false, error }
+ * → { success: true, letters, expiresAt } или { success: false, error }
  *
- * Тариф определяется по сумме оплаты, поэтому ID цен в коде не нужны.
- * Требуется переменная окружения STRIPE_SECRET_KEY в Vercel.
+ * - Пакет определяется по сумме (499 → 5 писем, 999 → 15 писем).
+ * - Повторная активация того же платежа блокируется: при первой активации ставим
+ *   metadata[deasy_redeemed] на PaymentIntent в Stripe (БД не нужна).
+ * Нужен STRIPE_SECRET_KEY (restricted: Checkout Sessions Read, Payment Intents Write).
  */
 
-const PLAN_BY_AMOUNT_CENTS: Record<number, 'plus' | 'pro'> = {
-  499: 'plus',
-  999: 'pro',
+const LETTERS_BY_AMOUNT_CENTS: Record<number, number> = {
+  499: 5,
+  999: 15,
 };
+const VALID_MONTHS = 12;
 
-const DAY = 24 * 60 * 60 * 1000;
 const STRIPE_API = process.env.STRIPE_API_BASE || 'https://api.stripe.com/v1'; // переопределяется только в тестах
 
-async function stripeGet(path: string, key: string) {
+async function stripe(method: 'GET' | 'POST', path: string, key: string, body?: Record<string, string>) {
   const res = await fetch(`${STRIPE_API}/${path}`, {
-    headers: { Authorization: `Bearer ${key}` },
+    method,
+    headers: {
+      Authorization: `Bearer ${key}`,
+      ...(body ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+    },
+    body: body ? new URLSearchParams(body).toString() : undefined,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data?.error?.message || `Stripe ${res.status}`), { status: res.status });
@@ -41,32 +48,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const session = await stripeGet(`checkout/sessions/${sessionId}?expand[]=subscription`, key);
+    const session = await stripe('GET', `checkout/sessions/${sessionId}?expand[]=payment_intent`, key);
 
-    const paid = session.status === 'complete' && ['paid', 'no_payment_required'].includes(session.payment_status);
-    if (!paid) return res.status(402).json({ success: false, error: 'Zahlung nicht abgeschlossen' });
-
-    // Сумма одного периода: у подписки берём цену первой позиции, иначе amount_total
-    const sub = session.subscription && typeof session.subscription === 'object' ? session.subscription : null;
-    const item = sub?.items?.data?.[0];
-    const amount: number = item?.price?.unit_amount ?? session.amount_subtotal ?? session.amount_total;
-    const plan = PLAN_BY_AMOUNT_CENTS[amount];
-    if (!plan) {
-      console.error('Unbekannter Betrag für Plan:', amount);
-      return res.status(422).json({ success: false, error: 'Tarif konnte nicht zugeordnet werden' });
+    if (session.mode !== 'payment') {
+      return res.status(422).json({ success: false, error: 'Unerwartete Zahlungsart' });
+    }
+    if (session.status !== 'complete' || session.payment_status !== 'paid') {
+      return res.status(402).json({ success: false, error: 'Zahlung nicht abgeschlossen' });
     }
 
-    let paidUntil = new Date(Date.now() + 31 * DAY);
-    if (sub) {
-      if (!['active', 'trialing', 'past_due'].includes(sub.status)) {
-        return res.status(402).json({ success: false, error: 'Abo ist nicht aktiv', status: sub.status });
-      }
-      // current_period_end: у старых версий API — на подписке, у новых — на позиции
-      const periodEnd: number | undefined = sub.current_period_end ?? item?.current_period_end;
-      if (periodEnd) paidUntil = new Date(periodEnd * 1000 + DAY); // +1 день запаса на продление
+    const amount: number = session.amount_subtotal ?? session.amount_total;
+    const letters = LETTERS_BY_AMOUNT_CENTS[amount];
+    if (!letters) {
+      console.error('Unbekannter Betrag für Paket:', amount);
+      return res.status(422).json({ success: false, error: 'Paket konnte nicht zugeordnet werden' });
     }
 
-    return res.status(200).json({ success: true, plan, paidUntil: paidUntil.toISOString() });
+    const pi = session.payment_intent && typeof session.payment_intent === 'object' ? session.payment_intent : null;
+    if (!pi?.id) return res.status(422).json({ success: false, error: 'Zahlung nicht gefunden' });
+    if (pi.metadata?.deasy_redeemed) {
+      return res.status(409).json({
+        success: false,
+        error: 'Dieses Paket wurde bereits in einem anderen Browser eingelöst. Schreiben Sie uns, wenn Sie es übertragen möchten.',
+      });
+    }
+
+    await stripe('POST', `payment_intents/${pi.id}`, key, { 'metadata[deasy_redeemed]': new Date().toISOString() });
+
+    const paidAt = new Date((session.created || Date.now() / 1000) * 1000);
+    const expiresAt = new Date(paidAt);
+    expiresAt.setMonth(expiresAt.getMonth() + VALID_MONTHS);
+
+    return res.status(200).json({ success: true, letters, expiresAt: expiresAt.toISOString() });
   } catch (error: any) {
     console.error('Stripe-Prüfung fehlgeschlagen:', error?.status, error?.message);
     if (error?.status === 404) return res.status(404).json({ success: false, error: 'Zahlung nicht gefunden' });

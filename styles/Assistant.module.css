@@ -13,14 +13,14 @@
   gap: 12px;
   padding: 16px 18px;
   border-bottom: 1px solid #eef0f4;
-  background: linear-gradient(180deg, #f7f5ff 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #f3f6ff 0%, #ffffff 100%);
 }
 
 .avatar {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #4338ca;
+  background: #2b4fd8;
   color: #fff;
   display: grid;
   place-items: center;
@@ -62,8 +62,8 @@
 }
 
 .tabActive {
-  color: #4338ca;
-  border-bottom-color: #4338ca;
+  color: #2b4fd8;
+  border-bottom-color: #2b4fd8;
 }
 
 /* Chat */
@@ -90,7 +90,7 @@
 
 .msgUser {
   align-self: flex-end;
-  background: #4338ca;
+  background: #2b4fd8;
   color: #fff;
   border-bottom-right-radius: 4px;
 }
@@ -124,9 +124,9 @@
 
 .chip {
   flex-shrink: 0;
-  border: 1px solid #d9d4ff;
-  background: #f5f3ff;
-  color: #3829a0;
+  border: 1px solid #c9d4fb;
+  background: #eef2ff;
+  color: #1f3bb0;
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 13px;
@@ -136,7 +136,7 @@
 }
 
 .chip:hover {
-  background: #ebe7ff;
+  background: #e0e7ff;
 }
 
 .chip:disabled {
@@ -162,12 +162,12 @@
 }
 
 .input:focus {
-  outline: 2px solid #c7c0ff;
-  border-color: #4338ca;
+  outline: 2px solid #b9c6f7;
+  border-color: #2b4fd8;
 }
 
 .primary {
-  background: #4338ca;
+  background: #2b4fd8;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -178,18 +178,18 @@
 }
 
 .primary:hover {
-  background: #3829a0;
+  background: #1f3bb0;
 }
 
 .primary:disabled {
-  background: #a5a0d8;
+  background: #9fb0ea;
   cursor: default;
 }
 
 .secondary {
   background: #fff;
-  color: #3829a0;
-  border: 1px solid #d9d4ff;
+  color: #1f3bb0;
+  border: 1px solid #c9d4fb;
   border-radius: 10px;
   padding: 10px 14px;
   font-weight: 600;
@@ -198,7 +198,7 @@
 }
 
 .secondary:hover {
-  background: #f5f3ff;
+  background: #eef2ff;
 }
 
 /* Reply builder */
@@ -240,9 +240,9 @@
 }
 
 .typeBtnActive {
-  border-color: #4338ca;
-  background: #f5f3ff;
-  box-shadow: 0 0 0 1px #4338ca inset;
+  border-color: #2b4fd8;
+  background: #eef2ff;
+  box-shadow: 0 0 0 1px #2b4fd8 inset;
 }
 
 .notes {

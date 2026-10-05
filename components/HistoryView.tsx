@@ -41,7 +41,7 @@ export default function HistoryView({
     <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
       <button
         onClick={onBack}
-        style={{ background: 'none', border: 'none', color: '#4338ca', fontWeight: 600, fontSize: 15, padding: '4px 0', marginBottom: 12, cursor: 'pointer' }}
+        style={{ background: 'none', border: 'none', color: '#2b4fd8', fontWeight: 600, fontSize: 15, padding: '4px 0', marginBottom: 12, cursor: 'pointer' }}
       >
         ← {de ? 'Zurück' : 'Назад'}
       </button>
@@ -105,9 +105,9 @@ export default function HistoryView({
 }
 
 const smallBtn: React.CSSProperties = {
-  border: '1px solid #d9d4ff',
-  background: '#f5f3ff',
-  color: '#3829a0',
+  border: '1px solid #c9d4fb',
+  background: '#eef2ff',
+  color: '#1f3bb0',
   borderRadius: 8,
   padding: '6px 10px',
   fontWeight: 600,
