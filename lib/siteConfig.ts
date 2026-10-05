@@ -10,10 +10,10 @@ export const COMPANY = {
   /** Для Einzelunternehmer в Impressum обязательно полное имя владельца */
   name: 'Ilja Schneider – Schneider Studios',
   brand: 'DEASY',
-  street: 'Newtonstraße [Hausnummer]',
+  street: 'Newtonstraße 4',
   zipCity: '12489 Berlin',
   country: 'Deutschland',
-  email: 'info@deasy.de',
+  email: 'ishneider@icloud.com',
   phone: '',
   /** Kleinunternehmer nach § 19 UStG — USt-IdNr. не требуется */
   kleinunternehmer: true,
