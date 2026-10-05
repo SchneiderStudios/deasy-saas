@@ -1,10 +1,20 @@
 import React from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import styles from '@/styles/Legal.module.css';
+import LegalLinks from '@/components/LegalLinks';
+import { COMPANY, LEGAL_UPDATED, companyComplete } from '@/lib/siteConfig';
 
 export default function Impressum() {
+  const complete = companyComplete();
+
   return (
     <div className={styles.container}>
+      <Head>
+        <title>Impressum – {COMPANY.brand}</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+
       <nav className={styles.nav}>
         <Link href="/">← Zurück zur Startseite</Link>
       </nav>
@@ -12,86 +22,81 @@ export default function Impressum() {
       <article className={styles.content}>
         <h1>Impressum</h1>
 
-        <div className={styles.warning}>
-          <strong>⚠️ Platzhalter — vor dem echten Launch ausfüllen.</strong>
-          <p>
-            Ein Impressum ist in Deutschland für jede kommerzielle Website gesetzlich
-            erforderlich (§ 5 TMG / Telemediengesetz). Bitte ersetzen Sie die Angaben
-            unten mit Ihren echten Daten.
-          </p>
-        </div>
+        {!complete && (
+          <div className={styles.warning}>
+            <strong>⚠️ Angaben unvollständig</strong>
+            <p>Die ladungsfähige Anschrift fehlt noch. Bitte in <code>lib/siteConfig.ts</code> ergänzen.</p>
+          </div>
+        )}
 
-        <h2>Angaben gemäß § 5 Telemediengesetz (TMG)</h2>
-
-        <h3>Inhaltverantwortlicher</h3>
+        <h2>Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)</h2>
         <p>
-          [Vor- und Nachname/Firmenname]
+          {COMPANY.name}
+          {COMPANY.brand && <> – {COMPANY.brand}</>}
           <br />
-          [Straße und Hausnummer]
+          {COMPANY.street || '[Straße und Hausnummer]'}
           <br />
-          [PLZ und Ort]
+          {COMPANY.zipCity || '[PLZ und Ort]'}
           <br />
-          Deutschland
+          {COMPANY.country}
         </p>
 
         <h2>Kontakt</h2>
         <p>
-          Telefon: [Telefonnummer]
+          E-Mail: <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
+          {COMPANY.phone && (
+            <>
+              <br />
+              Telefon: {COMPANY.phone}
+            </>
+          )}
+        </p>
+
+        <h2>Umsatzsteuer</h2>
+        {COMPANY.vatId ? (
+          <p>Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: {COMPANY.vatId}</p>
+        ) : COMPANY.kleinunternehmer ? (
+          <p>Kleinunternehmer gemäß § 19 UStG – es wird keine Umsatzsteuer ausgewiesen.</p>
+        ) : null}
+
+        <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+        <p>
+          {COMPANY.name}
           <br />
-          E-Mail: <a href="mailto:info@deasy.de">info@deasy.de</a>
+          {COMPANY.street || '[Straße und Hausnummer]'}, {COMPANY.zipCity || '[PLZ und Ort]'}
         </p>
 
-        <h2>Umsatzsteuer-ID</h2>
-        <p>[Falls vorhanden: Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG]</p>
-
-        <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
+        <h2>Hinweis zum Dienst</h2>
         <p>
-          [Name und Anschrift der verantwortlichen Person]
+          {COMPANY.brand} erklärt Behördenschreiben mithilfe künstlicher Intelligenz (Claude von Anthropic).
+          Die Ergebnisse werden automatisch erzeugt und können Fehler enthalten. {COMPANY.brand} ist kein
+          Rechtsdienstleister und ersetzt keine Rechts-, Steuer- oder Sozialberatung. Bei Fristen, hohen
+          Beträgen oder Fragen zum Aufenthalt wenden Sie sich bitte an eine Beratungsstelle, einen
+          Mieterverein, eine Steuerberatung oder eine Anwaltskanzlei.
         </p>
 
-        <h2>Haftungsausschluss</h2>
+        <h2>Verbraucherstreitbeilegung</h2>
         <p>
-          Die Inhalte dieser Website werden mit größter Sorgfalt erstellt. Wir
-          übernehmen jedoch keine Gewähr für die Korrektheit, Vollständigkeit und
-          Aktualität der Inhalte. Die Verwendung unseres Services erfolgt auf
-          Eigenrisiko des Nutzers. DEASY ist kein Rechtsberatungsservice.
+          Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+          Verbraucherschlichtungsstelle teilzunehmen.
         </p>
 
-        <h2>Externe Links</h2>
+        <h2>Haftung für Inhalte und Links</h2>
         <p>
-          Unser Service enthält Links zu externen Websites. Wir sind nicht
-          verantwortlich für den Inhalt, Verfügbarkeit oder Aktualität dieser
-          externen Seiten. Für Inhalte verknüpfter Seiten sind ausschließlich deren
-          Betreiber verantwortlich.
-        </p>
-
-        <h2>Urheberrecht</h2>
-        <p>
-          Die Inhalte und Werke auf diesen Seiten unterliegen dem deutschen
-          Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art
-          der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der
-          schriftlichen Zustimmung des Autors oder Urhebers. Downloads und Kopien
-          dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch
-          gestattet.
+          Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und
+          Aktualität können wir jedoch keine Gewähr übernehmen. Für Inhalte externer Websites, auf die wir
+          verlinken, sind ausschließlich deren Betreiber verantwortlich.
         </p>
 
         <h2>Datenschutz</h2>
         <p>
-          Informationen zur Verarbeitung Ihrer Daten finden Sie in unserer{' '}
+          Informationen zur Verarbeitung Ihrer Daten finden Sie in der{' '}
           <Link href="/datenschutz">Datenschutzerklärung</Link>.
         </p>
 
-        <h2>Streitschlichtung</h2>
-        <p>
-          Wir sind nicht verpflichtet und nicht bereit, an
-          Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
-          teilzunehmen.
-        </p>
-
-        <p className={styles.lastUpdated}>
-          Letzte Aktualisierung: September 2024
-        </p>
+        <p className={styles.lastUpdated}>Stand: {LEGAL_UPDATED}</p>
       </article>
+      <LegalLinks compact />
     </div>
   );
 }

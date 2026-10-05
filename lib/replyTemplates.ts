@@ -9,35 +9,6 @@ export interface ReplyTemplate {
 /** Готовые шаблоны без ИИ — запасной вариант. Письмо в ведомство всегда на немецком, body_ru — перевод для понимания. */
 export const REPLY_TEMPLATES: ReplyTemplate[] = [
   {
-    id: 'einspruch_finanzamt',
-    title_de: 'Einspruch beim Finanzamt',
-    title_ru: 'Возражение в налоговую (Einspruch)',
-    body_de: `[Ihr Name]
-[Ihre Adresse]
-
-Finanzamt [Ort]
-[Adresse des Finanzamts]
-
-[Ort], [Datum]
-
-Steuernummer: [Steuernummer]
-Einspruch gegen den Bescheid vom [Datum des Bescheids]
-
-Sehr geehrte Damen und Herren,
-
-hiermit lege ich gegen den oben genannten Bescheid fristgerecht Einspruch ein.
-
-Begründung:
-[Begründung einfügen]
-
-Ich beantrage, den Bescheid entsprechend zu ändern. Bis zur Entscheidung beantrage ich die Aussetzung der Vollziehung.
-
-Mit freundlichen Grüßen
-
-[Ihr Name]`,
-    body_ru: `Перевод: подаю возражение против решения от [дата] в установленный срок. Обоснование: [...]. Прошу изменить решение и приостановить его исполнение до рассмотрения.`,
-  },
-  {
     id: 'widerspruch_jobcenter',
     title_de: 'Widerspruch beim Jobcenter',
     title_ru: 'Возражение в Jobcenter (Widerspruch)',

@@ -22,7 +22,19 @@ export interface Analysis {
   deadlines: string[];
   actions: string[];
   language: 'de' | 'ru';
+  /** Absender (Behörde/Firma), wie im Brief angegeben */
+  absender?: string;
+  /** 'steuer' = Steuersache → keine inhaltliche Analyse (Hilfeleistung in Steuersachen nur durch Befugte, § 2 StBerG) */
+  restricted?: 'steuer';
 }
+
+/**
+ * Steuersachen analysieren wir nicht: Hilfe in Steuersachen dürfen nur Steuerberater, Lohnsteuerhilfevereine
+ * u. a. leisten (§§ 2–4 StBerG). Dazu zählen auch Kindergeld nach EStG (Familienkasse), Kfz-Steuer und Zölle
+ * (Hauptzollamt) sowie Gemeindesteuern (Grundsteuer, Hundesteuer, Zweitwohnungsteuer).
+ * Zusätzlich zur Einstufung durch die KI prüfen wir den Absender per Muster.
+ */
+const TAX_SENDER = /finanzamt|finanzverwaltung|bundeszentralamt\s+f(ü|ue)r\s+steuern|\bbzst\b|hauptzollamt|familienkasse|steueramt|steuerverwaltung|kasse\s*\/\s*steuern|elster/i;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -50,25 +62,33 @@ function buildPrompt(language: 'de' | 'ru', pageCount: number): string {
     return `${pagesNote}Ты помощник, который объясняет немецкие официальные письма людям, плохо знающим немецкий язык.
 Проанализируй письмо и ответь ТОЛЬКО JSON-объектом без markdown:
 {
+  "absender": "кто отправил письмо (ведомство или организация), как указано в письме",
+  "kategorie": "steuer" | "sonstige",
   "summary": "2-4 простых предложения на русском: кто пишет, что хочет, что будет, если ничего не делать",
   "risk": "Gering" | "Mittel" | "Kritisch",
   "deadlines": ["конкретная дата и что к ней сделать"],
   "actions": ["конкретное действие на русском"]
 }
 Правила: risk = "Kritisch", если есть срок, штраф, отказ, взыскание или судебные последствия; "Mittel" — нужно действие без жёсткой угрозы; "Gering" — информационное письмо.
-Если сроков нет — пустой массив. Не придумывай даты, которых нет в письме.`;
+Если сроков нет — пустой массив. Не придумывай даты, которых нет в письме.
+Ты даёшь общую понятную информацию, а не юридическую консультацию: не оценивай, законно ли решение, и не прогнозируй шансы обжалования. В actions можно назвать общие варианты действий и где получить консультацию (Beratungsstelle, Mieterverein, Lohnsteuerhilfeverein, адвокат).
+kategorie = "steuer", wenn das Schreiben eine Steuersache betrifft: Finanzamt, Bundeszentralamt für Steuern, Steuerbescheid, Steuererklärung, Steuernummer/Steuer-ID-Anfrage, Kindergeld der Familienkasse, Kfz-Steuer oder Zoll (Hauptzollamt), Grund-, Hunde- oder Zweitwohnungsteuer. In diesem Fall lass summary, deadlines und actions LEER. Sonst kategorie = "sonstige".`;
   }
 
   return `${pagesNote}Du hilfst Menschen, deutsche Behördenbriefe zu verstehen.
 Analysiere den Brief und antworte NUR mit einem JSON-Objekt ohne Markdown:
 {
+  "absender": "Absender (Behörde oder Organisation) wie im Brief angegeben",
+  "kategorie": "steuer" | "sonstige",
   "summary": "2-4 einfache Sätze: wer schreibt, was wird verlangt, was passiert, wenn man nichts tut",
   "risk": "Gering" | "Mittel" | "Kritisch",
   "deadlines": ["konkretes Datum und was bis dahin zu tun ist"],
   "actions": ["konkrete Handlung in einfacher Sprache"]
 }
 Regeln: risk = "Kritisch" bei Frist mit Sanktion, Ablehnung, Mahnung, Vollstreckung oder Gericht; "Mittel" wenn eine Handlung nötig ist; "Gering" bei reiner Information.
-Keine Fristen → leeres Array. Erfinde keine Daten, die nicht im Brief stehen.`;
+Keine Fristen → leeres Array. Erfinde keine Daten, die nicht im Brief stehen.
+Du gibst allgemeine, verständliche Informationen, keine Rechtsberatung: Bewerte nicht, ob der Bescheid rechtmäßig ist, und prognostiziere keine Erfolgsaussichten. In actions darfst du allgemeine Handlungsoptionen und Beratungsangebote nennen (Beratungsstelle, Mieterverein, Lohnsteuerhilfeverein, Anwalt).
+kategorie = "steuer", wenn das Schreiben eine Steuersache betrifft: Finanzamt, Bundeszentralamt für Steuern, Steuerbescheid, Steuererklärung, Steuernummer/Steuer-ID-Anfrage, Kindergeld der Familienkasse, Kfz-Steuer oder Zoll (Hauptzollamt), Grund-, Hunde- oder Zweitwohnungsteuer. In diesem Fall lass summary, deadlines und actions LEER. Sonst kategorie = "sonstige".`;
 }
 
 function extractJson(text: string): any | null {
@@ -147,6 +167,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           language,
         }
       : { summary: text, risk: 'Mittel', deadlines: [], actions: [], language };
+
+    const absender = parsed ? String(parsed.absender || '').trim().slice(0, 200) : '';
+    const isTax =
+      (parsed && String(parsed.kategorie || '').toLowerCase() === 'steuer') ||
+      TAX_SENDER.test(absender) ||
+      (!parsed && TAX_SENDER.test(text));
+    if (isTax) {
+      // Keine inhaltliche Auswertung von Steuersachen — nur Hinweis auf befugte Stellen (UI)
+      return res.status(200).json({
+        success: true,
+        analysis: { summary: '', risk: 'Mittel', deadlines: [], actions: [], language, absender, restricted: 'steuer' },
+      });
+    }
+    analysis.absender = absender;
 
     if (!analysis.summary) {
       return res.status(502).json({

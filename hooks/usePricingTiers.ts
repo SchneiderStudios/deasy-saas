@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
+import { STRIPE_LINKS } from '@/lib/siteConfig';
 
 export interface PricingTier {
-  id: 'free' | 'plus' | 'pro' | 'business';
+  id: 'free' | 'plus' | 'pro';
   name: string;
   price: number;
   monthlyLimit: number;
@@ -10,10 +11,16 @@ export interface PricingTier {
 }
 
 export interface UsageStats {
-  tier: 'free' | 'plus' | 'pro' | 'business';
+  tier: 'free' | 'plus' | 'pro';
   usedThisMonth: number;
   lastResetDate: string;
+  /** ISO-дата, до которой оплачен тариф (из Stripe) */
+  paidUntil?: string;
+  /** ID сессии Stripe Checkout — для повторной проверки подписки */
+  checkoutSession?: string;
 }
+
+export type ActivationState = 'idle' | 'checking' | 'activated' | 'failed';
 
 const PRICING_TIERS: Record<string, PricingTier> = {
   free: {
@@ -29,23 +36,15 @@ const PRICING_TIERS: Record<string, PricingTier> = {
     price: 4.99,
     monthlyLimit: 50,
     features: ['50 Dokumente/Monat', 'PDF-Support', 'Antwort-Generator'],
-    stripeLink: 'https://buy.stripe.com/your_plus_link', // Replace with actual Stripe link
+    stripeLink: STRIPE_LINKS.plus,
   },
   pro: {
     id: 'pro',
     name: 'Pro',
     price: 9.99,
     monthlyLimit: 100,
-    features: ['100 Dokumente/Monat', 'Fälle-Tracking', 'Export in PDF', 'Priority Support'],
-    stripeLink: 'https://buy.stripe.com/your_pro_link', // Replace with actual Stripe link
-  },
-  business: {
-    id: 'business',
-    name: 'Business',
-    price: 49.99,
-    monthlyLimit: Infinity,
-    features: ['Unlimited Dokumente', 'Team-Zugang (bis 5 User)', 'API-Zugang', 'White-Label-Option'],
-    stripeLink: 'https://buy.stripe.com/your_business_link', // Replace with actual Stripe link
+    features: ['100 Dokumente/Monat', 'Chat und Antwortentwürfe', 'E-Mail-Support'],
+    stripeLink: STRIPE_LINKS.pro,
   },
 };
 
@@ -117,8 +116,65 @@ export function usePricingTiers() {
     }));
   }, []);
 
+  const [activation, setActivation] = useState<ActivationState>('idle');
+  const [activationError, setActivationError] = useState<string | null>(null);
+
+  const verify = useCallback(async (sessionId: string) => {
+    const res = await fetch(`/api/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok && data.success, data };
+  }, []);
+
+  // 1) Возврат со Stripe: /app?checkout=cs_... → проверяем оплату и включаем тариф
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const sessionId = url.searchParams.get('checkout');
+    if (!sessionId) return;
+
+    url.searchParams.delete('checkout');
+    window.history.replaceState({}, '', url.pathname + url.search);
+
+    setActivation('checking');
+    verify(sessionId)
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.error || 'Zahlung konnte nicht bestätigt werden');
+        setUsageStats((prev) => ({
+          ...prev,
+          tier: data.plan,
+          paidUntil: data.paidUntil,
+          checkoutSession: sessionId,
+        }));
+        setActivation('activated');
+      })
+      .catch((e) => {
+        setActivationError(e instanceof Error ? e.message : String(e));
+        setActivation('failed');
+      });
+  }, [verify]);
+
+  // 2) Оплаченный период истёк → спрашиваем Stripe, продлена ли подписка
+  useEffect(() => {
+    const { tier, paidUntil, checkoutSession } = usageStats;
+    if (tier === 'free' || !paidUntil) return;
+    if (new Date(paidUntil).getTime() > Date.now()) return;
+
+    const downgrade = () => setUsageStats((prev) => ({ ...prev, tier: 'free', paidUntil: undefined, checkoutSession: undefined }));
+    if (!checkoutSession) return downgrade();
+
+    verify(checkoutSession)
+      .then(({ ok, data }) => {
+        if (ok) setUsageStats((prev) => ({ ...prev, tier: data.plan, paidUntil: data.paidUntil }));
+        else if (data?.error !== 'Zahlung konnte nicht geprüft werden') downgrade(); // при сбое сети не наказываем
+      })
+      .catch(() => {});
+  }, [usageStats.tier, usageStats.paidUntil, usageStats.checkoutSession, verify]);
+
   return {
     usageStats,
+    activation,
+    activationError,
+    dismissActivation: () => setActivation('idle'),
     getCurrentTier,
     getRemainingRequests,
     canMakeRequest,

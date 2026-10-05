@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { STRIPE_LINKS, COMPANY } from '@/lib/siteConfig';
 import styles from '@/styles/Landing.module.css';
 import { translations, Language } from '@/lib/translations';
 
@@ -134,9 +135,15 @@ export default function Home() {
               <li>{t.planPlusFeature2}</li>
               <li>{t.planPlusFeature3}</li>
             </ul>
-            <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_PLUS_LINK" target="_blank" rel="noopener noreferrer" className={styles.pricingButton}>
-              {t.planPlusButton}
-            </a>
+            {STRIPE_LINKS.plus ? (
+              <a href={STRIPE_LINKS.plus} className={styles.pricingButton}>
+                {t.planPlusButton}
+              </a>
+            ) : (
+              <span className={styles.pricingButton} style={{ opacity: 0.55, cursor: 'default' }}>
+                {language === 'de' ? 'Bald verfügbar' : 'Скоро'}
+              </span>
+            )}
           </div>
 
           <div className={styles.pricingCard + ' ' + styles.featured}>
@@ -149,28 +156,25 @@ export default function Home() {
               <li>{t.planProFeature3}</li>
               <li>{t.planProFeature4}</li>
             </ul>
-            <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_MONTHLY_LINK" target="_blank" rel="noopener noreferrer" className={styles.pricingButton}>
-              {t.planProButton}
-            </a>
+            {STRIPE_LINKS.pro ? (
+              <a href={STRIPE_LINKS.pro} className={styles.pricingButton}>
+                {t.planProButton}
+              </a>
+            ) : (
+              <span className={styles.pricingButton} style={{ opacity: 0.55, cursor: 'default' }}>
+                {language === 'de' ? 'Bald verfügbar' : 'Скоро'}
+              </span>
+            )}
           </div>
 
-          <div className={styles.pricingCard}>
-            <h3>{t.planBusiness}</h3>
-            <div className={styles.price} style={{ fontSize: '1.6rem', overflowWrap: 'normal' }}>{language === 'de' ? 'Maßgeschneidert' : 'Индивидуально'}<span></span></div>
-            <ul>
-              <li>{t.planBusinessFeature1}</li>
-              <li>{t.planBusinessFeature2}</li>
-              <li>{t.planBusinessFeature3}</li>
-              <li>{t.planBusinessFeature4}</li>
-            </ul>
-            <a href="mailto:info@deasy.de?subject=Business%20Plan%20Anfrage%20-%20API%20Zugang" className={styles.pricingButton}>
-              {language === 'de' ? '📧 Anfrage senden' : '📧 Отправить запрос'}
-            </a>
-            <p style={{ fontSize: '0.85rem', color: '#4b4e5c', marginTop: '0.5rem' }}>
-              {language === 'de' ? 'Mit API-Zugang & White-Label' : 'С API-доступом и White-Label'}
-            </p>
-          </div>
         </div>
+        <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#4b4e5c', marginTop: '1.5rem', lineHeight: 1.6 }}>
+          {language === 'de'
+            ? 'Alle Preise sind Endpreise. Gemäß § 19 UStG wird keine Umsatzsteuer berechnet. Plus und Pro verlängern sich monatlich und sind jederzeit zum Ende des bezahlten Monats kündbar.'
+            : 'Все цены окончательные. Согласно § 19 UStG НДС не начисляется. Plus и Pro продлеваются ежемесячно, отменить можно в любой момент до конца оплаченного месяца.'}{' '}
+          <a href="/agb">{language === 'de' ? 'AGB' : 'Условия (AGB)'}</a> ·{' '}
+          <a href="/widerruf">{language === 'de' ? 'Widerrufsbelehrung' : 'Право отзыва'}</a>
+        </p>
       </section>
 
       {/* FAQ */}
@@ -230,22 +234,19 @@ export default function Home() {
                 <a href="/impressum">{t.footerImprint}</a>
               </li>
               <li>
-                <a href="mailto:info@deasy.de">{t.footerContact}</a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4>{t.footerSocialTitle}</h4>
-            <ul>
-              <li>
-                <a href="https://twitter.com/deasy_de" target="_blank">
-                  {t.footerTwitter}
-                </a>
+                <a href={`mailto:${COMPANY.email}`}>{t.footerContact}</a>
               </li>
               <li>
-                <a href="https://github.com/deasy-ai" target="_blank">
-                  {t.footerGithub}
-                </a>
+                <a href="/agb">AGB</a>
+              </li>
+              <li>
+                <a href="/widerruf">Widerrufsbelehrung</a>
+              </li>
+              <li>
+                <a href="/vertrag?aktion=kuendigen">Verträge hier kündigen</a>
+              </li>
+              <li>
+                <a href="/vertrag?aktion=widerrufen">Vertrag widerrufen</a>
               </li>
             </ul>
           </div>

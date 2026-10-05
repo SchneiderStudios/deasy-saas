@@ -4,6 +4,8 @@ import { usePdfUpload } from '@/hooks/usePdfUpload';
 import { useDocumentHistory } from '@/hooks/useDocumentHistory';
 import styles from '@/styles/App.module.css';
 import DocumentAssistant from '@/components/DocumentAssistant';
+import LegalLinks from '@/components/LegalLinks';
+import { BeratungHinweis, SteuerHinweis } from '@/components/BeratungHinweis';
 
 interface AnalysisResult {
   summary: string;
@@ -11,6 +13,8 @@ interface AnalysisResult {
   deadlines: string[];
   actions: string[];
   language: 'de' | 'ru';
+  absender?: string;
+  restricted?: 'steuer';
 }
 
 const TEXTS_DE = {
@@ -27,7 +31,6 @@ const TEXTS_DE = {
   freePlan: 'Kostenlos: 3 Dokumente/Monat',
   plusPlan: '€4,99: 50 Dokumente/Monat',
   proPlan: '€9,99: 100 Dokumente/Monat',
-  businessPlan: '€49,99: Unbegrenzt',
   myDocuments: 'Meine Dokumente',
   language: 'Sprache',
   logout: 'Abmelden',
@@ -73,7 +76,6 @@ const TEXTS_RU = {
   freePlan: 'Бесплатно: 3 документа/месяц',
   plusPlan: '€4,99: 50 документов/месяц',
   proPlan: '€9,99: 100 документов/месяц',
-  businessPlan: '€49,99: Без ограничений',
   myDocuments: 'Мои документы',
   language: 'Язык',
   logout: 'Выход',
@@ -107,7 +109,7 @@ const TEXTS_RU = {
 
 
 export default function App() {
-  const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers } = usePricingTiers();
+  const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers, activation, activationError, dismissActivation } = usePricingTiers();
   const { convertFileToImages, error: pdfError, clearError } = usePdfUpload();
   const { saveCaseToHistory } = useDocumentHistory();
 
@@ -126,11 +128,34 @@ export default function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Einwilligung (Art. 6 Abs. 1 lit. a, Art. 9 Abs. 2 lit. a, Art. 49 DSGVO) — до первой загрузки
+  const CONSENT_KEY = 'deasyConsent';
+  const CONSENT_VERSION = '2026-10';
+  const [consent, setConsent] = useState(false);
+  const [consentHint, setConsentHint] = useState(false);
+  useEffect(() => {
+    try {
+      setConsent(localStorage.getItem(CONSENT_KEY) === CONSENT_VERSION);
+    } catch {}
+  }, []);
+  const updateConsent = (value: boolean) => {
+    setConsent(value);
+    setConsentHint(false);
+    try {
+      if (value) localStorage.setItem(CONSENT_KEY, CONSENT_VERSION);
+      else localStorage.removeItem(CONSENT_KEY);
+    } catch {}
+  };
+
   // Handle file upload
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
     if (isLoading) return;
+    if (!consent) {
+      setConsentHint(true);
+      return;
+    }
     const file = files[0]; // Берем первый файл
 
     if (!canMakeRequest()) {
@@ -175,16 +200,20 @@ export default function App() {
         deadlines: Array.isArray(raw.deadlines) ? raw.deadlines : [],
         actions: Array.isArray(raw.actions) ? raw.actions : [],
         language: raw.language || selectedLanguage,
+        absender: raw.absender || '',
+        restricted: raw.restricted === 'steuer' ? 'steuer' : undefined,
       };
 
       // Сохраняем результат анализа
       setAnalysis(analysisData);
       setUploadedImages(result.base64Images);
       setCurrentView('analysis');
-      saveCaseToHistory({ ...analysisData, nextSteps: analysisData.actions }, result.fileName);
 
-      // Увеличиваем счетчик использования
-      incrementUsage();
+      // Налоговые письма не разбираем (§ 2 StBerG): не сохраняем и не списываем лимит
+      if (!analysisData.restricted) {
+        saveCaseToHistory({ ...analysisData, nextSteps: analysisData.actions }, result.fileName);
+        incrementUsage();
+      }
 
       setDocKey((k) => k + 1); // новый документ → новый чат
 
@@ -215,12 +244,19 @@ export default function App() {
         {TEXTS.uploadInfo}
       </p>
 
+      <p style={{ margin: '0 0 16px', padding: '10px 12px', background: '#f5f3ff', borderRadius: 10, fontSize: 13, color: '#3829a0' }}>
+        🤖 {selectedLanguage === 'de'
+          ? 'DEASY nutzt künstliche Intelligenz (Claude von Anthropic). Ergebnisse werden automatisch erzeugt, können Fehler enthalten und ersetzen keine Beratung durch Fachleute. Steuerschreiben (z. B. Finanzamt, Familienkasse) erklären wir nicht.'
+          : 'DEASY работает на искусственном интеллекте (Claude от Anthropic). Результаты создаются автоматически, могут содержать ошибки и не заменяют консультацию специалиста. Налоговые письма (например, от Finanzamt или Familienkasse) мы не разбираем.'}
+      </p>
+
       <div
         className={styles.uploadArea}
         onDragOver={handleDragOver}
         onDragLeave={() => {}}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => (consent ? fileInputRef.current?.click() : setConsentHint(true))}
+        style={consent ? undefined : { opacity: 0.6 }}
       >
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
           <div style={{ fontSize: '48px', marginBottom: '10px' }}>📄</div>
@@ -240,6 +276,38 @@ export default function App() {
         }}
         style={{ display: 'none' }}
       />
+
+      <label
+        style={{
+          display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 4, padding: '12px 14px', borderRadius: 10,
+          fontSize: 13, lineHeight: 1.5, color: '#3d4257', cursor: 'pointer',
+          background: consentHint ? '#fef3f2' : '#f8f9fb', border: `1px solid ${consentHint ? '#fda29b' : '#e5e7eb'}`,
+        }}
+      >
+        <input type="checkbox" checked={consent} onChange={(e) => updateConsent(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
+        <span>
+          {selectedLanguage === 'de' ? (
+            <>
+              Ich willige ein, dass mein Dokument – einschließlich darin enthaltener sensibler Daten (z. B. Gesundheits- oder Sozialdaten) –
+              zur Analyse an Anthropic PBC in den USA übermittelt wird. Ich habe die{' '}
+              <a href="/datenschutz" target="_blank">Datenschutzerklärung</a> gelesen; Widerruf jederzeit möglich. Es gelten die{' '}
+              <a href="/agb" target="_blank">AGB</a>.
+            </>
+          ) : (
+            <>
+              Я согласен(на), что мой документ — включая чувствительные данные в нём (например, о здоровье или пособиях) — будет передан
+              для анализа компании Anthropic PBC в США. Я прочитал(а){' '}
+              <a href="/datenschutz" target="_blank">Datenschutzerklärung</a>; согласие можно отозвать в любой момент. Действуют{' '}
+              <a href="/agb" target="_blank">AGB</a>.
+            </>
+          )}
+        </span>
+      </label>
+      {consentHint && (
+        <div style={{ color: '#b42318', marginTop: 8, fontSize: 14 }}>
+          {selectedLanguage === 'de' ? 'Bitte zuerst die Einwilligung bestätigen.' : 'Сначала подтвердите согласие.'}
+        </div>
+      )}
 
       {error && <div style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
       {isLoading && <div style={{ marginTop: '10px', color: '#666' }}>{TEXTS.analyzing}</div>}
@@ -261,10 +329,20 @@ export default function App() {
         </details>
       )}
 
-      {analysis && (
+      {analysis?.restricted === 'steuer' && (
+        <>
+          <SteuerHinweis language={selectedLanguage} absender={analysis.absender} />
+          <BeratungHinweis language={selectedLanguage} />
+        </>
+      )}
+
+      {analysis && !analysis.restricted && (
         <>
           <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f0f7ff', borderRadius: '8px' }}>
             <h3>{TEXTS.summary}</h3>
+            <p style={{ fontSize: 12, color: '#6b7085', margin: '-4px 0 8px' }}>
+              🤖 {selectedLanguage === 'de' ? 'KI-generiert · ohne Gewähr · keine Rechtsberatung' : 'Создано ИИ · без гарантий · не юридическая консультация'}
+            </p>
             <p>{analysis.summary}</p>
           </div>
 
@@ -302,6 +380,8 @@ export default function App() {
             images={uploadedImages}
             language={selectedLanguage}
           />
+
+          <BeratungHinweis language={selectedLanguage} />
         </>
       )}
     </div>
@@ -337,10 +417,38 @@ export default function App() {
         </div>
       </header>
 
+      {activation !== 'idle' && (
+        <div
+          role="status"
+          style={{
+            maxWidth: 760, margin: '16px auto 0', padding: '12px 16px', borderRadius: 12, fontSize: 15,
+            display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center',
+            background: activation === 'failed' ? '#fef3f2' : activation === 'activated' ? '#ecfdf3' : '#f5f3ff',
+            color: activation === 'failed' ? '#b42318' : activation === 'activated' ? '#067647' : '#3829a0',
+            border: '1px solid currentColor',
+          }}
+        >
+          <span>
+            {activation === 'checking' && (selectedLanguage === 'de' ? '⏳ Zahlung wird geprüft…' : '⏳ Проверяем оплату…')}
+            {activation === 'activated' && (selectedLanguage === 'de'
+              ? `✅ Danke! Ihr Plan ${currentTier.name} ist aktiv.`
+              : `✅ Спасибо! Тариф ${currentTier.name} активирован.`)}
+            {activation === 'failed' && (selectedLanguage === 'de'
+              ? `⚠️ Zahlung konnte nicht bestätigt werden (${activationError}). Schreiben Sie uns, wir helfen sofort.`
+              : `⚠️ Не удалось подтвердить оплату (${activationError}). Напишите нам — поможем сразу.`)}
+          </span>
+          {activation !== 'checking' && (
+            <button onClick={dismissActivation} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'inherit' }} aria-label="close">×</button>
+          )}
+        </div>
+      )}
+
       <main className={styles.mainContent}>
         {currentView === 'upload' && renderUploadView()}
         {currentView === 'analysis' && renderAnalysisView()}
       </main>
+
+      <LegalLinks compact />
 
       {showPricingModal && (
         <div className={styles.modal}>
@@ -351,16 +459,28 @@ export default function App() {
                 <div key={tier.id} className={styles.planCard}>
                   <h3>{tier.name}</h3>
                   <p className={styles.price}>€{tier.price === 0 ? '0' : tier.price}</p>
-                  <p>{tier.monthlyLimit === Infinity ? '∞' : tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
-                  <button
-                    onClick={() => {
-                      if (tier.id === 'free') setShowPricingModal(false);
-                      else window.open(tier.stripeLink || '#', '_blank');
-                    }}
-                    className={styles.analyzeButton}
-                  >
-                    {tier.id === 'free' ? TEXTS.close : 'Upgrade'}
-                  </button>
+                  <p>{tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
+                  {tier.id === usageStats.tier ? (
+                    <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
+                      {selectedLanguage === 'de' ? '✓ Aktueller Plan' : '✓ Текущий тариф'}
+                    </button>
+                  ) : tier.id === 'free' ? (
+                    <button onClick={() => setShowPricingModal(false)} className={styles.analyzeButton}>
+                      {TEXTS.close}
+                    </button>
+                  ) : tier.stripeLink ? (
+                    <a
+                      href={tier.stripeLink}
+                      className={styles.analyzeButton}
+                      style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
+                    >
+                      {selectedLanguage === 'de' ? `${tier.name} buchen` : `Подключить ${tier.name}`}
+                    </a>
+                  ) : (
+                    <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
+                      {selectedLanguage === 'de' ? 'Bald verfügbar' : 'Скоро'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
