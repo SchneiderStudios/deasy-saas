@@ -1,185 +1,141 @@
 import { useState, useCallback, useEffect } from 'react';
 import { STRIPE_LINKS } from '@/lib/siteConfig';
 
-export interface PricingTier {
-  id: 'free' | 'plus' | 'pro';
+/**
+ * Разовые пакеты без подписки.
+ * - Бесплатно: FREE_PER_MONTH писем в календарный месяц.
+ * - Пакеты: покупаются через Stripe Payment Link (разовый платёж), письма действуют 12 месяцев.
+ * Баланс хранится в браузере (localStorage). Оплата проверяется сервером (/api/verify-payment),
+ * повторная активация того же платежа блокируется на стороне Stripe (metadata платежа).
+ */
+
+export const FREE_PER_MONTH = 2;
+export const PACK_VALID_MONTHS = 12;
+
+export interface Pack {
+  id: 'paket5' | 'paket15';
   name: string;
-  price: number;
-  monthlyLimit: number;
-  features: string[];
-  stripeLink?: string;
+  price: number; // €
+  letters: number;
+  stripeLink: string;
 }
 
-export interface UsageStats {
-  tier: 'free' | 'plus' | 'pro';
-  usedThisMonth: number;
-  lastResetDate: string;
-  /** ISO-дата, до которой оплачен тариф (из Stripe) */
-  paidUntil?: string;
-  /** ID сессии Stripe Checkout — для повторной проверки подписки */
-  checkoutSession?: string;
+export const PACKS: Pack[] = [
+  { id: 'paket5', name: '5 Briefe', price: 4.99, letters: 5, stripeLink: STRIPE_LINKS.paket5 },
+  { id: 'paket15', name: '15 Briefe', price: 9.99, letters: 15, stripeLink: STRIPE_LINKS.paket15 },
+];
+
+export interface CreditBatch {
+  session: string;
+  total: number;
+  remaining: number;
+  expiresAt: string; // ISO
+}
+
+export interface Balance {
+  month: string; // YYYY-MM
+  freeUsed: number;
+  batches: CreditBatch[];
 }
 
 export type ActivationState = 'idle' | 'checking' | 'activated' | 'failed';
 
-const PRICING_TIERS: Record<string, PricingTier> = {
-  free: {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    monthlyLimit: 3,
-    features: ['3 Dokumente kostenlos', 'Unbegrenzter Chat', 'Basis-Analyse'],
-  },
-  plus: {
-    id: 'plus',
-    name: 'Plus',
-    price: 4.99,
-    monthlyLimit: 50,
-    features: ['50 Dokumente/Monat', 'PDF-Support', 'Antwort-Generator'],
-    stripeLink: STRIPE_LINKS.plus,
-  },
-  pro: {
-    id: 'pro',
-    name: 'Pro',
-    price: 9.99,
-    monthlyLimit: 100,
-    features: ['100 Dokumente/Monat', 'Chat und Antwortentwürfe', 'E-Mail-Support'],
-    stripeLink: STRIPE_LINKS.pro,
-  },
-};
+const KEY = 'deasyBalance';
+const monthKey = () => new Date().toISOString().slice(0, 7);
+const empty = (): Balance => ({ month: monthKey(), freeUsed: 0, batches: [] });
+
+function load(): Balance {
+  try {
+    const b = JSON.parse(localStorage.getItem(KEY) || 'null') as Balance | null;
+    if (!b || !Array.isArray(b.batches)) return empty();
+    return b.month === monthKey() ? b : { ...b, month: monthKey(), freeUsed: 0 };
+  } catch {
+    return empty();
+  }
+}
+
+const valid = (b: CreditBatch) => b.remaining > 0 && new Date(b.expiresAt).getTime() > Date.now();
 
 export function usePricingTiers() {
-  const [usageStats, setUsageStats] = useState<UsageStats>({
-    tier: 'free',
-    usedThisMonth: 0,
-    lastResetDate: new Date().toISOString().split('T')[0],
-  });
-
-  // Load usage stats from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('deasyUsageStats');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Reset monthly usage if month has changed
-        const currentMonth = new Date().toISOString().split('T')[0].substring(0, 7);
-        const storedMonth = parsed.lastResetDate.substring(0, 7);
-
-        if (currentMonth !== storedMonth) {
-          setUsageStats({
-            ...parsed,
-            usedThisMonth: 0,
-            lastResetDate: new Date().toISOString().split('T')[0],
-          });
-        } else {
-          setUsageStats(parsed);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading usage stats:', error);
-    }
-  }, []);
-
-  // Save usage stats to localStorage whenever they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('deasyUsageStats', JSON.stringify(usageStats));
-    } catch (error) {
-      console.error('Error saving usage stats:', error);
-    }
-  }, [usageStats]);
-
-  const getCurrentTier = useCallback((): PricingTier => {
-    return PRICING_TIERS[usageStats.tier] || PRICING_TIERS.free;
-  }, [usageStats.tier]);
-
-  const getRemainingRequests = useCallback((): number => {
-    const tier = getCurrentTier();
-    return Math.max(0, tier.monthlyLimit - usageStats.usedThisMonth);
-  }, [usageStats, getCurrentTier]);
-
-  const canMakeRequest = useCallback((): boolean => {
-    return getRemainingRequests() > 0;
-  }, [getRemainingRequests]);
-
-  const incrementUsage = useCallback(() => {
-    setUsageStats((prev) => ({
-      ...prev,
-      usedThisMonth: prev.usedThisMonth + 1,
-    }));
-  }, []);
-
-  const setTier = useCallback((tier: UsageStats['tier']) => {
-    setUsageStats((prev) => ({
-      ...prev,
-      tier,
-    }));
-  }, []);
-
+  const [balance, setBalance] = useState<Balance>(empty);
+  const [loaded, setLoaded] = useState(false);
   const [activation, setActivation] = useState<ActivationState>('idle');
   const [activationError, setActivationError] = useState<string | null>(null);
+  const [activatedLetters, setActivatedLetters] = useState(0);
 
-  const verify = useCallback(async (sessionId: string) => {
-    const res = await fetch(`/api/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
-    const data = await res.json().catch(() => ({}));
-    return { ok: res.ok && data.success, data };
+  useEffect(() => {
+    setBalance(load());
+    setLoaded(true);
   }, []);
 
-  // 1) Возврат со Stripe: /app?checkout=cs_... → проверяем оплату и включаем тариф
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!loaded) return;
+    try {
+      localStorage.setItem(KEY, JSON.stringify(balance));
+    } catch {}
+  }, [balance, loaded]);
+
+  const freeLeft = Math.max(0, FREE_PER_MONTH - balance.freeUsed);
+  const paidLeft = balance.batches.filter(valid).reduce((s, b) => s + b.remaining, 0);
+  const totalLeft = freeLeft + paidLeft;
+
+  const canMakeRequest = useCallback(() => totalLeft > 0, [totalLeft]);
+
+  /** Списывает одно письмо: сначала бесплатные, потом пакет с ближайшим сроком действия. */
+  const incrementUsage = useCallback(() => {
+    setBalance((prev) => {
+      const cur = prev.month === monthKey() ? prev : { ...prev, month: monthKey(), freeUsed: 0 };
+      if (cur.freeUsed < FREE_PER_MONTH) return { ...cur, freeUsed: cur.freeUsed + 1 };
+      const order = [...cur.batches].filter(valid).sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
+      const target = order[0];
+      if (!target) return cur;
+      return { ...cur, batches: cur.batches.map((b) => (b.session === target.session ? { ...b, remaining: b.remaining - 1 } : b)) };
+    });
+  }, []);
+
+  // Возврат со Stripe: /app?checkout=cs_... → сервер проверяет оплату, мы добавляем письма
+  useEffect(() => {
+    if (!loaded || typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     const sessionId = url.searchParams.get('checkout');
     if (!sessionId) return;
-
     url.searchParams.delete('checkout');
     window.history.replaceState({}, '', url.pathname + url.search);
 
+    if (load().batches.some((b) => b.session === sessionId)) {
+      setActivation('activated');
+      return;
+    }
+
     setActivation('checking');
-    verify(sessionId)
-      .then(({ ok, data }) => {
-        if (!ok) throw new Error(data.error || 'Zahlung konnte nicht bestätigt werden');
-        setUsageStats((prev) => ({
+    fetch(`/api/verify-payment?session_id=${encodeURIComponent(sessionId)}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.error || 'Zahlung konnte nicht bestätigt werden');
+        setBalance((prev) => ({
           ...prev,
-          tier: data.plan,
-          paidUntil: data.paidUntil,
-          checkoutSession: sessionId,
+          batches: [...prev.batches, { session: sessionId, total: data.letters, remaining: data.letters, expiresAt: data.expiresAt }],
         }));
+        setActivatedLetters(data.letters);
         setActivation('activated');
       })
       .catch((e) => {
         setActivationError(e instanceof Error ? e.message : String(e));
         setActivation('failed');
       });
-  }, [verify]);
-
-  // 2) Оплаченный период истёк → спрашиваем Stripe, продлена ли подписка
-  useEffect(() => {
-    const { tier, paidUntil, checkoutSession } = usageStats;
-    if (tier === 'free' || !paidUntil) return;
-    if (new Date(paidUntil).getTime() > Date.now()) return;
-
-    const downgrade = () => setUsageStats((prev) => ({ ...prev, tier: 'free', paidUntil: undefined, checkoutSession: undefined }));
-    if (!checkoutSession) return downgrade();
-
-    verify(checkoutSession)
-      .then(({ ok, data }) => {
-        if (ok) setUsageStats((prev) => ({ ...prev, tier: data.plan, paidUntil: data.paidUntil }));
-        else if (data?.error !== 'Zahlung konnte nicht geprüft werden') downgrade(); // при сбое сети не наказываем
-      })
-      .catch(() => {});
-  }, [usageStats.tier, usageStats.paidUntil, usageStats.checkoutSession, verify]);
+  }, [loaded]);
 
   return {
-    usageStats,
-    activation,
-    activationError,
-    dismissActivation: () => setActivation('idle'),
-    getCurrentTier,
-    getRemainingRequests,
+    balance,
+    freeLeft,
+    paidLeft,
+    totalLeft,
     canMakeRequest,
     incrementUsage,
-    setTier,
-    allTiers: Object.values(PRICING_TIERS),
+    packs: PACKS,
+    activation,
+    activationError,
+    activatedLetters,
+    dismissActivation: () => setActivation('idle'),
   };
 }

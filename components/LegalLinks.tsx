@@ -2,8 +2,9 @@ import React from 'react';
 import { COMPANY } from '@/lib/siteConfig';
 
 /**
- * Юридические ссылки — должны быть на КАЖДОЙ странице (§ 5 DDG «unmittelbar erreichbar»,
- * § 312k BGB Kündigungsbutton, § 356a BGB Widerrufsfunktion).
+ * Юридические ссылки — должны быть на КАЖДОЙ странице (§ 5 DDG «unmittelbar erreichbar», § 356a BGB Widerrufsfunktion).
+ * «Verträge hier kündigen» (§ 312k BGB) нужен только при подписках — сейчас их нет (разовые пакеты).
+ * Если вернутся подписки — вернуть ссылку '/vertrag?aktion=kuendigen'.
  * Подписи кнопок «Verträge hier kündigen» / «Vertrag widerrufen» заданы законом — не переводить и не менять.
  */
 export const LEGAL_LINKS = [
@@ -11,7 +12,6 @@ export const LEGAL_LINKS = [
   { href: '/datenschutz', label: 'Datenschutz' },
   { href: '/agb', label: 'AGB' },
   { href: '/widerruf', label: 'Widerrufsbelehrung' },
-  { href: '/vertrag?aktion=kuendigen', label: 'Verträge hier kündigen' },
   { href: '/vertrag?aktion=widerrufen', label: 'Vertrag widerrufen' },
 ];
 

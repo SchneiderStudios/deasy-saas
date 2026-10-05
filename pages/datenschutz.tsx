@@ -55,7 +55,7 @@ export default function Datenschutz() {
 
         <h2>4. Analyse hochgeladener Dokumente (KI)</h2>
         <p>
-          Wenn Sie ein Dokument hochladen, wird es in Ihrem Browser verkleinert und als Bild an unseren Server
+          Wenn Sie ein Dokument hochladen (Brief, PDF oder Screenshot einer E-Mail/SMS für den Echtheits-Check), wird es in Ihrem Browser verkleinert und als Bild an unseren Server
           gesendet. Von dort wird es zur Analyse, für Ihre Fragen im Chat und zum Erstellen von Antwortschreiben
           an die Schnittstelle (API) von Anthropic PBC (548 Market Street, PMB 90375, San Francisco, CA 94104,
           USA) übermittelt. Anthropic verarbeitet die Daten als Auftragsverarbeiter in unserem Auftrag. Nach
@@ -81,8 +81,8 @@ export default function Datenschutz() {
 
         <h2>5. Speicherung in Ihrem Browser</h2>
         <p>
-          Ihr Dokumentverlauf (Zusammenfassungen, Fristen), Ihre Einwilligung (Abschnitt 4), Ihre Sprachauswahl, der Nutzungszähler und ein
-          gebuchter Tarif werden im lokalen Speicher (localStorage) Ihres Browsers abgelegt. Diese Daten
+          Ihr Dokumentverlauf (Zusammenfassungen, Fristen), Ihre Einwilligung (Abschnitt 4), Ihre Sprachauswahl, die Zähler für kostenlose Briefe und
+          Echtheits-Checks sowie Ihr Paket-Guthaben werden im lokalen Speicher (localStorage) Ihres Browsers abgelegt. Diese Daten
           verlassen Ihr Gerät nicht und sind für die von Ihnen gewünschte Funktion unbedingt erforderlich
           (§ 25 Abs. 2 Nr. 2 TDDDG). Sie können sie jederzeit löschen, indem Sie die Websitedaten in Ihrem
           Browser entfernen.
@@ -92,8 +92,8 @@ export default function Datenschutz() {
         <p>
           Kostenpflichtige Tarife werden über Stripe Payments Europe, Ltd. (1 Grand Canal Street Lower, Dublin 2,
           Irland) abgewickelt. Ihre Zahlungsdaten geben Sie direkt bei Stripe ein; wir erhalten sie nicht. Nach
-          der Zahlung fragen wir bei Stripe ab, ob die Zahlung erfolgreich war, welcher Tarif gebucht wurde und
-          bis wann er gilt. Rechtsgrundlage ist die Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO); gesetzliche
+          der Zahlung fragen wir bei Stripe ab, ob die Zahlung erfolgreich war und welches Paket gekauft wurde, und
+          vermerken bei Stripe, dass das Paket eingelöst ist (damit es nicht mehrfach gutgeschrieben wird). Rechtsgrundlage ist die Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO); gesetzliche
           Aufbewahrungspflichten (Art. 6 Abs. 1 lit. c DSGVO) bleiben unberührt. Details:{' '}
           <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer">
             Datenschutzerklärung von Stripe
@@ -101,11 +101,11 @@ export default function Datenschutz() {
           .
         </p>
 
-        <h2>7. Kündigung und Widerruf über die Website</h2>
+        <h2>7. Widerruf über die Website</h2>
         <p>
-          Wenn Sie über „Verträge hier kündigen“ oder „Vertrag widerrufen“ eine Erklärung abgeben, verarbeiten wir Ihren
-          Namen, Ihre E-Mail-Adresse, den Vertrag und den Zeitpunkt des Eingangs, um die Erklärung umzusetzen, Ihr Abo bei
-          Stripe zu beenden und Ihnen den Eingang zu bestätigen (Art. 6 Abs. 1 lit. b und c DSGVO, §§ 312k, 356a BGB).
+          Wenn Sie über „Vertrag widerrufen“ eine Erklärung abgeben, verarbeiten wir Ihren
+          Namen, Ihre E-Mail-Adresse, den Vertrag und den Zeitpunkt des Eingangs, um die Erklärung umzusetzen, die Zahlung zu
+          erstatten und Ihnen den Eingang zu bestätigen (Art. 6 Abs. 1 lit. b und c DSGVO, § 356a BGB).
           Die Bestätigungs-E-Mails versenden wir über Resend (Plus Five Five, Inc., 2261 Market Street #5039,
           San Francisco, CA 94114, USA) als Auftragsverarbeiter auf Grundlage von EU-Standardvertragsklauseln. Wir bewahren
           die Erklärungen bis zum Ablauf der gesetzlichen Verjährungs- und Aufbewahrungsfristen auf.

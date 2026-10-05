@@ -45,11 +45,11 @@ const primary: React.CSSProperties = {
 
 export default function Vertrag() {
   const router = useRouter();
-  const [aktion, setAktion] = useState<Aktion>('kuendigen');
+  const [aktion, setAktion] = useState<Aktion>('widerrufen');
   const [form, setForm] = useState({
     name: '',
     email: '',
-    tarif: 'DEASY Plus',
+    tarif: 'DEASY Paket 5 Briefe',
     art: 'ordentlich',
     grund: '',
     zeitpunkt: 'naechstmoeglich',
@@ -143,10 +143,10 @@ export default function Vertrag() {
               Bitte speichern Sie diese Erklärung mit Datum und Uhrzeit:
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={saveFile} style={{ ...primary, background: '#4338ca', width: 'auto', marginTop: 0 }}>
+              <button onClick={saveFile} style={{ ...primary, background: '#2b4fd8', width: 'auto', marginTop: 0 }}>
                 ⬇️ Als Datei speichern
               </button>
-              <button onClick={() => window.print()} style={{ ...primary, background: '#fff', color: '#4338ca', border: '1px solid #4338ca', width: 'auto', marginTop: 0 }}>
+              <button onClick={() => window.print()} style={{ ...primary, background: '#fff', color: '#2b4fd8', border: '1px solid #2b4fd8', width: 'auto', marginTop: 0 }}>
                 🖨️ Drucken / als PDF
               </button>
             </div>
@@ -154,16 +154,16 @@ export default function Vertrag() {
         ) : (
           <>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-              {(['kuendigen', 'widerrufen'] as Aktion[]).map((a) => (
+              {(aktion === 'kuendigen' ? (['kuendigen', 'widerrufen'] as Aktion[]) : ([] as Aktion[])).map((a) => (
                 <button
                   key={a}
                   onClick={() => switchTo(a)}
                   style={{
                     padding: '8px 14px',
                     borderRadius: 999,
-                    border: '1px solid #4338ca',
-                    background: aktion === a ? '#4338ca' : '#fff',
-                    color: aktion === a ? '#fff' : '#4338ca',
+                    border: '1px solid #2b4fd8',
+                    background: aktion === a ? '#2b4fd8' : '#fff',
+                    color: aktion === a ? '#fff' : '#2b4fd8',
                     fontWeight: 600,
                     cursor: 'pointer',
                   }}
@@ -180,7 +180,7 @@ export default function Vertrag() {
                 : 'Innerhalb von 14 Tagen nach Vertragsschluss können Sie Ihren Vertrag ohne Angabe von Gründen widerrufen (siehe Widerrufsbelehrung).'}
             </p>
             <p style={{ fontSize: 14, color: '#4b4e5c' }}>
-              Kostenloser Tarif? Dafür ist keine Kündigung nötig – es besteht kein kostenpflichtiger Vertrag.
+              DEASY bietet nur einmalige Pakete ohne Abo an – eine Kündigung ist nicht nötig. Für die kostenlosen Briefe besteht kein kostenpflichtiger Vertrag.
             </p>
 
             <form onSubmit={submit}>
@@ -218,8 +218,8 @@ export default function Vertrag() {
               <label style={labelStyle}>
                 Vertrag
                 <select value={form.tarif} onChange={set('tarif')} style={field}>
-                  <option>DEASY Plus</option>
-                  <option>DEASY Pro</option>
+                  <option>DEASY Paket 5 Briefe</option>
+                  <option>DEASY Paket 15 Briefe</option>
                 </select>
               </label>
 

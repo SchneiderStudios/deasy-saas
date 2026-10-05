@@ -21,13 +21,15 @@ export const COMPANY = {
 };
 
 /**
- * Stripe Payment Links. Пустая строка = кнопка показывает «скоро доступно».
- * В настройках каждой ссылки в Stripe: «After payment» → «Don't show confirmation page» →
+ * Stripe Payment Links для РАЗОВЫХ пакетов (Payment Links → тип «Products or subscriptions», цена One-time).
+ * Пустая строка = кнопка показывает «скоро доступно».
+ * В настройках каждой ссылки: «After payment» → «Don't show confirmation page» →
  * redirect на  https://deasy-saas.vercel.app/app?checkout={CHECKOUT_SESSION_ID}
+ * Суммы должны быть ровно 4,99 € и 9,99 € — по ним сервер определяет пакет.
  */
 export const STRIPE_LINKS = {
-  plus: '',
-  pro: '',
+  paket5: '',
+  paket15: '',
 };
 
 

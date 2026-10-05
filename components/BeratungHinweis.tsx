@@ -83,7 +83,7 @@ const box: React.CSSProperties = {
 };
 
 const Ext = ({ link }: { link: Link }) => (
-  <a href={link.href} target="_blank" rel="noopener noreferrer" style={{ color: '#4338ca' }}>
+  <a href={link.href} target="_blank" rel="noopener noreferrer" style={{ color: '#2b4fd8' }}>
     {link.label} ↗
   </a>
 );
@@ -133,7 +133,7 @@ export function BeratungHinweis({ language, open = false }: { language: Lang; op
 export function SteuerHinweis({ language, absender }: { language: Lang; absender?: string }) {
   const de = language === 'de';
   return (
-    <div style={{ ...box, background: '#f8f7ff', borderColor: '#d9d4ff', marginTop: 0 }}>
+    <div style={{ ...box, background: '#f5f7ff', borderColor: '#c9d4fb', marginTop: 0 }}>
       <h3 style={{ margin: '0 0 8px', color: '#1c2340' }}>
         {de ? '🧾 Dieses Schreiben betrifft Steuern' : '🧾 Это письмо касается налогов'}
       </h3>

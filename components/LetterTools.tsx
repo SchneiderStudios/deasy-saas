@@ -15,9 +15,9 @@ const card: React.CSSProperties = {
 };
 const h3: React.CSSProperties = { margin: '0 0 8px', fontSize: 17 };
 const btn: React.CSSProperties = {
-  border: '1px solid #d9d4ff',
-  background: '#f5f3ff',
-  color: '#3829a0',
+  border: '1px solid #c9d4fb',
+  background: '#eef2ff',
+  color: '#1f3bb0',
   borderRadius: 10,
   padding: '8px 12px',
   fontWeight: 600,
@@ -122,7 +122,7 @@ export function EchtheitCheck({ echtheit, hinweise, language }: { echtheit?: str
         </ul>
       )}
       <details>
-        <summary style={{ cursor: 'pointer', color: '#4338ca', fontWeight: 600 }}>
+        <summary style={{ cursor: 'pointer', color: '#2b4fd8', fontWeight: 600 }}>
           {de ? 'So prüfen Sie einen Brief selbst' : 'Как проверить письмо самому'}
         </summary>
         <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
@@ -209,7 +209,7 @@ export function AnrufVorbereitung({
   };
 
   return (
-    <details style={{ ...card, background: '#f8f7ff', borderColor: '#d9d4ff' }}>
+    <details style={{ ...card, background: '#f5f7ff', borderColor: '#c9d4fb' }}>
       <summary style={{ cursor: 'pointer', fontWeight: 700, fontSize: 16 }}>
         📞 {de ? 'Anruf oder Termin vorbereiten' : 'Подготовка к звонку или визиту'}
       </summary>
@@ -272,5 +272,121 @@ export function AnrufVorbereitung({
         </p>
       </div>
     </details>
+  );
+}
+
+/* ---------------- Отдельная проверка на мошенничество: результат ---------------- */
+
+export interface FraudCheck {
+  art: string;
+  absender: string;
+  echtheit: 'unauffaellig' | 'pruefen' | 'verdaechtig';
+  betrugsHinweise: string[];
+  entwarnung: string[];
+  schritte: string[];
+}
+
+export function FraudResult({ check, language, onExplain, canExplain }: { check: FraudCheck; language: Lang; onExplain?: () => void; canExplain?: boolean }) {
+  const de = language === 'de';
+  const v = {
+    unauffaellig: { de: 'Keine Warnzeichen gefunden', ru: 'Признаков мошенничества не найдено', c: '#067647', bg: '#ecfdf3' },
+    pruefen: { de: 'Bitte genauer prüfen', ru: 'Стоит проверить', c: '#b54708', bg: '#fff6ed' },
+    verdaechtig: { de: 'Wahrscheinlich Betrug', ru: 'Похоже на мошенничество', c: '#b42318', bg: '#fef3f2' },
+  }[check.echtheit];
+  const artName: Record<string, [string, string]> = {
+    brief: ['Brief', 'Письмо'],
+    email: ['E-Mail', 'E-mail'],
+    sms: ['SMS', 'SMS'],
+    messenger: ['Messenger-Nachricht', 'Сообщение в мессенджере'],
+    sonstiges: ['Dokument', 'Документ'],
+  };
+  const [aDe, aRu] = artName[check.art] || artName.sonstiges;
+
+  return (
+    <div>
+      <div
+        style={{
+          ...card,
+          background: v.bg,
+          borderColor: v.c,
+          borderWidth: 2,
+          textAlign: 'center',
+          padding: '24px 16px',
+        }}
+      >
+        <div
+          className="deasy-stamp"
+          style={{
+            display: 'inline-block',
+            border: `3px solid ${v.c}`,
+            color: v.c,
+            borderRadius: 8,
+            padding: '8px 16px',
+            fontSize: 22,
+            fontWeight: 800,
+            transform: 'rotate(-3deg)',
+            letterSpacing: 0.3,
+          }}
+        >
+          {de ? v.de : v.ru}
+        </div>
+        <p style={{ margin: '12px 0 0', color: '#4b4e5c' }}>
+          {de ? aDe : aRu}
+          {check.absender && ` – ${de ? 'angeblich von' : 'якобы от'} ${check.absender}`}
+        </p>
+      </div>
+
+      {check.betrugsHinweise.length > 0 && (
+        <div style={card}>
+          <h3 style={h3}>🚩 {de ? 'Warnzeichen' : 'Тревожные признаки'}</h3>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {check.betrugsHinweise.map((h) => (
+              <li key={h} style={{ marginBottom: 4 }}>{h}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {check.entwarnung.length > 0 && (
+        <div style={card}>
+          <h3 style={h3}>✅ {de ? 'Spricht für Echtheit' : 'Говорит в пользу подлинности'}</h3>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {check.entwarnung.map((h) => (
+              <li key={h} style={{ marginBottom: 4 }}>{h}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div style={{ ...card, background: '#f5f7ff', borderColor: '#c9d4fb' }}>
+        <h3 style={h3}>👣 {de ? 'Was jetzt sicher ist' : 'Что безопасно сделать сейчас'}</h3>
+        <ul style={{ margin: 0, paddingLeft: 18 }}>
+          {(check.schritte.length
+            ? check.schritte
+            : de
+            ? ['Absender über die Nummer auf seiner offiziellen Website kontaktieren.', 'Nichts zahlen und keine Daten eingeben, bevor die Echtheit geklärt ist.']
+            : ['Свяжитесь с отправителем по номеру с его официального сайта.', 'Ничего не платите и не вводите данные, пока не убедитесь в подлинности.']
+          ).map((s) => (
+            <li key={s} style={{ marginBottom: 4 }}>{s}</li>
+          ))}
+        </ul>
+      </div>
+
+      {onExplain && (
+        <button
+          onClick={onExplain}
+          disabled={!canExplain}
+          style={{ ...btn, width: '100%', padding: '12px 14px', fontSize: 15, marginBottom: 16, opacity: canExplain ? 1 : 0.6 }}
+        >
+          📄 {de ? 'Dieses Schreiben jetzt auch erklären lassen (1 Brief)' : 'Объяснить это письмо полностью (1 письмо)'}
+        </button>
+      )}
+
+      <p style={{ fontSize: 12.5, color: '#6b7085', margin: 0 }}>
+        {de
+          ? 'Automatische KI-Einschätzung ohne Gewähr. Auch ohne Warnzeichen kann ein Dokument gefälscht sein – im Zweifel beim Absender über die offizielle Nummer nachfragen.'
+          : 'Автоматическая оценка ИИ без гарантий. Даже без тревожных признаков документ может быть поддельным — если сомневаетесь, позвоните отправителю по официальному номеру.'}
+      </p>
+    </div>
   );
 }

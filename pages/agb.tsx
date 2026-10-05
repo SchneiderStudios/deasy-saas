@@ -67,25 +67,31 @@ export default function AGB() {
           untersagt.
         </p>
 
-        <h2>§ 4 Tarife und Vertragsschluss</h2>
+        <h2>§ 4 Leistungsumfang, Pakete und Vertragsschluss</h2>
         <p>
-          (1) Der kostenlose Tarif umfasst 3 Dokumente pro Kalendermonat. Die kostenpflichtigen Tarife „Plus“ (50
-          Dokumente pro Monat) und „Pro“ (100 Dokumente pro Monat) werden als Monatsabonnement angeboten. Nicht genutzte
-          Kontingente verfallen am Monatsende.
+          (1) Jeden Kalendermonat können 2 Briefe kostenlos erklärt werden. Zusätzlich sind bis zu 5 Echtheits-Checks
+          (Prüfung auf Betrugsmerkmale) pro Monat kostenlos. Nicht genutzte kostenlose Kontingente verfallen am Monatsende.
         </p>
         <p>
-          (2) Die Darstellung der Tarife auf der Website ist kein bindendes Angebot. Durch Klick auf die Schaltfläche zur
+          (2) Darüber hinaus bieten wir Pakete zum einmaligen Preis an: „5 Briefe“ und „15 Briefe“. Es handelt sich{' '}
+          <strong>nicht um ein Abonnement</strong>; es entstehen keine wiederkehrenden Zahlungen und keine Kündigung ist
+          nötig. Die Briefe eines Pakets können 12 Monate ab dem Kauf genutzt werden; danach verfallen nicht genutzte
+          Briefe. Kostenlose Briefe werden vor Paket-Briefen verbraucht. Schreiben in Steuersachen (§ 2 Abs. 3) werden nicht
+          angerechnet.
+        </p>
+        <p>
+          (3) Die Darstellung der Pakete auf der Website ist kein bindendes Angebot. Durch Klick auf die Schaltfläche zur
           kostenpflichtigen Bestellung auf der Zahlungsseite unseres Zahlungsdienstleisters Stripe geben Sie ein
           verbindliches Angebot ab; der Vertrag kommt mit der Bestätigung der Zahlung zustande. Vertragssprache ist
           Deutsch.
         </p>
         <p>
-          (3) {COMPANY.brand} arbeitet ohne Benutzerkonto. Ein gebuchter Tarif wird in dem Browser freigeschaltet, in dem
-          die Zahlung abgeschlossen wurde. Werden die Websitedaten dieses Browsers gelöscht oder ein anderes Gerät genutzt,
-          schalten wir den Tarif auf Anfrage per E-Mail kurzfristig wieder frei.
+          (4) {COMPANY.brand} arbeitet ohne Benutzerkonto. Ein Paket wird in dem Browser gutgeschrieben, in dem die Zahlung
+          abgeschlossen wurde, und kann nur einmal eingelöst werden. Werden die Websitedaten dieses Browsers gelöscht oder
+          ein anderes Gerät genutzt, übertragen wir das verbleibende Guthaben auf Anfrage per E-Mail.
         </p>
         <p>
-          (4) Wir speichern den Vertragstext nicht gesondert. Diese AGB können Sie jederzeit auf dieser Seite abrufen und
+          (5) Wir speichern den Vertragstext nicht gesondert. Diese AGB können Sie jederzeit auf dieser Seite abrufen und
           ausdrucken oder speichern; die Zahlungsbestätigung erhalten Sie per E-Mail von Stripe.
         </p>
 
@@ -94,22 +100,13 @@ export default function AGB() {
           (1) Es gelten die bei der Bestellung angegebenen Preise. Alle Preise sind Endpreise; als Kleinunternehmer gemäß
           § 19 UStG berechnen wir keine Umsatzsteuer.
         </p>
-        <p>
-          (2) Die Vergütung ist monatlich im Voraus fällig und wird über Stripe mit dem gewählten Zahlungsmittel
-          eingezogen.
-        </p>
+        <p>(2) Der Preis eines Pakets ist mit der Bestellung fällig und wird einmalig über Stripe bezahlt.</p>
 
-        <h2>§ 6 Laufzeit und Kündigung</h2>
+        <h2>§ 6 Laufzeit</h2>
         <p>
-          (1) Ein Abonnement läuft zunächst einen Monat und verlängert sich jeweils um einen weiteren Monat, wenn es nicht
-          gekündigt wird.
+          Der Vertrag über ein Paket endet, wenn alle Briefe des Pakets genutzt sind, spätestens 12 Monate nach dem Kauf.
+          Eine Kündigung ist nicht erforderlich.
         </p>
-        <p>
-          (2) Sie können jederzeit zum Ende des laufenden Abrechnungsmonats kündigen – am einfachsten über die
-          Schaltfläche <Link href="/vertrag?aktion=kuendigen">„Verträge hier kündigen“</Link>, die auf jeder Seite verlinkt
-          ist, oder in Textform (z. B. per E-Mail). Bis zum Ende des bezahlten Monats bleibt der Tarif nutzbar.
-        </p>
-        <p>(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.</p>
 
         <h2>§ 7 Widerrufsrecht</h2>
         <p>

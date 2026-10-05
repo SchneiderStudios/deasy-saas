@@ -24,6 +24,12 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 
 Меняя одну сторону контракта — меняй и другую в том же коммите.
 
+6. `POST /api/check-fraud` `{ images, language }` → `{ success, check: { art, absender, echtheit: 'unauffaellig'|'pruefen'|'verdaechtig', betrugsHinweise[], entwarnung[], schritte[] } }` — отдельный бесплатный режим «Проверить на обман» (`/app?modus=betrug`), модель Sonnet, работает и для налоговых писем.
+
+## Дизайн
+- Главная `pages/index.tsx` + `styles/Landing.module.css`: главный образ — письмо из ведомства, размечаемое маркером, с пометками на полях. Одна анимация при загрузке, `prefers-reduced-motion` уважается.
+- Токены цвета в `styles/globals.css`: ink #1d2433, paper #fbfbf8, marker #ffe45c, pen #2b4fd8, alarm #c8321f. Шрифт Golos Text (self-hosted через @fontsource, без Google Fonts).
+
 ## Ограничения
 - Vercel режет тело запроса на **4,5 МБ** → картинки обязательно сжимаются на клиенте.
 - HEIC: Safari декодирует сам, остальные браузеры — через `heic2any`.
@@ -35,18 +41,19 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
 - **Продукт = перевод + сроки + куда идти.** Никаких писем-возражений (Widerspruch/Einspruch/Klage), никакой правовой оценки. Простые письма (продление срока, досылка документов, вопрос) — можно.
 - Данные владельца и ссылки Stripe — только в `lib/siteConfig.ts`.
 - На КАЖДОЙ странице футер `components/LegalLinks.tsx`: Impressum, Datenschutz, AGB, Widerrufsbelehrung, «Verträge hier kündigen» (§312k BGB), «Vertrag widerrufen» (§356a BGB). Подписи кнопок заданы законом.
-- `/vertrag` + `/api/vertrag`: кнопки «jetzt kündigen» / «Widerruf bestätigen», подтверждение по e-mail через Resend (env `RESEND_API_KEY`, `MAIL_FROM`, `OWNER_EMAIL`), отмена в Stripe.
+- `/vertrag` + `/api/vertrag`: кнопка «Widerruf bestätigen» (поток «jetzt kündigen» скрыт, вернуть при подписках), подтверждение по e-mail через Resend (env `RESEND_API_KEY`, `MAIL_FROM`, `OWNER_EMAIL`), отмена в Stripe.
 - Перед загрузкой — чекбокс согласия (Art. 9/49 DSGVO), ключ `deasyConsent` в localStorage. Не загружать без него.
 - ИИ всегда помечен как ИИ (AI Act Art. 50, Anthropic AUP): «KI-Assistent», «KI-generiert». Промпты: общая информация, без индивидуальной правовой оценки и прогноза шансов (RDG/StBerG).
 - **Налоговые письма не разбираем (§ 2 StBerG):** Finanzamt, BZSt, Familienkasse (Kindergeld), Hauptzollamt, Gemeindesteuern. `/api/analyze-document` возвращает `analysis.restricted = 'steuer'` (KI-категория + регулярка `TAX_SENDER` по отправителю), UI показывает `SteuerHinweis`, лимит не списывается, `/api/chat` и `/api/generate-reply` отвечают 403. Шаблонов для налоговой нет.
 - Под каждым анализом — `BeratungHinweis`: куда обратиться, с проверенными ссылками на официальные сайты ведомств (arbeitsagentur.de, bamf-navi.bamf.de, elster.de, 115.de …). Новые ссылки — только официальные и проверенные.
-- Тарифы только Free / Plus / Pro. Тарифа Business/API нет — не возвращать без решения владельца.
+- **Оплата — только разовые пакеты, без подписок:** бесплатно 2 письма/мес + 5 проверок на мошенничество/мес; пакеты 5 писем 4,99 € и 15 писем 9,99 €, действуют 12 мес. Логика — `hooks/usePricingTiers.ts` (баланс в localStorage `deasyBalance`), проверка — `/api/verify-payment` (сумма → кол-во писем; повторная активация блокируется metadata `deasy_redeemed` на PaymentIntent). Ссылки — `STRIPE_LINKS.paket5/paket15`. Тарифов Business/API и подписок нет — не возвращать без решения владельца.
+- Без подписок кнопка «Verträge hier kündigen» (§312k) не нужна; «Vertrag widerrufen» (§356a) — обязательна. Если вернутся подписки — вернуть кнопку в `LegalLinks`.
 - Нельзя обещать на сайте функции, которых нет (UWG). Никаких сторонних скриптов/шрифтов/трекинга без обновления Datenschutz.
 - Функции работают в регионе `fra1` (vercel.json).
 
 ## Известные долги (не трогать без задачи)
 - `prisma`, `next-auth` в зависимостях, но не подключены.
-- Лимиты и тариф хранятся в `localStorage` (тариф проверяется через `/api/verify-payment`); без аккаунтов.
+- Баланс писем хранится в `localStorage`; без аккаунтов. Перенос на другое устройство — вручную через поддержку.
 
 ## Правила работы
 - Никаких прямых коммитов в `main`: ветка → Pull Request → проверка на Vercel Preview → Merge.

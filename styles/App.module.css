@@ -1,7 +1,7 @@
 .container {
   min-height: 100vh;
   background: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font);
 }
 
 .header {
@@ -17,13 +17,13 @@
 .logo {
   font-size: 1.3rem;
   font-weight: 800;
-  color: #4338ca;
+  color: #2b4fd8;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .logo:hover {
-  color: #3829a0;
+  color: #1f3bb0;
 }
 
 .headerRight {
@@ -35,13 +35,13 @@
 .plan {
   font-size: 0.85rem;
   color: #4b4e5c;
-  background: #f0ebff;
+  background: #eef2ff;
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
 }
 
 .upgradeButton {
-  background: #4338ca;
+  background: #2b4fd8;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -52,7 +52,7 @@
 }
 
 .upgradeButton:hover {
-  background: #3829a0;
+  background: #1f3bb0;
 }
 
 .content {
@@ -77,7 +77,7 @@
 
 .uploadArea {
   background: white;
-  border: 2px dashed #4338ca;
+  border: 2px dashed #2b4fd8;
   border-radius: 12px;
   padding: 3rem 2rem;
   text-align: center;
@@ -87,8 +87,8 @@
 }
 
 .uploadArea:hover {
-  background: #f8f6ff;
-  border-color: #3829a0;
+  background: #f3f6ff;
+  border-color: #1f3bb0;
 }
 
 .uploadIcon {
@@ -125,7 +125,7 @@
 
 .analyzeButton {
   width: 100%;
-  background: #4338ca;
+  background: #2b4fd8;
   color: white;
   border: none;
   padding: 1rem;
@@ -137,7 +137,7 @@
 }
 
 .analyzeButton:hover:not(:disabled) {
-  background: #3829a0;
+  background: #1f3bb0;
   transform: translateY(-2px);
 }
 
@@ -150,7 +150,7 @@
   text-align: center;
   color: #4b4e5c;
   font-size: 0.9rem;
-  background: #f0ebff;
+  background: #eef2ff;
   padding: 1rem;
   border-radius: 8px;
 }
@@ -232,7 +232,7 @@
   content: '✓';
   position: absolute;
   left: 0;
-  color: #4338ca;
+  color: #2b4fd8;
   font-weight: bold;
 }
 
@@ -307,7 +307,7 @@
 
 .chatMessage.user {
   align-self: flex-end;
-  background: #4338ca;
+  background: #2b4fd8;
   color: white;
 }
 
@@ -338,12 +338,12 @@
 
 .chatInput input:focus {
   outline: none;
-  border-color: #4338ca;
+  border-color: #2b4fd8;
   box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
 }
 
 .chatInput button {
-  background: #4338ca;
+  background: #2b4fd8;
   color: white;
   border: none;
   padding: 0.75rem 1rem;
@@ -354,7 +354,7 @@
 }
 
 .chatInput button:hover:not(:disabled) {
-  background: #3829a0;
+  background: #1f3bb0;
 }
 
 .chatInput button:disabled {
@@ -444,7 +444,7 @@
 }
 
 .planCard:hover {
-  border-color: #4338ca;
+  border-color: #2b4fd8;
   box-shadow: 0 4px 12px rgba(67, 56, 202, 0.15);
   transform: translateY(-2px);
 }
@@ -464,7 +464,7 @@
 
 .planButton {
   display: inline-block;
-  background: #4338ca;
+  background: #2b4fd8;
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
@@ -477,7 +477,7 @@
 }
 
 .planButton:hover {
-  background: #3829a0;
+  background: #1f3bb0;
 }
 
 .closeModal {
@@ -515,7 +515,7 @@
 
 .upgradeSection {
   background: white;
-  border: 2px solid #4338ca;
+  border: 2px solid #2b4fd8;
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 1.5rem;
@@ -635,7 +635,7 @@
 .usagePill {
   font-size: 12px;
   color: #4b4e5c;
-  background: #f0ebff;
+  background: #eef2ff;
   padding: 4px 10px;
   border-radius: 999px;
   white-space: nowrap;
@@ -657,7 +657,7 @@
 }
 
 .plusButton {
-  background: #4338ca;
+  background: #2b4fd8;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -676,7 +676,7 @@
 .backButton {
   background: none;
   border: none;
-  color: #4338ca;
+  color: #2b4fd8;
   font-weight: 600;
   font-size: 15px;
   padding: 4px 0;
@@ -710,4 +710,68 @@
   .analysisPanel {
     padding: 16px;
   }
+}
+
+
+/* --- Mode switch: понять письмо / проверить на обман --- */
+.modeSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.modeSwitch button {
+  text-align: left;
+  border: 1.5px solid #dadde3;
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: #1d2433;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modeSwitch button span {
+  font-size: 12.5px;
+  color: #5b6272;
+}
+
+.modeSwitch button:focus-visible {
+  outline: 3px solid #ffe45c;
+  outline-offset: 2px;
+}
+
+.modeSwitch .modeActive {
+  border-color: #2b4fd8;
+  background: #eef2ff;
+  box-shadow: inset 0 0 0 1px #2b4fd8;
+}
+
+/* --- Шапка приложения на телефоне: баланс сам открывает покупку --- */
+.usagePill {
+  white-space: nowrap;
+  font-weight: 600;
+  color: #1f3bb0;
+}
+
+@media (max-width: 520px) {
+  .plusButton {
+    display: none;
+  }
+  .topBar {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+}
+
+/* --- Окно покупки пакетов --- */
+.planCard .price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1d2433;
+  margin: 4px 0 0;
 }

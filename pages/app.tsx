@@ -6,7 +6,8 @@ import styles from '@/styles/App.module.css';
 import DocumentAssistant from '@/components/DocumentAssistant';
 import LegalLinks from '@/components/LegalLinks';
 import { BeratungHinweis, SteuerHinweis } from '@/components/BeratungHinweis';
-import { FristenKarte, EchtheitCheck, AnrufVorbereitung } from '@/components/LetterTools';
+import { FristenKarte, EchtheitCheck, AnrufVorbereitung, FraudResult } from '@/components/LetterTools';
+import type { FraudCheck } from '@/components/LetterTools';
 import HistoryView from '@/components/HistoryView';
 import type { SavedCase } from '@/hooks/useDocumentHistory';
 
@@ -30,10 +31,10 @@ interface AnalysisResult {
 const TEXTS_DE = {
   title: 'DEASY – Deutsch-Bürokratie Assistent',
   subtitle: 'Verstehe deutsche Behördenschreiben in Sekunden',
-  uploadTitle: 'Dokument hochladen',
-  uploadHint: 'PDF oder Bild hier ablegen oder klicken',
+  uploadTitle: 'Brief hochladen',
+  uploadHint: 'Tippen, um zu fotografieren oder eine Datei zu wählen',
   uploadFormats: 'Formate: PDF, JPG, PNG, HEIC (max 10 MB)',
-  uploadInfo: 'DEASY analysiert automatisch jeden Brief, den du hochlädst und erklärt dir, was er bedeutet.',
+  uploadInfo: 'Fotografieren Sie den Brief oder laden Sie ein PDF hoch – DEASY erklärt, was drinsteht, welche Fristen gelten und wer hilft.',
   analyzeBtn: 'Dokument analysieren',
   analyzing: 'Analysieren...',
   analysis: 'Analyse',
@@ -52,7 +53,7 @@ const TEXTS_DE = {
   generateReply: 'Antwort schreiben',
   close: 'Schließen',
   chat: 'Chat',
-  typeMessage: 'Deine Frage...',
+  typeMessage: 'Ihre Frage...',
   send: 'Senden',
   noMessages: 'Stelle eine Frage zum Dokument',
   replyTemplates: 'Antwort-Vorlagen',
@@ -68,17 +69,17 @@ const TEXTS_DE = {
   edit: 'Bearbeiten',
   delete: 'Löschen',
   usage: 'Nutzung',
-  error: 'Fehler bei der Analyse. Bitte versuche es erneut.',
+  error: 'Fehler bei der Analyse. Bitte erneut versuchen.',
   loading: 'Lädt...',
 };
 
 const TEXTS_RU = {
   title: 'DEASY – Помощник по немецкой бюрократии',
-  subtitle: 'Разберись в немецких официальных письмах за секунды',
-  uploadTitle: 'Загрузить документ',
-  uploadHint: 'Перетащи PDF или изображение сюда или нажми',
+  subtitle: 'Немецкие официальные письма — понятным языком',
+  uploadTitle: 'Загрузить письмо',
+  uploadHint: 'Нажмите, чтобы сфотографировать или выбрать файл',
   uploadFormats: 'Форматы: PDF, JPG, PNG, HEIC (макс 10 МБ)',
-  uploadInfo: 'DEASY автоматически анализирует каждое письмо, которое ты загружаешь, и объясняет тебе, что оно означает.',
+  uploadInfo: 'Сфотографируйте письмо или загрузите PDF — DEASY объяснит, что в нём написано, какие сроки и куда обратиться.',
   analyzeBtn: 'Анализировать документ',
   analyzing: 'Анализирование...',
   analysis: 'Анализ',
@@ -97,9 +98,9 @@ const TEXTS_RU = {
   generateReply: 'Написать ответ',
   close: 'Закрыть',
   chat: 'Чат',
-  typeMessage: 'Твой вопрос...',
+  typeMessage: 'Ваш вопрос...',
   send: 'Отправить',
-  noMessages: 'Задай вопрос о документе',
+  noMessages: 'Задайте вопрос о письме',
   replyTemplates: 'Шаблоны ответов',
   selectTemplate: 'Выбрать шаблон',
   copyToClipboard: 'Скопировать',
@@ -113,20 +114,20 @@ const TEXTS_RU = {
   edit: 'Редактировать',
   delete: 'Удалить',
   usage: 'Использование',
-  error: 'Ошибка при анализе. Попробуй ещё раз.',
+  error: 'Ошибка при анализе. Попробуйте ещё раз.',
   loading: 'Загрузка...',
 };
 
 
 export default function App() {
-  const { usageStats, canMakeRequest, incrementUsage, getCurrentTier, getRemainingRequests, allTiers, activation, activationError, dismissActivation } = usePricingTiers();
+  const { freeLeft, paidLeft, totalLeft, canMakeRequest, incrementUsage, packs, activation, activationError, activatedLetters, dismissActivation } = usePricingTiers();
   const { convertFileToImages, error: pdfError, clearError } = usePdfUpload();
   const { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone } = useDocumentHistory();
 
   const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
   const TEXTS = selectedLanguage === 'ru' ? TEXTS_RU : TEXTS_DE;
 
-  const [currentView, setCurrentView] = useState<'upload' | 'analysis' | 'history'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'analysis' | 'history' | 'fraud'>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -158,6 +159,92 @@ export default function App() {
   };
 
   // Handle file upload
+  // ---- Режимы: объяснить письмо / проверить на мошенничество ----
+  const FRAUD_FREE_PER_MONTH = 5;
+  const [mode, setMode] = useState<'erklaeren' | 'betrug'>('erklaeren');
+  const [fraudCheck, setFraudCheck] = useState<FraudCheck | null>(null);
+  const [lastUpload, setLastUpload] = useState<{ images: string[]; fileName: string } | null>(null);
+  const [fraudUsed, setFraudUsed] = useState(0);
+  const fraudMonth = () => new Date().toISOString().slice(0, 7);
+
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get('modus') === 'betrug') setMode('betrug');
+      const f = JSON.parse(localStorage.getItem('deasyFraud') || 'null');
+      setFraudUsed(f && f.month === fraudMonth() ? f.count : 0);
+    } catch {}
+  }, []);
+
+  const bumpFraud = () => {
+    const next = fraudUsed + 1;
+    setFraudUsed(next);
+    try {
+      localStorage.setItem('deasyFraud', JSON.stringify({ month: fraudMonth(), count: next }));
+    } catch {}
+  };
+
+  const apiError = async (response: Response) => {
+    const errorData = await response.json().catch(() => ({}));
+    if (response.status === 413) {
+      return new Error(selectedLanguage === 'de' ? 'Datei zu groß für die Analyse' : 'Файл слишком большой для анализа');
+    }
+    return new Error(errorData.error || `Analysis failed (${response.status})`);
+  };
+
+  /** Полный разбор письма (списывает 1 письмо, кроме налоговых). */
+  const analyzeImages = async (images: string[], fileName: string) => {
+    const response = await fetch('/api/analyze-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images, language: selectedLanguage }),
+    });
+    if (!response.ok) throw await apiError(response);
+
+    const data = await response.json();
+    const raw = data.analysis || data;
+    const analysisData: AnalysisResult = {
+      summary: raw.summary || '',
+      risk: raw.risk || 'Mittel',
+      deadlines: Array.isArray(raw.deadlines) ? raw.deadlines : [],
+      actions: Array.isArray(raw.actions) ? raw.actions : [],
+      language: raw.language || selectedLanguage,
+      absender: raw.absender || '',
+      restricted: raw.restricted === 'steuer' ? 'steuer' : undefined,
+      aktenzeichen: raw.aktenzeichen || '',
+      briefdatum: raw.briefdatum || '',
+      telefon: raw.telefon || '',
+      fristen: Array.isArray(raw.fristen) ? raw.fristen : [],
+      unterlagen: Array.isArray(raw.unterlagen) ? raw.unterlagen : [],
+      echtheit: raw.echtheit === 'pruefen' ? 'pruefen' : 'unauffaellig',
+      betrugsHinweise: Array.isArray(raw.betrugsHinweise) ? raw.betrugsHinweise : [],
+    };
+
+    setAnalysis(analysisData);
+    setUploadedImages(images);
+    setCurrentView('analysis');
+
+    // Налоговые письма не разбираем (§ 2 StBerG): не сохраняем и не списываем лимит
+    if (!analysisData.restricted) {
+      saveCaseToHistory(analysisData, fileName);
+      incrementUsage();
+    }
+    setDocKey((k) => k + 1); // новый документ → новый чат
+  };
+
+  /** Только проверка на мошенничество (бесплатно, FRAUD_FREE_PER_MONTH в месяц). */
+  const checkFraud = async (images: string[]) => {
+    const response = await fetch('/api/check-fraud', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images, language: selectedLanguage }),
+    });
+    if (!response.ok) throw await apiError(response);
+    const data = await response.json();
+    setFraudCheck(data.check);
+    setCurrentView('fraud');
+    bumpFraud();
+  };
+
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
@@ -168,8 +255,16 @@ export default function App() {
     }
     const file = files[0]; // Берем первый файл
 
-    if (!canMakeRequest()) {
+    if (mode === 'erklaeren' && !canMakeRequest()) {
       setShowPricingModal(true);
+      return;
+    }
+    if (mode === 'betrug' && fraudUsed >= FRAUD_FREE_PER_MONTH) {
+      setError(
+        selectedLanguage === 'de'
+          ? `Sie haben diesen Monat alle ${FRAUD_FREE_PER_MONTH} kostenlosen Echtheits-Checks genutzt. Ein vollständiger Brief-Check enthält die Prüfung ebenfalls.`
+          : `В этом месяце вы использовали все ${FRAUD_FREE_PER_MONTH} бесплатных проверок. Полный разбор письма тоже включает проверку на мошенничество.`
+      );
       return;
     }
 
@@ -179,65 +274,36 @@ export default function App() {
 
       // Конвертируем файл (фото или PDF) в images
       const result = await convertFileToImages(file);
-
       if (!result.base64Images || result.base64Images.length === 0) {
         throw new Error('Failed to process file');
       }
+      setLastUpload({ images: result.base64Images, fileName: result.fileName });
 
-      // Отправляем на анализ все страницы (для PDF — до 3)
-      const response = await fetch('/api/analyze-document', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          images: result.base64Images,
-          language: selectedLanguage,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 413) {
-          throw new Error(selectedLanguage === 'de' ? 'Datei zu groß für die Analyse' : 'Файл слишком большой для анализа');
-        }
-        throw new Error(errorData.error || `Analysis failed (${response.status})`);
-      }
-
-      const data = await response.json();
-      const raw = data.analysis || data;
-      const analysisData: AnalysisResult = {
-        summary: raw.summary || '',
-        risk: raw.risk || 'Mittel',
-        deadlines: Array.isArray(raw.deadlines) ? raw.deadlines : [],
-        actions: Array.isArray(raw.actions) ? raw.actions : [],
-        language: raw.language || selectedLanguage,
-        absender: raw.absender || '',
-        restricted: raw.restricted === 'steuer' ? 'steuer' : undefined,
-        aktenzeichen: raw.aktenzeichen || '',
-        briefdatum: raw.briefdatum || '',
-        telefon: raw.telefon || '',
-        fristen: Array.isArray(raw.fristen) ? raw.fristen : [],
-        unterlagen: Array.isArray(raw.unterlagen) ? raw.unterlagen : [],
-        echtheit: raw.echtheit === 'pruefen' ? 'pruefen' : 'unauffaellig',
-        betrugsHinweise: Array.isArray(raw.betrugsHinweise) ? raw.betrugsHinweise : [],
-      };
-
-      // Сохраняем результат анализа
-      setAnalysis(analysisData);
-      setUploadedImages(result.base64Images);
-      setCurrentView('analysis');
-
-      // Налоговые письма не разбираем (§ 2 StBerG): не сохраняем и не списываем лимит
-      if (!analysisData.restricted) {
-        saveCaseToHistory(analysisData, result.fileName);
-        incrementUsage();
-      }
-
-      setDocKey((k) => k + 1); // новый документ → новый чат
-
+      if (mode === 'betrug') await checkFraud(result.base64Images);
+      else await analyzeImages(result.base64Images, result.fileName);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : (selectedLanguage === 'de' ? 'Upload fehlgeschlagen' : 'Загрузка не удалась');
       setError(errorMessage);
       console.error('Upload error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /** Из результата проверки — полный разбор того же письма без повторной загрузки. */
+  const explainAfterFraud = async () => {
+    if (!lastUpload) return;
+    if (!canMakeRequest()) {
+      setShowPricingModal(true);
+      return;
+    }
+    try {
+      setIsLoading(true);
+      setError(null);
+      await analyzeImages(lastUpload.images, lastUpload.fileName);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setCurrentView('upload');
     } finally {
       setIsLoading(false);
     }
@@ -279,12 +345,31 @@ export default function App() {
 
   const renderUploadView = () => (
     <div className={styles.uploadSection}>
-      <h2>{TEXTS.uploadTitle}</h2>
+      <div className={styles.modeSwitch} role="tablist" aria-label={selectedLanguage === 'de' ? 'Was möchten Sie tun?' : 'Что сделать?'}>
+        <button role="tab" aria-selected={mode === 'erklaeren'} className={mode === 'erklaeren' ? styles.modeActive : ''} onClick={() => { setMode('erklaeren'); setError(null); }}>
+          <strong>📄 {selectedLanguage === 'de' ? 'Brief verstehen' : 'Понять письмо'}</strong>
+          <span>{selectedLanguage === 'de' ? 'Übersetzung, Fristen, wohin' : 'Перевод, сроки, куда идти'}</span>
+        </button>
+        <button role="tab" aria-selected={mode === 'betrug'} className={mode === 'betrug' ? styles.modeActive : ''} onClick={() => { setMode('betrug'); setError(null); }}>
+          <strong>🛡️ {selectedLanguage === 'de' ? 'Betrug prüfen' : 'Проверить на обман'}</strong>
+          <span>{selectedLanguage === 'de' ? 'Brief, E-Mail oder SMS · kostenlos' : 'Письмо, e-mail или SMS · бесплатно'}</span>
+        </button>
+      </div>
+
+      <h2>
+        {mode === 'betrug'
+          ? selectedLanguage === 'de' ? 'Ist das echt?' : 'Это настоящее письмо?'
+          : TEXTS.uploadTitle}
+      </h2>
       <p style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
-        {TEXTS.uploadInfo}
+        {mode === 'betrug'
+          ? selectedLanguage === 'de'
+            ? `Foto oder Screenshot hochladen – DEASY sucht nach typischen Betrugsmerkmalen. Noch ${Math.max(0, FRAUD_FREE_PER_MONTH - fraudUsed)} von ${FRAUD_FREE_PER_MONTH} kostenlosen Checks diesen Monat.`
+            : `Загрузите фото или скриншот — DEASY поищет типичные признаки мошенничества. Осталось ${Math.max(0, FRAUD_FREE_PER_MONTH - fraudUsed)} из ${FRAUD_FREE_PER_MONTH} бесплатных проверок в этом месяце.`
+          : TEXTS.uploadInfo}
       </p>
 
-      <p style={{ margin: '0 0 16px', padding: '10px 12px', background: '#f5f3ff', borderRadius: 10, fontSize: 13, color: '#3829a0' }}>
+      <p style={{ margin: '0 0 16px', padding: '10px 12px', background: '#eef2ff', borderRadius: 10, fontSize: 13, color: '#1f3bb0' }}>
         🤖 {selectedLanguage === 'de'
           ? 'DEASY nutzt künstliche Intelligenz (Claude von Anthropic). Ergebnisse werden automatisch erzeugt, können Fehler enthalten und ersetzen keine Beratung durch Fachleute. Steuerschreiben (z. B. Finanzamt, Familienkasse) erklären wir nicht.'
           : 'DEASY работает на искусственном интеллекте (Claude от Anthropic). Результаты создаются автоматически, могут содержать ошибки и не заменяют консультацию специалиста. Налоговые письма (например, от Finanzamt или Familienkasse) мы не разбираем.'}
@@ -442,17 +527,20 @@ export default function App() {
     </div>
   );
 
-  const currentTier = getCurrentTier();
-  const remainingRequests = getRemainingRequests();
 
   return (
     <div className={styles.container}>
       <header className={styles.topBar}>
         <div className={styles.brand}>
           <a href="/" className={styles.logo}>DEASY</a>
-          <span className={styles.usagePill}>
-            {usageStats.usedThisMonth}/{currentTier.monthlyLimit === Infinity ? '∞' : currentTier.monthlyLimit} {selectedLanguage === 'ru' ? 'документов' : 'Dokumente'}
-          </span>
+          <button
+            className={styles.usagePill}
+            onClick={() => setShowPricingModal(true)}
+            style={{ border: 'none', cursor: 'pointer' }}
+            title={selectedLanguage === 'de' ? 'Guthaben' : 'Баланс'}
+          >
+            {selectedLanguage === 'ru' ? `Осталось писем: ${totalLeft}` : `Noch ${totalLeft} ${totalLeft === 1 ? 'Brief' : 'Briefe'}`}
+          </button>
         </div>
         <div className={styles.topActions}>
           <select
@@ -473,11 +561,9 @@ export default function App() {
           >
             📁{cases.length > 0 ? ` ${cases.length}` : ''}
           </button>
-          {usageStats.tier === 'free' && (
-            <button onClick={() => setShowPricingModal(true)} className={styles.plusButton}>
-              Plus
-            </button>
-          )}
+          <button onClick={() => setShowPricingModal(true)} className={styles.plusButton}>
+            {selectedLanguage === 'de' ? 'Briefe kaufen' : 'Купить'}
+          </button>
         </div>
       </header>
 
@@ -487,16 +573,16 @@ export default function App() {
           style={{
             maxWidth: 760, margin: '16px auto 0', padding: '12px 16px', borderRadius: 12, fontSize: 15,
             display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center',
-            background: activation === 'failed' ? '#fef3f2' : activation === 'activated' ? '#ecfdf3' : '#f5f3ff',
-            color: activation === 'failed' ? '#b42318' : activation === 'activated' ? '#067647' : '#3829a0',
+            background: activation === 'failed' ? '#fef3f2' : activation === 'activated' ? '#ecfdf3' : '#eef2ff',
+            color: activation === 'failed' ? '#b42318' : activation === 'activated' ? '#067647' : '#1f3bb0',
             border: '1px solid currentColor',
           }}
         >
           <span>
             {activation === 'checking' && (selectedLanguage === 'de' ? '⏳ Zahlung wird geprüft…' : '⏳ Проверяем оплату…')}
             {activation === 'activated' && (selectedLanguage === 'de'
-              ? `✅ Danke! Ihr Plan ${currentTier.name} ist aktiv.`
-              : `✅ Спасибо! Тариф ${currentTier.name} активирован.`)}
+              ? `✅ Danke! ${activatedLetters ? `${activatedLetters} Briefe wurden gutgeschrieben.` : 'Ihr Paket ist aktiv.'} Gültig 12 Monate.`
+              : `✅ Спасибо! ${activatedLetters ? `Добавлено писем: ${activatedLetters}.` : 'Пакет активирован.'} Действует 12 месяцев.`)}
             {activation === 'failed' && (selectedLanguage === 'de'
               ? `⚠️ Zahlung konnte nicht bestätigt werden (${activationError}). Schreiben Sie uns, wir helfen sofort.`
               : `⚠️ Не удалось подтвердить оплату (${activationError}). Напишите нам — поможем сразу.`)}
@@ -510,6 +596,21 @@ export default function App() {
       <main className={styles.mainContent}>
         {currentView === 'upload' && renderUploadView()}
         {currentView === 'analysis' && renderAnalysisView()}
+        {currentView === 'fraud' && fraudCheck && (
+          <div className={styles.analysisPanel}>
+            <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
+              ← {selectedLanguage === 'ru' ? 'Проверить другое' : 'Weiteres prüfen'}
+            </button>
+            <FraudResult
+              check={fraudCheck}
+              language={selectedLanguage}
+              onExplain={lastUpload ? explainAfterFraud : undefined}
+              canExplain={!isLoading}
+            />
+            {isLoading && <p style={{ color: '#666' }}>{TEXTS.analyzing}</p>}
+            {error && <p style={{ color: '#b42318' }}>{error}</p>}
+          </div>
+        )}
         {currentView === 'history' && (
           <HistoryView
             cases={cases}
@@ -525,30 +626,30 @@ export default function App() {
       <LegalLinks compact />
 
       {showPricingModal && (
-        <div className={styles.modal}>
-          <div className={styles.modalContent}>
-            <h2>{selectedLanguage === 'de' ? 'Pläne & Preise' : 'Планы и цены'}</h2>
+        <div className={styles.modal} role="dialog" aria-modal="true" onClick={() => setShowPricingModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0 }}>{selectedLanguage === 'de' ? 'Briefe nachkaufen' : 'Докупить письма'}</h2>
+            <p style={{ marginTop: 0, color: '#4b4e5c' }}>
+              {selectedLanguage === 'de'
+                ? `Kein Abo. Sie zahlen einmal und nutzen die Briefe 12 Monate lang. Jeden Monat sind ${2} Briefe kostenlos.`
+                : `Без подписки. Платите один раз, письма действуют 12 месяцев. Каждый месяц ${2} письма бесплатно.`}
+            </p>
+            <p style={{ margin: '0 0 12px', fontSize: 14 }}>
+              {selectedLanguage === 'de'
+                ? `Guthaben: ${freeLeft} kostenlos diesen Monat + ${paidLeft} aus Paketen`
+                : `Баланс: ${freeLeft} бесплатно в этом месяце + ${paidLeft} из пакетов`}
+            </p>
             <div className={styles.plans}>
-              {allTiers.map((tier) => (
-                <div key={tier.id} className={styles.planCard}>
-                  <h3>{tier.name}</h3>
-                  <p className={styles.price}>€{tier.price === 0 ? '0' : tier.price}</p>
-                  <p>{tier.monthlyLimit} {selectedLanguage === 'de' ? 'Dokumente' : 'документов'}</p>
-                  {tier.id === usageStats.tier ? (
-                    <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
-                      {selectedLanguage === 'de' ? '✓ Aktueller Plan' : '✓ Текущий тариф'}
-                    </button>
-                  ) : tier.id === 'free' ? (
-                    <button onClick={() => setShowPricingModal(false)} className={styles.analyzeButton}>
-                      {TEXTS.close}
-                    </button>
-                  ) : tier.stripeLink ? (
-                    <a
-                      href={tier.stripeLink}
-                      className={styles.analyzeButton}
-                      style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
-                    >
-                      {selectedLanguage === 'de' ? `${tier.name} buchen` : `Подключить ${tier.name}`}
+              {packs.map((p) => (
+                <div key={p.id} className={styles.planCard}>
+                  <h3>{selectedLanguage === 'de' ? `${p.letters} Briefe` : `${p.letters} писем`}</h3>
+                  <p className={styles.price}>{p.price.toFixed(2).replace('.', ',')} €</p>
+                  <p style={{ fontSize: 13, color: '#6b7085' }}>
+                    {(p.price / p.letters).toFixed(2).replace('.', ',')} € {selectedLanguage === 'de' ? 'pro Brief' : 'за письмо'}
+                  </p>
+                  {p.stripeLink ? (
+                    <a href={p.stripeLink} className={styles.analyzeButton} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+                      {selectedLanguage === 'de' ? `${p.letters} Briefe kaufen` : `Купить ${p.letters} писем`}
                     </a>
                   ) : (
                     <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
@@ -558,6 +659,11 @@ export default function App() {
                 </div>
               ))}
             </div>
+            <p style={{ fontSize: 12.5, color: '#6b7085' }}>
+              {selectedLanguage === 'de'
+                ? 'Endpreise, gem. § 19 UStG ohne Umsatzsteuer. Es gelten die AGB und die Widerrufsbelehrung.'
+                : 'Окончательные цены, без НДС по § 19 UStG. Действуют AGB и Widerrufsbelehrung.'}
+            </p>
             <button onClick={() => setShowPricingModal(false)} className={styles.analyzeButton}>
               {TEXTS.close}
             </button>
