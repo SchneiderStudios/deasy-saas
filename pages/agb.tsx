@@ -92,7 +92,8 @@ export default function AGB() {
         </p>
         <p>
           (5) Wir speichern den Vertragstext nicht gesondert. Diese AGB können Sie jederzeit auf dieser Seite abrufen und
-          ausdrucken oder speichern; die Zahlungsbestätigung erhalten Sie per E-Mail von Stripe.
+          ausdrucken oder speichern. Die Zahlungsbestätigung erhalten Sie per E-Mail von Stripe, eine Vertragsbestätigung
+          mit Ihrer Erklärung nach § 7 Abs. 2 per E-Mail von uns.
         </p>
 
         <h2>§ 5 Preise und Zahlung</h2>
@@ -110,9 +111,21 @@ export default function AGB() {
 
         <h2>§ 7 Widerrufsrecht</h2>
         <p>
-          Verbraucherinnen und Verbrauchern steht ein gesetzliches Widerrufsrecht zu. Einzelheiten enthält die{' '}
+          (1) Verbraucherinnen und Verbrauchern steht ein gesetzliches Widerrufsrecht zu. Einzelheiten enthält die{' '}
           <Link href="/widerruf">Widerrufsbelehrung</Link>. Der Widerruf ist auch über die Schaltfläche{' '}
           <Link href="/vertrag?aktion=widerrufen">„Vertrag widerrufen“</Link> möglich.
+        </p>
+        <p>
+          (2) Vor dem Kauf bestätigen Sie ausdrücklich, dass wir vor Ablauf der Widerrufsfrist mit der Leistung beginnen
+          sollen. Widerrufen Sie danach, erstatten wir den Kaufpreis abzüglich eines anteiligen Wertersatzes für bereits
+          genutzte Briefe. Der Wertersatz beträgt je genutztem Brief den Paketpreis geteilt durch die Zahl der Briefe des
+          Pakets (Paket „5 Briefe“: 1,00 € je Brief; Paket „15 Briefe“: 0,67 € je Brief). Kostenlose Briefe werden nicht
+          berechnet.
+        </p>
+        <p>
+          (3) Das Widerrufsrecht erlischt, sobald alle Briefe des Pakets genutzt sind und die Leistung damit vollständig
+          erbracht ist, wenn Sie vorher ausdrücklich zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der
+          Leistung beginnen, und Ihre Kenntnis davon bestätigt haben (§ 356 Abs. 4 BGB).
         </p>
 
         <h2>§ 8 Haftung</h2>

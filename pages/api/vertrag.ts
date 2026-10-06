@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { COMPANY } from '@/lib/siteConfig';
+import { sendMail, mailConfigured, ownerEmail } from '@/lib/mail';
 
 /**
  * Kündigung (§ 312k BGB) и Widerruf (§ 356a BGB) через сайт.
@@ -7,13 +8,11 @@ import { COMPANY } from '@/lib/siteConfig';
  *   { aktion: 'kuendigen'|'widerrufen', name, email, tarif, art?, grund?, zeitpunkt?, datum?, bestelldatum?, website? (honeypot) }
  * → { success: true, eingang: ISO, eingangText, stripe: 'cancelled'|'scheduled'|'not_found'|'skipped'|'error' }
  *
- * Подтверждение «unverzüglich in Textform» отправляется письмом через Resend:
- *   RESEND_API_KEY, MAIL_FROM (например "DEASY <noreply@ваш-домен.de>"), OWNER_EMAIL (куда приходят заявки)
+ * Подтверждение «unverzüglich in Textform» отправляется письмом через lib/mail.ts (Gmail или Resend).
  * Отмена подписки в Stripe — если STRIPE_SECRET_KEY имеет право Subscriptions: Write.
  */
 
 const STRIPE_API = process.env.STRIPE_API_BASE || 'https://api.stripe.com/v1';
-const RESEND_API = process.env.RESEND_API_BASE || 'https://api.resend.com';
 
 type Aktion = 'kuendigen' | 'widerrufen';
 type StripeResult = 'cancelled' | 'scheduled' | 'not_found' | 'skipped' | 'error';
@@ -60,15 +59,6 @@ async function cancelInStripe(email: string, aktion: Aktion, sofort: boolean): P
   }
 }
 
-async function sendMail(to: string, subject: string, text: string, replyTo?: string) {
-  const res = await fetch(`${RESEND_API}/emails`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: process.env.MAIL_FROM, to: [to], subject, text, ...(replyTo ? { reply_to: replyTo } : {}) }),
-  });
-  if (!res.ok) throw new Error(`Mail ${res.status}: ${(await res.text()).slice(0, 200)}`);
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
@@ -90,8 +80,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (b.art === 'ausserordentlich' && !grund) {
     return res.status(400).json({ success: false, error: 'Bitte den Grund der außerordentlichen Kündigung angeben.' });
   }
-  if (!process.env.RESEND_API_KEY || !process.env.MAIL_FROM) {
-    console.error('RESEND_API_KEY / MAIL_FROM fehlen – Bestätigung kann nicht versendet werden');
+  if (!mailConfigured()) {
+    console.error('E-Mail-Versand nicht konfiguriert – Bestätigung kann nicht versendet werden');
     return res.status(503).json({
       success: false,
       error: `Die Online-Erklärung ist gerade nicht verfügbar. Bitte senden Sie Ihre Erklärung per E-Mail an ${COMPANY.email}.`,
@@ -117,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ...lines,
     '',
     aktion === 'widerrufen'
-      ? 'Ihr Vertrag ist damit beendet. Bereits geleistete Zahlungen erstatten wir gemäß unserer Widerrufsbelehrung spätestens binnen 14 Tagen.'
+      ? 'Ihr Vertrag ist damit beendet. Den Kaufpreis erstatten wir spätestens binnen 14 Tagen über das ursprüngliche Zahlungsmittel. Haben Sie bereits Briefe aus dem Paket genutzt, ziehen wir dafür gemäß Widerrufsbelehrung einen anteiligen Betrag ab (Paketpreis geteilt durch die Zahl der Briefe, je genutztem Brief).'
       : 'Ihr Abonnement endet zum genannten Zeitpunkt; bis dahin bleibt Ihr Tarif nutzbar. Es erfolgen keine weiteren Abbuchungen.',
     '',
     'Mit freundlichen Grüßen',
@@ -129,23 +119,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const stripeHinweis: Record<StripeResult, string> = {
     cancelled: 'Stripe: Abo sofort beendet.',
     scheduled: 'Stripe: Abo zum Periodenende gekündigt (cancel_at_period_end).',
-    not_found: 'Stripe: KEIN aktives Abo zu dieser E-Mail gefunden – bitte manuell prüfen!',
-    skipped: 'Stripe: nicht konfiguriert – bitte manuell kündigen!',
+    not_found: 'Stripe: kein Abo (Paketkauf) – Erstattung bitte manuell, siehe unten.',
+    skipped: 'Stripe: nicht automatisch geprüft – bitte manuell erledigen, siehe unten.',
     error: 'Stripe: FEHLER – bitte manuell kündigen!',
   };
   const owner = [
-    `Neue ${titel} über die Website.`,
+    `${titel} über die Website eingegangen.`,
     '',
     ...lines,
     '',
     stripeHinweis[stripeResult],
-    aktion === 'widerrufen' ? 'TODO: Zahlung binnen 14 Tagen erstatten (ggf. anteiliger Wertersatz).' : '',
+    aktion === 'widerrufen'
+      ? [
+          'TODO binnen 14 Tagen: Stripe → Zahlungen → Zahlung dieser E-Mail suchen → Erstatten.',
+          'Anteilig: Paketpreis ÷ Briefe × genutzte Briefe abziehen (5 Briefe: 1,00 €/Brief, 15 Briefe: 0,67 €/Brief).',
+          'Genutzte Briefe beim Kunden erfragen, falls unklar. Alle Briefe genutzt + Zustimmung beim Kauf → Widerrufsrecht erloschen.',
+        ].join('\n')
+      : '',
   ].join('\n');
 
   try {
     const betreff = aktion === 'widerrufen' ? 'Ihres Widerrufs' : 'Ihrer Kündigung';
     await sendMail(email, `Eingangsbestätigung ${betreff} – ${COMPANY.brand}`, kunde, COMPANY.email);
-    await sendMail(process.env.OWNER_EMAIL || COMPANY.email, `[${COMPANY.brand}] ${titel}: ${name}`, owner, email);
+    await sendMail(ownerEmail(), `[${COMPANY.brand}] ${titel}: ${name}`, owner, email);
   } catch (e: any) {
     console.error('Bestätigungsmail fehlgeschlagen:', e?.message);
     return res.status(502).json({
