@@ -93,7 +93,9 @@ export default function Datenschutz() {
           Kostenpflichtige Tarife werden über Stripe Payments Europe, Ltd. (1 Grand Canal Street Lower, Dublin 2,
           Irland) abgewickelt. Ihre Zahlungsdaten geben Sie direkt bei Stripe ein; wir erhalten sie nicht. Nach
           der Zahlung fragen wir bei Stripe ab, ob die Zahlung erfolgreich war und welches Paket gekauft wurde, und
-          vermerken bei Stripe, dass das Paket eingelöst ist (damit es nicht mehrfach gutgeschrieben wird). Rechtsgrundlage ist die Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO); gesetzliche
+          vermerken bei Stripe, dass das Paket eingelöst ist (damit es nicht mehrfach gutgeschrieben wird). Den Zeitpunkt
+          Ihrer Zustimmung zum sofortigen Leistungsbeginn übermitteln wir an Stripe, und an die bei Stripe angegebene
+          E-Mail-Adresse senden wir Ihnen die Vertragsbestätigung (§ 312f BGB). Rechtsgrundlage ist die Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO); gesetzliche
           Aufbewahrungspflichten (Art. 6 Abs. 1 lit. c DSGVO) bleiben unberührt. Details:{' '}
           <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener noreferrer">
             Datenschutzerklärung von Stripe
@@ -106,16 +108,24 @@ export default function Datenschutz() {
           Wenn Sie über „Vertrag widerrufen“ eine Erklärung abgeben, verarbeiten wir Ihren
           Namen, Ihre E-Mail-Adresse, den Vertrag und den Zeitpunkt des Eingangs, um die Erklärung umzusetzen, die Zahlung zu
           erstatten und Ihnen den Eingang zu bestätigen (Art. 6 Abs. 1 lit. b und c DSGVO, § 356a BGB).
-          Die Bestätigungs-E-Mails versenden wir über Resend (Plus Five Five, Inc., 2261 Market Street #5039,
-          San Francisco, CA 94114, USA) als Auftragsverarbeiter auf Grundlage von EU-Standardvertragsklauseln. Wir bewahren
-          die Erklärungen bis zum Ablauf der gesetzlichen Verjährungs- und Aufbewahrungsfristen auf.
+          Wir bewahren die Erklärungen bis zum Ablauf der gesetzlichen Verjährungs- und Aufbewahrungsfristen auf.
+        </p>
+        <p>
+          <strong>E-Mail-Versand:</strong> Vertragsbestätigungen und Eingangsbestätigungen versenden wir über unser
+          E-Mail-Postfach bei Google (Gmail), Anbieter Google Ireland Limited, Gordon House, Barrow Street, Dublin 4,
+          Irland. Dabei können Daten auch an die Google LLC in den USA übermittelt werden; die Google LLC ist unter dem
+          EU-US Data Privacy Framework zertifiziert (Angemessenheitsbeschluss der EU-Kommission, Art. 45 DSGVO). Details:{' '}
+          <a href="https://policies.google.com/privacy?hl=de" target="_blank" rel="noopener noreferrer">
+            Datenschutzerklärung von Google
+          </a>
+          .
         </p>
 
         <h2>8. Kontakt per E-Mail</h2>
         <p>
           Wenn Sie uns per E-Mail schreiben, verarbeiten wir Ihre Angaben zur Bearbeitung der Anfrage
           (Art. 6 Abs. 1 lit. b bzw. f DSGVO) und löschen sie, sobald sie nicht mehr erforderlich sind und keine
-          Aufbewahrungspflichten bestehen.
+          Aufbewahrungspflichten bestehen. Unser Postfach wird von Google betrieben (siehe Abschnitt 7).
         </p>
 
         <h2>9. Ihre Rechte</h2>
