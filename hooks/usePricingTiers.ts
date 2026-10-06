@@ -21,8 +21,8 @@ export interface Pack {
 }
 
 export const PACKS: Pack[] = [
-  { id: 'paket5', name: '5 Briefe', price: 4.99, letters: 5, stripeLink: STRIPE_LINKS.paket5 },
-  { id: 'paket15', name: '15 Briefe', price: 9.99, letters: 15, stripeLink: STRIPE_LINKS.paket15 },
+  { id: 'paket5', name: 'Plus', price: 4.99, letters: 5, stripeLink: STRIPE_LINKS.paket5 },
+  { id: 'paket15', name: 'Pro', price: 9.99, letters: 15, stripeLink: STRIPE_LINKS.paket15 },
 ];
 
 export interface CreditBatch {

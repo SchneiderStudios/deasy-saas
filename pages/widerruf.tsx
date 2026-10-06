@@ -74,7 +74,7 @@ export default function Widerruf() {
         <h2>Erlöschen des Widerrufsrechts</h2>
         <p>
           Das Widerrufsrecht erlischt bei einem Vertrag zur Erbringung von Dienstleistungen, wenn wir die Dienstleistung
-          vollständig erbracht haben (alle Briefe des Pakets sind genutzt) und Sie vor Beginn der Ausführung ausdrücklich
+          vollständig erbracht haben (alle Erklärungen des Pakets sind genutzt) und Sie vor Beginn der Ausführung ausdrücklich
           zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der Ausführung beginnen, und Ihre Kenntnis davon
           bestätigt haben, dass Ihr Widerrufsrecht bei vollständiger Vertragserfüllung erlischt.
         </p>

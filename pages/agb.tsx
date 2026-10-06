@@ -73,10 +73,10 @@ export default function AGB() {
           (Prüfung auf Betrugsmerkmale) pro Monat kostenlos. Nicht genutzte kostenlose Kontingente verfallen am Monatsende.
         </p>
         <p>
-          (2) Darüber hinaus bieten wir Pakete zum einmaligen Preis an: „5 Briefe“ und „15 Briefe“. Es handelt sich{' '}
+          (2) Darüber hinaus bieten wir Pakete zum einmaligen Preis an: „Plus“ (5 Brief-Erklärungen) und „Pro“ (15 Brief-Erklärungen). Es handelt sich{' '}
           <strong>nicht um ein Abonnement</strong>; es entstehen keine wiederkehrenden Zahlungen und keine Kündigung ist
-          nötig. Die Briefe eines Pakets können 12 Monate ab dem Kauf genutzt werden; danach verfallen nicht genutzte
-          Briefe. Kostenlose Briefe werden vor Paket-Briefen verbraucht. Schreiben in Steuersachen (§ 2 Abs. 3) werden nicht
+          nötig. Die Erklärungen eines Pakets können 12 Monate ab dem Kauf genutzt werden; danach verfallen nicht genutzte
+          Erklärungen. Kostenlose Erklärungen werden vor Paket-Erklärungen verbraucht. Schreiben in Steuersachen (§ 2 Abs. 3) werden nicht
           angerechnet.
         </p>
         <p>
@@ -105,7 +105,7 @@ export default function AGB() {
 
         <h2>§ 6 Laufzeit</h2>
         <p>
-          Der Vertrag über ein Paket endet, wenn alle Briefe des Pakets genutzt sind, spätestens 12 Monate nach dem Kauf.
+          Der Vertrag über ein Paket endet, wenn alle Erklärungen des Pakets genutzt sind, spätestens 12 Monate nach dem Kauf.
           Eine Kündigung ist nicht erforderlich.
         </p>
 
@@ -118,12 +118,12 @@ export default function AGB() {
         <p>
           (2) Vor dem Kauf bestätigen Sie ausdrücklich, dass wir vor Ablauf der Widerrufsfrist mit der Leistung beginnen
           sollen. Widerrufen Sie danach, erstatten wir den Kaufpreis abzüglich eines anteiligen Wertersatzes für bereits
-          genutzte Briefe. Der Wertersatz beträgt je genutztem Brief den Paketpreis geteilt durch die Zahl der Briefe des
-          Pakets (Paket „5 Briefe“: 1,00 € je Brief; Paket „15 Briefe“: 0,67 € je Brief). Kostenlose Briefe werden nicht
-          berechnet.
+          genutzte Erklärungen. Der Wertersatz beträgt je genutzter Erklärung den Paketpreis geteilt durch die Zahl der
+          Erklärungen des Pakets (Paket „Plus“: 1,00 € je Erklärung; Paket „Pro“: 0,67 € je Erklärung). Kostenlose
+          Erklärungen werden nicht berechnet.
         </p>
         <p>
-          (3) Das Widerrufsrecht erlischt, sobald alle Briefe des Pakets genutzt sind und die Leistung damit vollständig
+          (3) Das Widerrufsrecht erlischt, sobald alle Erklärungen des Pakets genutzt sind und die Leistung damit vollständig
           erbracht ist, wenn Sie vorher ausdrücklich zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der
           Leistung beginnen, und Ihre Kenntnis davon bestätigt haben (§ 356 Abs. 4 BGB).
         </p>

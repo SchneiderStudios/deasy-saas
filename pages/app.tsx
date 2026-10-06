@@ -39,7 +39,6 @@ const TEXTS_DE = {
   analyzing: 'Analysieren...',
   analysis: 'Analyse',
   upgradeBtn: 'Auf Plus upgraden',
-  freePlan: 'Kostenlos: 3 Dokumente/Monat',
   plusPlan: '€4,99: 50 Dokumente/Monat',
   proPlan: '€9,99: 100 Dokumente/Monat',
   myDocuments: 'Meine Dokumente',
@@ -84,7 +83,6 @@ const TEXTS_RU = {
   analyzing: 'Анализирование...',
   analysis: 'Анализ',
   upgradeBtn: 'Обновить на Plus',
-  freePlan: 'Бесплатно: 3 документа/месяц',
   plusPlan: '€4,99: 50 документов/месяц',
   proPlan: '€9,99: 100 документов/месяц',
   myDocuments: 'Мои документы',
@@ -561,7 +559,7 @@ export default function App() {
             style={{ border: 'none', cursor: 'pointer' }}
             title={selectedLanguage === 'de' ? 'Guthaben' : 'Баланс'}
           >
-            {selectedLanguage === 'ru' ? `Осталось писем: ${totalLeft}` : `Noch ${totalLeft} ${totalLeft === 1 ? 'Brief' : 'Briefe'}`}
+            {selectedLanguage === 'ru' ? `Осталось разборов: ${totalLeft}` : `Noch ${totalLeft} ${totalLeft === 1 ? 'Erklärung' : 'Erklärungen'}`}
           </button>
         </div>
         <div className={styles.topActions}>
@@ -584,7 +582,7 @@ export default function App() {
             📁{cases.length > 0 ? ` ${cases.length}` : ''}
           </button>
           <button onClick={() => setShowPricingModal(true)} className={styles.plusButton}>
-            {selectedLanguage === 'de' ? 'Briefe kaufen' : 'Купить'}
+            {selectedLanguage === 'de' ? 'Plus / Pro' : 'Plus / Pro'}
           </button>
         </div>
       </header>
@@ -603,8 +601,8 @@ export default function App() {
           <span>
             {activation === 'checking' && (selectedLanguage === 'de' ? '⏳ Zahlung wird geprüft…' : '⏳ Проверяем оплату…')}
             {activation === 'activated' && (selectedLanguage === 'de'
-              ? `✅ Danke! ${activatedLetters ? `${activatedLetters} Briefe wurden gutgeschrieben.` : 'Ihr Paket ist aktiv.'} Gültig 12 Monate.`
-              : `✅ Спасибо! ${activatedLetters ? `Добавлено писем: ${activatedLetters}.` : 'Пакет активирован.'} Действует 12 месяцев.`)}
+              ? `✅ Danke! ${activatedLetters ? `${activatedLetters} Erklärungen wurden gutgeschrieben.` : 'Ihr Paket ist aktiv.'} Gültig 12 Monate.`
+              : `✅ Спасибо! ${activatedLetters ? `Добавлено разборов: ${activatedLetters}.` : 'Пакет активирован.'} Действует 12 месяцев.`)}
             {activation === 'failed' && (selectedLanguage === 'de'
               ? `⚠️ Zahlung konnte nicht bestätigt werden (${activationError}). Schreiben Sie uns, wir helfen sofort.`
               : `⚠️ Не удалось подтвердить оплату (${activationError}). Напишите нам — поможем сразу.`)}
@@ -650,26 +648,33 @@ export default function App() {
       {showPricingModal && (
         <div className={styles.modal} role="dialog" aria-modal="true" onClick={() => setShowPricingModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0 }}>{selectedLanguage === 'de' ? 'Briefe nachkaufen' : 'Докупить письма'}</h2>
+            <h2 style={{ marginTop: 0 }}>{selectedLanguage === 'de' ? 'Pakete Plus und Pro' : 'Пакеты Plus и Pro'}</h2>
+            {totalLeft === 0 && (
+              <p style={{ margin: '0 0 10px', fontWeight: 600, color: '#1d2433' }}>
+                {selectedLanguage === 'de'
+                  ? 'Ihre kostenlosen Erklärungen für diesen Monat sind aufgebraucht.'
+                  : 'Бесплатные разборы на этот месяц закончились.'}
+              </p>
+            )}
             <p style={{ marginTop: 0, color: '#4b4e5c' }}>
               {selectedLanguage === 'de'
-                ? `Kein Abo. Sie zahlen einmal und nutzen die Briefe 12 Monate lang. Jeden Monat sind ${2} Briefe kostenlos.`
-                : `Без подписки. Платите один раз, письма действуют 12 месяцев. Каждый месяц ${2} письма бесплатно.`}
+                ? `Kein Abo. Sie zahlen einmal und nutzen die Erklärungen 12 Monate lang. Jeden Monat sind 2 Erklärungen kostenlos.`
+                : `Без подписки. Платите один раз, разборы действуют 12 месяцев. Каждый месяц 2 разбора бесплатно.`}
             </p>
             <p style={{ margin: '0 0 12px', fontSize: 14 }}>
               {selectedLanguage === 'de'
-                ? `Guthaben: ${freeLeft} kostenlos diesen Monat + ${paidLeft} aus Paketen`
-                : `Баланс: ${freeLeft} бесплатно в этом месяце + ${paidLeft} из пакетов`}
+                ? `Guthaben: ${freeLeft} kostenlose Erklärungen diesen Monat + ${paidLeft} aus Paketen`
+                : `Баланс: ${freeLeft} бесплатных разборов в этом месяце + ${paidLeft} из пакетов`}
             </p>
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13.5, lineHeight: 1.45, margin: '0 0 14px', cursor: 'pointer' }}>
               <input type="checkbox" checked={verzicht} onChange={(e) => setVerzicht(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
               <span>
                 Ich verlange ausdrücklich, dass DEASY vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt,
-                dass ich bei einem Widerruf für bereits genutzte Briefe anteilig Wertersatz leiste und mein Widerrufsrecht
-                erlischt, sobald alle Briefe des Pakets genutzt sind.
+                dass ich bei einem Widerruf für bereits genutzte Erklärungen anteilig Wertersatz leiste und mein Widerrufsrecht
+                erlischt, sobald alle Erklärungen des Pakets genutzt sind.
                 {selectedLanguage !== 'de' && (
                   <span style={{ display: 'block', color: '#6b7085', marginTop: 4 }}>
-                    Я прошу начать услугу сразу. Мне известно: при отказе от покупки за уже использованные письма вычитается их стоимость, а когда использованы все письма пакета, право на отказ пропадает.
+                    Я прошу начать услугу сразу. Мне известно: при отказе от покупки за уже использованные разборы вычитается их стоимость, а когда использованы все разборы пакета, право на отказ пропадает.
                   </span>
                 )}
               </span>
@@ -677,10 +682,11 @@ export default function App() {
             <div className={styles.plans}>
               {packs.map((p) => (
                 <div key={p.id} className={styles.planCard}>
-                  <h3>{selectedLanguage === 'de' ? `${p.letters} Briefe` : `${p.letters} писем`}</h3>
+                  <h3 style={{ marginBottom: 2 }}>{p.name}</h3>
+                  <p style={{ margin: '0 0 6px', fontSize: 14, color: '#4b4e5c' }}>{selectedLanguage === 'de' ? `${p.letters} Erklärungen` : `${p.letters} разборов`}</p>
                   <p className={styles.price}>{p.price.toFixed(2).replace('.', ',')} €</p>
                   <p style={{ fontSize: 13, color: '#6b7085' }}>
-                    {(p.price / p.letters).toFixed(2).replace('.', ',')} € {selectedLanguage === 'de' ? 'pro Brief' : 'за письмо'}
+                    {(p.price / p.letters).toFixed(2).replace('.', ',')} € {selectedLanguage === 'de' ? 'pro Erklärung' : 'за разбор'}
                   </p>
                   {p.stripeLink ? (
                     <button
@@ -690,7 +696,7 @@ export default function App() {
                       className={styles.analyzeButton}
                       style={{ width: '100%', opacity: verzicht ? 1 : 0.5 }}
                     >
-                      {selectedLanguage === 'de' ? `${p.letters} Briefe kaufen` : `Купить ${p.letters} писем`}
+                      {selectedLanguage === 'de' ? `${p.name} – weiter zur Zahlung` : `${p.name} — перейти к оплате`}
                     </button>
                   ) : (
                     <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
