@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ...lines,
     '',
     aktion === 'widerrufen'
-      ? 'Ihr Vertrag ist damit beendet. Den Kaufpreis erstatten wir spätestens binnen 14 Tagen über das ursprüngliche Zahlungsmittel. Haben Sie bereits Briefe aus dem Paket genutzt, ziehen wir dafür gemäß Widerrufsbelehrung einen anteiligen Betrag ab (Paketpreis geteilt durch die Zahl der Briefe, je genutztem Brief).'
+      ? 'Ihr Vertrag ist damit beendet. Den Kaufpreis erstatten wir spätestens binnen 14 Tagen über das ursprüngliche Zahlungsmittel. Haben Sie bereits Erklärungen aus dem Paket genutzt, ziehen wir dafür gemäß Widerrufsbelehrung einen anteiligen Betrag ab (Paketpreis geteilt durch die Zahl der Erklärungen, je genutzter Erklärung).'
       : 'Ihr Abonnement endet zum genannten Zeitpunkt; bis dahin bleibt Ihr Tarif nutzbar. Es erfolgen keine weiteren Abbuchungen.',
     '',
     'Mit freundlichen Grüßen',
@@ -132,8 +132,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     aktion === 'widerrufen'
       ? [
           'TODO binnen 14 Tagen: Stripe → Zahlungen → Zahlung dieser E-Mail suchen → Erstatten.',
-          'Anteilig: Paketpreis ÷ Briefe × genutzte Briefe abziehen (5 Briefe: 1,00 €/Brief, 15 Briefe: 0,67 €/Brief).',
-          'Genutzte Briefe beim Kunden erfragen, falls unklar. Alle Briefe genutzt + Zustimmung beim Kauf → Widerrufsrecht erloschen.',
+          'Anteilig: Paketpreis ÷ Erklärungen × genutzte Erklärungen abziehen (Plus: 1,00 € je Erklärung, Pro: 0,67 € je Erklärung).',
+          'Genutzte Erklärungen beim Kunden erfragen, falls unklar. Alle genutzt + Zustimmung beim Kauf → Widerrufsrecht erloschen.',
         ].join('\n')
       : '',
   ].join('\n');

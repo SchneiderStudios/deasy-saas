@@ -49,7 +49,7 @@ export default function Vertrag() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    tarif: 'DEASY Paket 5 Briefe',
+    tarif: 'DEASY Plus (5 Erklärungen)',
     art: 'ordentlich',
     grund: '',
     zeitpunkt: 'naechstmoeglich',
@@ -180,7 +180,7 @@ export default function Vertrag() {
                 : 'Innerhalb von 14 Tagen nach Vertragsschluss können Sie Ihren Vertrag ohne Angabe von Gründen widerrufen (siehe Widerrufsbelehrung).'}
             </p>
             <p style={{ fontSize: 14, color: '#4b4e5c' }}>
-              DEASY bietet nur einmalige Pakete ohne Abo an – eine Kündigung ist nicht nötig. Für die kostenlosen Briefe besteht kein kostenpflichtiger Vertrag.
+              DEASY bietet nur einmalige Pakete ohne Abo an – eine Kündigung ist nicht nötig. Für die kostenlosen Erklärungen besteht kein kostenpflichtiger Vertrag.
             </p>
 
             <form onSubmit={submit}>
@@ -218,8 +218,8 @@ export default function Vertrag() {
               <label style={labelStyle}>
                 Vertrag
                 <select value={form.tarif} onChange={set('tarif')} style={field}>
-                  <option>DEASY Paket 5 Briefe</option>
-                  <option>DEASY Paket 15 Briefe</option>
+                  <option>DEASY Plus (5 Erklärungen)</option>
+                  <option>DEASY Pro (15 Erklärungen)</option>
                 </select>
               </label>
 

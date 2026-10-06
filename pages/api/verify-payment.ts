@@ -7,7 +7,7 @@ import { sendMail, mailConfigured, ownerEmail } from '@/lib/mail';
  * GET /api/verify-payment?session_id=cs_...
  * → { success: true, letters, expiresAt } или { success: false, error }
  *
- * - Пакет определяется по сумме (499 → 5 писем, 999 → 15 писем).
+ * - Пакет определяется по сумме (499 → Plus, 5 разборов; 999 → Pro, 15 разборов).
  * - Повторная активация того же платежа блокируется: при первой активации ставим
  *   metadata[deasy_redeemed] на PaymentIntent в Stripe (БД не нужна).
  * Нужен STRIPE_SECRET_KEY (restricted: Checkout Sessions Read, Payment Intents Write).
@@ -32,20 +32,20 @@ async function sendBestaetigung(session: any, letters: number, amount: number, e
     '',
     `vielen Dank für Ihren Kauf. Hiermit bestätigen wir Ihren Vertrag:`,
     '',
-    `Paket: DEASY ${letters} Briefe (einmalige Zahlung, kein Abo)`,
+    `Paket: DEASY ${letters === 15 ? 'Pro' : 'Plus'} – ${letters} Brief-Erklärungen (einmalige Zahlung, kein Abo)`,
     `Preis: ${preis} (gem. § 19 UStG ohne Umsatzsteuer)`,
     `Gekauft am: ${berlin(paidAt)}`,
     `Gültig bis: ${expiresAt.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}`,
     '',
     'Ihre Zustimmung beim Kauf:',
-    '„Ich verlange ausdrücklich, dass DEASY vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt, dass ich bei einem Widerruf für bereits genutzte Briefe anteilig Wertersatz leiste und mein Widerrufsrecht erlischt, sobald alle Briefe des Pakets genutzt sind.“',
+    '„Ich verlange ausdrücklich, dass DEASY vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt, dass ich bei einem Widerruf für bereits genutzte Erklärungen anteilig Wertersatz leiste und mein Widerrufsrecht erlischt, sobald alle Erklärungen des Pakets genutzt sind.“',
     `Zustimmung: ${zustimmung}`,
     '',
     `AGB: ${SITE_URL}/agb`,
     `Widerrufsbelehrung und Muster-Widerrufsformular: ${SITE_URL}/widerruf`,
     `Vertrag widerrufen: ${SITE_URL}/vertrag?aktion=widerrufen`,
     '',
-    'Die Briefe sind in dem Browser gutgeschrieben, in dem Sie bezahlt haben.',
+    'Die Erklärungen sind in dem Browser gutgeschrieben, in dem Sie bezahlt haben.',
     '',
     'Mit freundlichen Grüßen',
     `${COMPANY.name} – ${COMPANY.brand}`,
@@ -53,8 +53,8 @@ async function sendBestaetigung(session: any, letters: number, amount: number, e
     COMPANY.email,
   ].join('\n');
   try {
-    await sendMail(email, `Ihre Vertragsbestätigung – ${COMPANY.brand} ${letters} Briefe`, text, COMPANY.email);
-    await sendMail(ownerEmail(), `[${COMPANY.brand}] Verkauf: ${letters} Briefe (${preis})`, `Käufer: ${email}\nZustimmung: ${zustimmung}\nSession: ${session.id}`);
+    await sendMail(email, `Ihre Vertragsbestätigung – ${COMPANY.brand} ${letters === 15 ? 'Pro' : 'Plus'}`, text, COMPANY.email);
+    await sendMail(ownerEmail(), `[${COMPANY.brand}] Verkauf: ${letters === 15 ? 'Pro' : 'Plus'} (${preis})`, `Käufer: ${email}\nZustimmung: ${zustimmung}\nSession: ${session.id}`);
   } catch (e: any) {
     console.error('Vertragsbestätigung fehlgeschlagen:', e?.message);
   }
