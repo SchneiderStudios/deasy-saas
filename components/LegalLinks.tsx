@@ -38,7 +38,7 @@ export default function LegalLinks({ compact = false }: { compact?: boolean }) {
           Kontakt
         </a>
       </nav>
-      <div style={{ marginTop: 6 }}>© 2026 {COMPANY.name}</div>
+      <div style={{ marginTop: 6 }}>© 2026 {COMPANY.tradeName}</div>
     </footer>
   );
 }
