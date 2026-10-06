@@ -161,6 +161,13 @@ export default function App() {
   // Handle file upload
   // ---- Режимы: объяснить письмо / проверить на мошенничество ----
   const FRAUD_FREE_PER_MONTH = 5;
+  const [verzicht, setVerzicht] = useState(false);
+  // Согласие на начало услуги до конца срока отзыва (§ 356 Abs. 4, § 357a Abs. 2 BGB) — фиксируется в Stripe как client_reference_id
+  const buyPack = (link: string) => {
+    if (!verzicht) return;
+    const sep = link.includes('?') ? '&' : '?';
+    window.location.href = `${link}${sep}client_reference_id=verzicht_${Date.now()}`;
+  };
   const [mode, setMode] = useState<'erklaeren' | 'betrug'>('erklaeren');
   const [fraudCheck, setFraudCheck] = useState<FraudCheck | null>(null);
   const [lastUpload, setLastUpload] = useState<{ images: string[]; fileName: string } | null>(null);
@@ -169,7 +176,9 @@ export default function App() {
 
   useEffect(() => {
     try {
-      if (new URLSearchParams(window.location.search).get('modus') === 'betrug') setMode('betrug');
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('modus') === 'betrug') setMode('betrug');
+      if (q.get('kaufen')) setShowPricingModal(true);
       const f = JSON.parse(localStorage.getItem('deasyFraud') || 'null');
       setFraudUsed(f && f.month === fraudMonth() ? f.count : 0);
     } catch {}
@@ -639,6 +648,19 @@ export default function App() {
                 ? `Guthaben: ${freeLeft} kostenlos diesen Monat + ${paidLeft} aus Paketen`
                 : `Баланс: ${freeLeft} бесплатно в этом месяце + ${paidLeft} из пакетов`}
             </p>
+            <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 13.5, lineHeight: 1.45, margin: '0 0 14px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={verzicht} onChange={(e) => setVerzicht(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, flexShrink: 0 }} />
+              <span>
+                Ich verlange ausdrücklich, dass DEASY vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt,
+                dass ich bei einem Widerruf für bereits genutzte Briefe anteilig Wertersatz leiste und mein Widerrufsrecht
+                erlischt, sobald alle Briefe des Pakets genutzt sind.
+                {selectedLanguage !== 'de' && (
+                  <span style={{ display: 'block', color: '#6b7085', marginTop: 4 }}>
+                    Я прошу начать услугу сразу. Мне известно: при отказе от покупки за уже использованные письма вычитается их стоимость, а когда использованы все письма пакета, право на отказ пропадает.
+                  </span>
+                )}
+              </span>
+            </label>
             <div className={styles.plans}>
               {packs.map((p) => (
                 <div key={p.id} className={styles.planCard}>
@@ -648,9 +670,15 @@ export default function App() {
                     {(p.price / p.letters).toFixed(2).replace('.', ',')} € {selectedLanguage === 'de' ? 'pro Brief' : 'за письмо'}
                   </p>
                   {p.stripeLink ? (
-                    <a href={p.stripeLink} className={styles.analyzeButton} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+                    <button
+                      onClick={() => buyPack(p.stripeLink)}
+                      disabled={!verzicht}
+                      title={verzicht ? undefined : selectedLanguage === 'de' ? 'Bitte zuerst das Häkchen oben setzen' : 'Сначала поставьте галочку выше'}
+                      className={styles.analyzeButton}
+                      style={{ width: '100%', opacity: verzicht ? 1 : 0.5 }}
+                    >
                       {selectedLanguage === 'de' ? `${p.letters} Briefe kaufen` : `Купить ${p.letters} писем`}
-                    </a>
+                    </button>
                   ) : (
                     <button className={styles.analyzeButton} disabled style={{ opacity: 0.6 }}>
                       {selectedLanguage === 'de' ? 'Bald verfügbar' : 'Скоро'}

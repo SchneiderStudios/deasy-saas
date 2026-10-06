@@ -334,7 +334,7 @@ export default function Home() {
           <p className={styles.sectionLead}>{t.pricesLead}</p>
           <div className={styles.plans}>
             {t.plans.map((p, i) => {
-              const href = p.href || (p.link ? STRIPE_LINKS[p.link as 'paket5' | 'paket15'] : '');
+              const href = p.href || (p.link && STRIPE_LINKS[p.link as 'paket5' | 'paket15'] ? '/app?kaufen=1' : '');
               return (
                 <div key={p.name} className={`${styles.plan} ${i === 2 ? styles.planBest : ''}`}>
                   <h3>{p.name}</h3>

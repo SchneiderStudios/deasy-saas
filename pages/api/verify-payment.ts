@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { COMPANY, SITE_URL } from '@/lib/siteConfig';
+import { sendMail, mailConfigured, ownerEmail } from '@/lib/mail';
 
 /**
  * Проверка разовой оплаты пакета после возврата с Stripe Payment Link.
@@ -9,7 +11,54 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  * - Повторная активация того же платежа блокируется: при первой активации ставим
  *   metadata[deasy_redeemed] на PaymentIntent в Stripe (БД не нужна).
  * Нужен STRIPE_SECRET_KEY (restricted: Checkout Sessions Read, Payment Intents Write).
+ * После активации покупателю уходит Vertragsbestätigung (§ 312f BGB) — с отметкой о согласии
+ * на начало услуги до конца срока отзыва (client_reference_id = verzicht_<время>, ставится в окне покупки).
  */
+
+const berlin = (d: Date) =>
+  d.toLocaleString('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'long', timeStyle: 'short' }) + ' Uhr';
+
+async function sendBestaetigung(session: any, letters: number, amount: number, expiresAt: Date) {
+  const email: string | undefined = session.customer_details?.email;
+  if (!email || !mailConfigured()) return;
+  const paidAt = new Date((session.created || Date.now() / 1000) * 1000);
+  const ref = String(session.client_reference_id || '');
+  const zustimmung = ref.startsWith('verzicht_')
+    ? `Ja – erteilt am ${berlin(new Date(Number(ref.slice(9)) || paidAt.getTime()))}`
+    : 'nicht dokumentiert';
+  const preis = (amount / 100).toFixed(2).replace('.', ',') + ' €';
+  const text = [
+    'Guten Tag,',
+    '',
+    `vielen Dank für Ihren Kauf. Hiermit bestätigen wir Ihren Vertrag:`,
+    '',
+    `Paket: DEASY ${letters} Briefe (einmalige Zahlung, kein Abo)`,
+    `Preis: ${preis} (gem. § 19 UStG ohne Umsatzsteuer)`,
+    `Gekauft am: ${berlin(paidAt)}`,
+    `Gültig bis: ${expiresAt.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}`,
+    '',
+    'Ihre Zustimmung beim Kauf:',
+    '„Ich verlange ausdrücklich, dass DEASY vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt, dass ich bei einem Widerruf für bereits genutzte Briefe anteilig Wertersatz leiste und mein Widerrufsrecht erlischt, sobald alle Briefe des Pakets genutzt sind.“',
+    `Zustimmung: ${zustimmung}`,
+    '',
+    `AGB: ${SITE_URL}/agb`,
+    `Widerrufsbelehrung und Muster-Widerrufsformular: ${SITE_URL}/widerruf`,
+    `Vertrag widerrufen: ${SITE_URL}/vertrag?aktion=widerrufen`,
+    '',
+    'Die Briefe sind in dem Browser gutgeschrieben, in dem Sie bezahlt haben.',
+    '',
+    'Mit freundlichen Grüßen',
+    `${COMPANY.name} – ${COMPANY.brand}`,
+    `${COMPANY.street}, ${COMPANY.zipCity}`,
+    COMPANY.email,
+  ].join('\n');
+  try {
+    await sendMail(email, `Ihre Vertragsbestätigung – ${COMPANY.brand} ${letters} Briefe`, text, COMPANY.email);
+    await sendMail(ownerEmail(), `[${COMPANY.brand}] Verkauf: ${letters} Briefe (${preis})`, `Käufer: ${email}\nZustimmung: ${zustimmung}\nSession: ${session.id}`);
+  } catch (e: any) {
+    console.error('Vertragsbestätigung fehlgeschlagen:', e?.message);
+  }
+}
 
 const LETTERS_BY_AMOUNT_CENTS: Record<number, number> = {
   499: 5,
@@ -78,6 +127,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const paidAt = new Date((session.created || Date.now() / 1000) * 1000);
     const expiresAt = new Date(paidAt);
     expiresAt.setMonth(expiresAt.getMonth() + VALID_MONTHS);
+
+    await sendBestaetigung(session, letters, amount, expiresAt);
 
     return res.status(200).json({ success: true, letters, expiresAt: expiresAt.toISOString() });
   } catch (error: any) {
