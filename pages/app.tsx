@@ -46,7 +46,7 @@ const TEXTS_DE = {
   language: 'Sprache',
   logout: 'Abmelden',
   summary: 'Zusammenfassung',
-  risk: 'Risiko-Niveau',
+  risk: 'Was der Brief verlangt',
   deadlines: 'Fristen',
   actions: 'Empfohlene Aktionen',
   askQuestion: 'Frage stellen',
@@ -91,7 +91,7 @@ const TEXTS_RU = {
   language: 'Язык',
   logout: 'Выход',
   summary: 'Резюме',
-  risk: 'Уровень риска',
+  risk: 'Что требует письмо',
   deadlines: 'Сроки',
   actions: 'Рекомендуемые действия',
   askQuestion: 'Задать вопрос',
@@ -487,8 +487,21 @@ export default function App() {
             <p>
               {analysis.risk === 'Kritisch' ? '🔴' : analysis.risk === 'Mittel' ? '🟡' : '🟢'}{' '}
               {selectedLanguage === 'ru'
-                ? { Kritisch: 'Критично', Mittel: 'Важно', Gering: 'Низкий' }[analysis.risk] || analysis.risk
-                : analysis.risk}
+                ? {
+                    Kritisch: 'В письме есть срок и названы последствия (штраф, взыскание, сокращение выплат или суд)',
+                    Mittel: 'Письмо просит что-то сделать',
+                    Gering: 'Письмо только информирует',
+                  }[analysis.risk] || analysis.risk
+                : {
+                    Kritisch: 'Frist mit genannten Folgen (z. B. Mahnung, Kürzung, Vollstreckung oder Gericht)',
+                    Mittel: 'Der Brief verlangt eine Handlung',
+                    Gering: 'Der Brief informiert nur',
+                  }[analysis.risk] || analysis.risk}
+            </p>
+            <p style={{ fontSize: 12.5, color: '#6b5a1f', margin: 0 }}>
+              {selectedLanguage === 'ru'
+                ? 'Это пересказ письма, а не правовая оценка вашей ситуации.'
+                : 'Wiedergabe des Briefinhalts – keine rechtliche Bewertung Ihrer Situation.'}
             </p>
           </div>
 

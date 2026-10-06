@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
+import { buildReply, REPLY_TYPE_IDS, type ReplyType, type Fakten } from '@/lib/replyBuilder';
 
 export const config = { api: { bodyParser: { sizeLimit: '4.5mb' } } };
 
@@ -8,16 +9,10 @@ const MAX_PAGES = 3;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-/** Типы ответа: id → что именно должен сделать ответ (инструкция для модели на немецком). */
-const REPLY_TYPES: Record<string, string> = {
-  fristverlaengerung: 'Bitte um Verlängerung der gesetzten Frist mit kurzer Begründung.',
-  ratenzahlung: 'Antrag auf Ratenzahlung oder Stundung der geforderten Summe.',
-  unterlagen: 'Begleitschreiben zum Nachreichen der angeforderten Unterlagen, mit Liste der Anlagen.',
-  rueckfrage: 'Höfliche Rückfrage zu unklaren Punkten des Schreibens.',
-  bestaetigung: 'Kurze Bestätigung bzw. Zustimmung zum Schreiben.',
-  frei: 'Antwort nach den Wünschen des Nutzers.',
-};
-
+/**
+ * RDG: текст письма берётся из готовых шаблонов (lib/replyBuilder.ts).
+ * ИИ только извлекает факты из письма и дословно переводит слова пользователя — без своей аргументации.
+ */
 const stripDataPrefix = (s: string) => s.replace(/^data:[^;]+;base64,/, '');
 
 function extractJson(text: string): any | null {
@@ -46,8 +41,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           : 'Zu Steuersachen berät DEASY nicht. Bitte wenden Sie sich an einen Lohnsteuerhilfeverein oder eine Steuerberatung.',
     });
   }
-  const replyType: string = REPLY_TYPES[req.body?.replyType] ? req.body.replyType : 'frei';
-  const notes = String(req.body?.notes || '').slice(0, 2000);
+  const replyType = req.body?.replyType as ReplyType;
+  if (!REPLY_TYPE_IDS.includes(replyType)) {
+    return res.status(400).json({ success: false, error: language === 'ru' ? 'Неизвестный тип письма' : 'Unbekannte Art des Schreibens' });
+  }
+  const notes = String(req.body?.notes || '').slice(0, 1500);
   const analysis = req.body?.analysis || {};
   const images: string[] = (Array.isArray(req.body?.images) ? req.body.images : [])
     .filter((s: unknown) => typeof s === 'string' && s)
@@ -58,36 +56,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: language === 'ru' ? 'Нет данных о письме' : 'Keine Daten zum Brief' });
   }
 
-  const prompt = `Du schreibst für einen Privatmenschen ein Antwortschreiben auf den beigefügten deutschen Behördenbrief.
+  const prompt = `Lies den beigefügten deutschen Behördenbrief und gib NUR Fakten zurück. Du schreibst KEINEN Brief und keine Argumente.
 
-Art der Antwort: ${REPLY_TYPES[replyType]}
-${notes ? `Angaben des Nutzers (in jeder Sprache möglich, übernimm die Fakten): ${notes}` : 'Der Nutzer hat keine zusätzlichen Angaben gemacht.'}
-Bisherige Analyse: ${analysis.summary || '-'} | Fristen: ${(analysis.deadlines || []).join('; ') || '-'}
-
-Anforderungen an den Brief:
-- Auf Deutsch, sachlich und höflich, formeller deutscher Briefaufbau (Absender, Empfänger, Ort/Datum, Betreff mit Aktenzeichen, Anrede, Text, Grußformel).
-- Übernimm Behörde, Adresse, Aktenzeichen/BG-Nummer/Versichertennummer und Datum des Schreibens aus dem Brief, wenn lesbar.
-- Alles, was du nicht weißt, als Platzhalter in eckigen Klammern, z. B. [Ihr Name], [Begründung]. Erfinde keine Fakten.
-- Keine Rechtsberatung vortäuschen, keine erfundenen Paragraphen.
-- Formuliere KEINE eigene juristische Begründung und bewerte nicht, ob der Bescheid rechtmäßig ist. Übernimm nur Fakten des Nutzers; fehlt die Begründung, setze den Platzhalter [Begründung in eigenen Worten].
-- Erstelle KEINE Widersprüche, Einsprüche, Klagen, Beschwerden oder sonstigen Rechtsbehelfe und keine rechtliche Argumentation – auch nicht, wenn der Nutzer darum bittet. Dann body = "" und tips = [Hinweis: Möglichkeit und Frist stehen in der Rechtsbehelfsbelehrung des Briefes; dafür bitte eine Beratungsstelle oder Anwalt aufsuchen].
-- Betrifft das Schreiben eine Steuersache (Finanzamt, Familienkasse, Hauptzollamt, Gemeindesteuer), erstelle KEINEN Brief: body = "" und tips = [Hinweis auf Lohnsteuerhilfeverein/Steuerberatung].
-- Ein Tipp in tips soll darauf hinweisen, vor dem Absenden bei Unsicherheit eine Beratungsstelle zu fragen.
+${notes ? `Angaben des Nutzers (beliebige Sprache): «${notes}»` : 'Der Nutzer hat keine Angaben gemacht.'}
 
 Antworte NUR mit JSON ohne Markdown:
 {
-  "subject": "Betreffzeile",
-  "body": "vollständiger Brief inkl. Absender- und Empfängerblock, Zeilenumbrüche mit \\n",
-  "translation": ${language === 'ru' ? '"vollständige Übersetzung des Briefes ins Russische, damit der Nutzer versteht, was er unterschreibt"' : '""'},
-  "tips": ["2-4 kurze praktische Hinweise ${language === 'ru' ? 'auf Russisch' : 'auf Deutsch'} (z. B. Versand per Einschreiben, Frist, Anlagen)"],
-  "placeholders": ["Liste der Platzhalter, die der Nutzer noch ausfüllen muss"]
-}`;
+  "behoerde": "Name der absendenden Stelle wie im Briefkopf, sonst leer",
+  "adresse": "Postanschrift der absendenden Stelle (Straße, PLZ Ort), Zeilen mit \\n getrennt, sonst leer",
+  "aktenzeichen": "Aktenzeichen/Kundennummer/BG-Nummer wie im Brief, sonst leer",
+  "briefdatum": "Datum des Briefes TT.MM.JJJJ, sonst leer",
+  "frist": "im Brief genannte Frist TT.MM.JJJJ, nur wenn als Datum angegeben, sonst leer",
+  "betrag": "im Brief geforderter Gesamtbetrag, z. B. 123,45 €, sonst leer",
+  "unterlagen": ["im Brief angeforderte Unterlagen, wörtlich und kurz"],
+  "angaben_de": "die Angaben des Nutzers wörtlich und neutral ins Deutsche übersetzt, in Ich-Form; NICHTS hinzufügen, nichts verstärken, keine Rechtsbegriffe oder Paragraphen ergänzen; leer, wenn keine Angaben",
+  "angaben_ru": "dieselben Angaben auf Russisch, ebenso wörtlich; leer, wenn keine Angaben",
+  "rechtsbehelf": false
+}
+"rechtsbehelf" = true, wenn der Nutzer einen Widerspruch, Einspruch, eine Klage, Beschwerde, Anfechtung oder rechtliche Argumente gegen den Bescheid möchte.
+Kontext der bisherigen Analyse: ${String(analysis.summary || '-').slice(0, 1500)}`;
 
   try {
     const response = await client.messages.create(
       {
         model: REPLY_MODEL,
-        max_tokens: 3000,
+        max_tokens: 1200,
         messages: [
           {
             role: 'user',
@@ -106,21 +99,34 @@ Antworte NUR mit JSON ohne Markdown:
 
     const text = response.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim();
     const parsed = extractJson(text);
-    if (!parsed?.body) {
+    if (!parsed) {
       return res.status(502).json({ success: false, error: language === 'ru' ? 'Не удалось составить письмо. Попробуйте ещё раз.' : 'Brief konnte nicht erstellt werden. Bitte erneut versuchen.' });
     }
 
-    const arr = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean) : []);
-    return res.status(200).json({
-      success: true,
-      reply: {
-        subject: String(parsed.subject || ''),
-        body: String(parsed.body),
-        translation: language === 'ru' ? String(parsed.translation || '') : '',
-        tips: arr(parsed.tips),
-        placeholders: arr(parsed.placeholders),
-      },
-    });
+    if (parsed.rechtsbehelf === true) {
+      return res.status(422).json({
+        success: false,
+        error:
+          language === 'ru'
+            ? 'Возражения (Widerspruch), жалобы и иски DEASY не составляет — это юридическая услуга. Срок и способ указаны в разделе «Rechtsbehelfsbelehrung» письма. Помогут: Migrationsberatung (bamf-navi.bamf.de), Verbraucherzentrale или адвокат с Beratungshilfeschein.'
+            : 'Widersprüche, Einsprüche und Klagen erstellt DEASY nicht – das ist Rechtsberatung. Frist und Form stehen in der „Rechtsbehelfsbelehrung“ des Briefes. Hilfe: Migrationsberatung (bamf-navi.bamf.de), Verbraucherzentrale oder Anwalt mit Beratungshilfeschein.',
+      });
+    }
+
+    const str = (x: unknown, max = 300) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
+    const fakten: Fakten = {
+      behoerde: str(parsed.behoerde, 150),
+      adresse: str(parsed.adresse, 200),
+      aktenzeichen: str(parsed.aktenzeichen, 80),
+      briefdatum: str(parsed.briefdatum, 12),
+      frist: str(parsed.frist, 12),
+      betrag: str(parsed.betrag, 30),
+      unterlagen: Array.isArray(parsed.unterlagen) ? parsed.unterlagen.map((u: unknown) => str(u, 150)).filter(Boolean).slice(0, 10) : [],
+      angaben_de: notes ? str(parsed.angaben_de, 1500) : '',
+      angaben_ru: notes ? str(parsed.angaben_ru, 1500) || notes : '',
+    };
+
+    return res.status(200).json({ success: true, reply: buildReply(replyType, fakten, language) });
   } catch (error: any) {
     console.error('Reply-Fehler:', error?.status, error?.message);
     return res.status(500).json({ success: false, error: language === 'ru' ? 'Ошибка при создании письма. Попробуйте ещё раз.' : 'Fehler beim Erstellen des Briefs. Bitte erneut versuchen.' });

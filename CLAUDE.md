@@ -16,9 +16,12 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
    или `{ error }` с кодом 4xx/5xx.
 3. Экран анализа → `components/DocumentAssistant.tsx` (вкладки «Вопросы» и «Написать ответ»).
 4. `POST /api/chat` тело `{ messages: {role, content}[], analysis, images, language }`
-   → `{ success: true, message }` или `{ success: false, error }`. Картинки письма прикрепляются к первому сообщению пользователя.
+   → `{ success: true, message, guarded? }` или `{ success: false, error }`. Картинки письма прикрепляются к первому сообщению пользователя.
+   RDG-фильтр: перед ответом `claude-haiku-4-5-20251001` классифицирует вопрос (VERSTEHEN / BEWERTUNG); на просьбу о правовой оценке — готовый отказ со ссылками на консультации (`guarded: true`). Письма в чате не пишутся.
+   Поле `risk` в UI — «что требует письмо» (пересказ, не оценка).
 5. `POST /api/generate-reply` тело `{ replyType, notes, analysis, images, language }`
-   (`replyType`: fristverlaengerung | ratenzahlung | unterlagen | rueckfrage | bestaetigung | frei — **без Widerspruch/Einspruch/Klage**)
+   (`replyType`: fristverlaengerung | ratenzahlung | unterlagen | rueckfrage | bestaetigung — **без Widerspruch/Einspruch/Klage, без «frei»**; иначе 400, при просьбе о Widerspruch — 422)
+   RDG: текст письма — только из шаблонов `lib/replyBuilder.ts`; ИИ лишь извлекает факты из письма и дословно переводит слова пользователя.
    → `{ success: true, reply: { subject, body (немецкий), translation (рус., если language=ru), tips[], placeholders[] } }`.
    Готовые шаблоны без ИИ — `lib/replyTemplates.ts`.
 

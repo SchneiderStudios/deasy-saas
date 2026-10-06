@@ -114,7 +114,7 @@ Antworte NUR mit einem JSON-Objekt ohne Markdown:
   "betrugsHinweise": ["konkretes Warnzeichen aus dem Brief ${L}"]
 }
 Regeln:
-- risk = "Kritisch" bei Frist mit Sanktion, Mahnung, Vollstreckung oder Gericht; "Mittel" wenn etwas zu tun ist; "Gering" bei reiner Information.
+- risk gibt NUR wieder, was im Brief steht (keine eigene Einschätzung): "Kritisch", wenn der Brief selbst eine Frist UND eine Folge nennt (Mahnung, Säumniszuschlag, Kürzung/Einstellung von Leistungen, Vollstreckung, Bußgeld, Gericht); "Mittel", wenn der Brief eine Handlung verlangt; "Gering", wenn er nur informiert.
 - Nur Daten, die im Brief stehen. Keine erfundenen Fristen. Relative Fristen („innerhalb eines Monats nach Zugang“) nur als Text in actions, nicht in fristen.
 - actions beschränken sich auf: Frist einhalten, angeforderte Unterlagen schicken, beim Absender nachfragen, eine passende Beratungsstelle aufsuchen. KEINE rechtliche Bewertung, keine Empfehlung für oder gegen Widerspruch/Klage, keine Erfolgsprognose.
 - echtheit = "pruefen", wenn Warnzeichen für Betrug vorliegen, z. B.: Zahlung auf ein privates/ausländisches Konto, Gutscheinkarten oder Krypto, ungewöhnlicher Zeitdruck oder Drohungen, fehlendes Aktenzeichen bei einer Behörde, Kontakt nur per WhatsApp/Messenger, Absender-E-Mail mit Gmail/Outlook statt Behördendomain, Rechtschreibfehler im Briefkopf, Links zu fremden Websites. Liste nur Warnzeichen auf, die wirklich vorkommen; sonst leeres Array und "unauffaellig".
