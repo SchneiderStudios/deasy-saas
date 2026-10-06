@@ -9,11 +9,13 @@ export const SITE_URL = 'https://deasy-saas.vercel.app';
 export const COMPANY = {
   /** Для Einzelunternehmer в Impressum обязательно полное имя владельца */
   name: 'Ilja Schneider – Schneider Studios',
+  /** Только название — для футера на всех страницах (имя и адрес остаются лишь на юридических страницах, § 5 DDG) */
+  tradeName: 'Schneider Studios',
   brand: 'DEASY',
   street: 'Newtonstraße 4',
   zipCity: '12489 Berlin',
   country: 'Deutschland',
-  email: 'ishneider@icloud.com',
+  email: 'herr.ishneider@gmail.com',
   phone: '',
   /** Kleinunternehmer nach § 19 UStG — USt-IdNr. не требуется */
   kleinunternehmer: true,
