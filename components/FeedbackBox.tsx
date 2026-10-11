@@ -4,18 +4,15 @@ import React, { useState } from 'react';
 
 type Lang = 'de' | 'ru';
 type Answer3 = 'ja' | 'teilweise' | 'nein';
-type Pay3 = 'ja' | 'vielleicht' | 'nein';
 
 const T = {
   ru: {
     title: '💬 Помогите улучшить DEASY',
-    sub: '3 коротких вопроса, анонимно',
+    sub: '2 коротких вопроса, анонимно',
     q1: 'Разбор помог понять письмо?',
     a1: { ja: 'Да', teilweise: 'Частично', nein: 'Нет' },
     q2: 'Чего не хватило? (необязательно)',
     ph2: 'Например: хотел спросить, … / непонятно было …',
-    q3: 'Заплатили бы 4,99 € за 5 разборов?',
-    a3: { ja: 'Да', vielleicht: 'Возможно', nein: 'Нет' },
     send: 'Отправить',
     sending: 'Отправляю…',
     thanks: '🙏 Спасибо! Ваш отзыв очень помогает.',
@@ -24,13 +21,11 @@ const T = {
   },
   de: {
     title: '💬 Helfen Sie, DEASY zu verbessern',
-    sub: '3 kurze Fragen, anonym',
+    sub: '2 kurze Fragen, anonym',
     q1: 'Hat die Erklärung geholfen, den Brief zu verstehen?',
     a1: { ja: 'Ja', teilweise: 'Teilweise', nein: 'Nein' },
     q2: 'Was hat gefehlt? (optional)',
     ph2: 'z. B. Ich wollte wissen, … / Unklar war …',
-    q3: 'Würden Sie 4,99 € für 5 Erklärungen zahlen?',
-    a3: { ja: 'Ja', vielleicht: 'Vielleicht', nein: 'Nein' },
     send: 'Absenden',
     sending: 'Wird gesendet…',
     thanks: '🙏 Danke! Ihr Feedback hilft sehr.',
@@ -54,7 +49,6 @@ const chip = (active: boolean): React.CSSProperties => ({
 export default function FeedbackBox({ language, demo }: { language: Lang; demo?: boolean }) {
   const t = T[language];
   const [helpful, setHelpful] = useState<Answer3 | null>(null);
-  const [pay, setPay] = useState<Pay3 | null>(null);
   const [missing, setMissing] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
 
@@ -65,7 +59,7 @@ export default function FeedbackBox({ language, demo }: { language: Lang; demo?:
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ helpful, pay, missing, language, demo: !!demo }),
+        body: JSON.stringify({ helpful, missing, language, demo: !!demo }),
       });
       if (!res.ok) throw new Error();
       setState('done');
@@ -107,15 +101,6 @@ export default function FeedbackBox({ language, demo }: { language: Lang; demo?:
         />
       </label>
       <p style={{ margin: '0 0 14px', fontSize: 12, color: '#6b7085' }}>{t.privacy}</p>
-
-      <p style={{ margin: '0 0 8px', fontWeight: 600 }}>{t.q3}</p>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        {(Object.keys(t.a3) as Pay3[]).map((k) => (
-          <button key={k} type="button" style={chip(pay === k)} onClick={() => setPay(k)}>
-            {t.a3[k]}
-          </button>
-        ))}
-      </div>
 
       <button
         type="button"
