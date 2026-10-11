@@ -792,3 +792,16 @@
     transition: none;
   }
 }
+
+/* Ссылка «Посмотреть пример» под кнопками в hero */
+.demoLink {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--pen, #2b4fd8);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.demoLink:hover {
+  text-decoration-thickness: 2px;
+}

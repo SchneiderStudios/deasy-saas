@@ -775,3 +775,22 @@
   color: #1d2433;
   margin: 4px 0 0;
 }
+
+/* «Посмотреть пример» на экране загрузки */
+.demoButton {
+  display: block;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px dashed #2b4fd8;
+  background: #f4f6ff;
+  color: #2b4fd8;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.demoButton:hover {
+  background: #e8edff;
+}

@@ -34,6 +34,7 @@ const COPY = {
       'Поддельные SMS «от Finanzamt», письма от несуществующих Inkasso-бюро, угрозы штрафом за 24 часа. DEASY ищет типичные признаки обмана в письмах, e-mail и SMS — до того, как вы заплатите или введёте данные.',
     fraudList: ['Чужой или иностранный счёт для оплаты', 'Давление и угрозы с коротким сроком', 'Ссылки на поддельные сайты', 'Нет номера дела и настоящего отправителя'],
     fraudCta: 'Проверить письмо или SMS',
+    demo: '▶ Посмотреть пример разбора — без загрузки',
     fraudFree: '5 проверок в месяц бесплатно',
     sms: 'Finanzamt: Ihre Steuererstattung von 412,30 EUR ist bereit. Bestätigen Sie Ihre Bankdaten innerhalb von 24 Std.: finanzamt-erstattung.co/de',
     stamp: 'Похоже на мошенничество',
@@ -98,6 +99,7 @@ const COPY = {
       'Gefälschte SMS „vom Finanzamt“, Briefe von erfundenen Inkassobüros, Drohungen mit 24-Stunden-Frist. DEASY sucht typische Betrugsmerkmale in Briefen, E-Mails und SMS – bevor Sie zahlen oder Daten eingeben.',
     fraudList: ['Fremdes oder ausländisches Konto', 'Druck und Drohungen mit kurzer Frist', 'Links auf gefälschte Websites', 'Kein Aktenzeichen, kein echter Absender'],
     fraudCta: 'Brief oder SMS prüfen',
+    demo: '▶ Beispiel ansehen – ohne Upload',
     fraudFree: '5 Checks pro Monat kostenlos',
     sms: 'Finanzamt: Ihre Steuererstattung von 412,30 EUR ist bereit. Bestätigen Sie Ihre Bankdaten innerhalb von 24 Std.: finanzamt-erstattung.co/de',
     stamp: 'Wahrscheinlich Betrug',
@@ -201,6 +203,9 @@ export default function Home() {
                 {t.ctaFraud}
               </Link>
             </div>
+            <Link href="/app?demo=1" className={styles.demoLink}>
+              {t.demo}
+            </Link>
             <ul className={styles.facts}>
               {t.facts.map((f) => (
                 <li key={f}>{f}</li>
