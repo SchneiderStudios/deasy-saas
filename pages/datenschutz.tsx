@@ -128,7 +128,14 @@ export default function Datenschutz() {
           Aufbewahrungspflichten bestehen. Unser Postfach wird von Google betrieben (siehe Abschnitt 7).
         </p>
 
-        <h2>9. Ihre Rechte</h2>
+        <h2>9. Feedback</h2>
+        <p>
+          Unter einer Erklärung können Sie freiwillig und anonym kurz bewerten, ob sie geholfen hat. Ihre Antworten
+          (Auswahl, optionaler Freitext, Sprache) senden wir per E-Mail über unser Postfach bei Google (siehe Abschnitt 7) an
+          uns, um DEASY zu verbessern (Art. 6 Abs. 1 lit. f DSGVO). Bitte tragen Sie keine Namen, Adressen oder Aktenzeichen ein.
+        </p>
+
+        <h2>10. Ihre Rechte</h2>
         <p>
           Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung
           der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO) sowie das
@@ -140,7 +147,7 @@ export default function Datenschutz() {
           Bundesland Ihres Wohnorts oder des Sitzes des Verantwortlichen.
         </p>
 
-        <h2>10. Automatisierte Ergebnisse</h2>
+        <h2>11. Automatisierte Ergebnisse</h2>
         <p>
           Analysen und Antwortentwürfe werden von einer KI erzeugt (Art. 50 KI-Verordnung). Sie dienen nur der
           Orientierung; es findet keine automatisierte Entscheidung mit rechtlicher Wirkung für Sie statt

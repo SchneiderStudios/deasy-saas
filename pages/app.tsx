@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePricingTiers } from '@/hooks/usePricingTiers';
 import { usePdfUpload } from '@/hooks/usePdfUpload';
 import { useDocumentHistory } from '@/hooks/useDocumentHistory';
+import { DEMO_ANALYSIS, DEMO_LETTER_TEXT } from '@/lib/demoLetter';
+import FeedbackBox from '@/components/FeedbackBox';
 import styles from '@/styles/App.module.css';
 import DocumentAssistant from '@/components/DocumentAssistant';
 import LegalLinks from '@/components/LegalLinks';
@@ -130,6 +132,19 @@ export default function App() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [docKey, setDocKey] = useState(0);
+  // Пример разбора (/app?demo=1): без загрузки, без ИИ, лимит не списывается
+  const [isDemo, setIsDemo] = useState(false);
+  const startDemo = () => {
+    setIsDemo(true);
+    setUploadedImages([]);
+    setError(null);
+    setCurrentView('analysis');
+    setDocKey((k) => k + 1);
+    try { window.scrollTo({ top: 0 }); } catch {}
+  };
+  useEffect(() => {
+    if (isDemo) setAnalysis(DEMO_ANALYSIS[selectedLanguage]);
+  }, [isDemo, selectedLanguage]);
 
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -177,6 +192,7 @@ export default function App() {
       const q = new URLSearchParams(window.location.search);
       if (q.get('modus') === 'betrug') setMode('betrug');
       if (q.get('kaufen')) setShowPricingModal(true);
+      if (q.get('demo')) startDemo();
       const f = JSON.parse(localStorage.getItem('deasyFraud') || 'null');
       setFraudUsed(f && f.month === fraudMonth() ? f.count : 0);
     } catch {}
@@ -226,6 +242,7 @@ export default function App() {
       betrugsHinweise: Array.isArray(raw.betrugsHinweise) ? raw.betrugsHinweise : [],
     };
 
+    setIsDemo(false);
     setAnalysis(analysisData);
     setUploadedImages(images);
     setCurrentView('analysis');
@@ -363,6 +380,12 @@ export default function App() {
         </button>
       </div>
 
+      {mode === 'erklaeren' && (
+        <button type="button" onClick={startDemo} className={styles.demoButton}>
+          ▶ {selectedLanguage === 'de' ? 'Kein Brief zur Hand? Beispiel ansehen' : 'Нет письма под рукой? Посмотреть пример'}
+        </button>
+      )}
+
       <h2>
         {mode === 'betrug'
           ? selectedLanguage === 'de' ? 'Ist das echt?' : 'Это настоящее письмо?'
@@ -452,6 +475,21 @@ export default function App() {
         ← {selectedLanguage === 'ru' ? 'Новое письмо' : 'Neuer Brief'}
       </button>
 
+      {isDemo && (
+        <div style={{ margin: '0 0 16px', padding: '14px 16px', borderRadius: 12, background: '#fff8db', border: '1px solid #f5e08a' }}>
+          <strong>👀 {selectedLanguage === 'de' ? 'Beispiel: So sieht eine Erklärung aus' : 'Пример: так выглядит разбор'}</strong>
+          <p style={{ margin: '4px 0 8px', fontSize: 14 }}>
+            {selectedLanguage === 'de'
+              ? 'Ein erfundener Brief vom Jobcenter. Kein Upload, Ihre kostenlosen Erklärungen bleiben erhalten.'
+              : 'Вымышленное письмо из Jobcenter. Ничего не загружается, ваши бесплатные разборы не тратятся.'}
+          </p>
+          <details>
+            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>📄 {selectedLanguage === 'de' ? 'Original-Brief anzeigen' : 'Показать само письмо'}</summary>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 13.5, background: '#fff', padding: 12, borderRadius: 8, border: '1px solid #e5e7eb', marginTop: 8 }}>{DEMO_LETTER_TEXT}</pre>
+          </details>
+        </div>
+      )}
+
       {uploadedImages.length > 0 && (
         <details className={styles.docPreview}>
           <summary>📄 {selectedLanguage === 'de' ? 'Dokument anzeigen' : 'Показать документ'}{uploadedImages.length > 1 ? ` (${uploadedImages.length})` : ''}</summary>
@@ -534,12 +572,30 @@ export default function App() {
             language={selectedLanguage}
           />
 
-          <DocumentAssistant
-            key={docKey}
-            analysis={analysis}
-            images={uploadedImages}
-            language={selectedLanguage}
-          />
+          {isDemo ? (
+            <div style={{ margin: '16px 0', padding: '18px 16px', borderRadius: 12, background: '#eef2ff', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px', fontWeight: 700 }}>
+                {selectedLanguage === 'de' ? '💬 Bei Ihrem eigenen Brief kommen dazu:' : '💬 Для вашего письма будет ещё:'}
+              </p>
+              <p style={{ margin: '0 0 12px', fontSize: 14 }}>
+                {selectedLanguage === 'de'
+                  ? 'Fragen an den KI-Assistenten und Vorlagen für einfache Antworten (z. B. Fristverlängerung).'
+                  : 'вопросы ИИ-ассистенту и шаблоны простых ответов (например, просьба продлить срок).'}
+              </p>
+              <button type="button" className={styles.analyzeButton} onClick={() => { setIsDemo(false); setAnalysis(null); setCurrentView('upload'); }}>
+                {selectedLanguage === 'de' ? '📷 Eigenen Brief erklären lassen' : '📷 Разобрать своё письмо'}
+              </button>
+            </div>
+          ) : (
+            <DocumentAssistant
+              key={docKey}
+              analysis={analysis}
+              images={uploadedImages}
+              language={selectedLanguage}
+            />
+          )}
+
+          <FeedbackBox key={`fb-${docKey}`} language={selectedLanguage} demo={isDemo} />
 
           <BeratungHinweis language={selectedLanguage} />
         </>
