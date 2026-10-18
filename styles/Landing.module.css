@@ -937,6 +937,25 @@
   margin-bottom: 16px !important;
 }
 
+/* Строка «станьте партнёром» — крупнее обычной сноски */
+.partnerLine {
+  margin-top: 20px !important;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 1.04rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.partnerLine a {
+  color: var(--pen-dark);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .statsGrid,
   .guideGrid,

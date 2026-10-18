@@ -45,7 +45,7 @@ const COPY = {
     how: [
       { h: 'Сфотографируйте письмо', p: 'Телефоном или загрузите PDF. Можно несколько страниц.' },
       { h: 'Прочитайте объяснение', p: 'Через 10–20 секунд — что в письме, сроки, документы и куда идти. Можно задать вопрос.' },
-      { h: 'Не пропустите срок', p: 'Добавьте срок в календарь и сохраните письмо в «Мои письма».' },
+      { h: 'Не пропустите срок', p: 'Добавьте срок в календарь. Разбор останется в «Моих письмах» — в вашем браузере.' },
     ],
     pricesTitle: 'Платите за разборы, а не за подписку',
     pricesLead: 'Письма приходят когда угодно — поэтому без ежемесячных платежей. Купленные разборы действуют 12 месяцев.',
@@ -82,12 +82,12 @@ const COPY = {
     guidesLead: 'Коротко и по делу: что за письмо пришло, какие бывают сроки и куда обратиться.',
     guidesAll: 'Все гайды →',
     testerTitle: 'Помогите сделать DEASY лучше',
-    testerText: 'Ищем людей, которым приходят письма от ведомств. Короткий разговор на 15–20 минут по телефону или в видео — расскажете, как справляетесь с письмами сейчас. Тестеры первыми получают новые функции.',
+    testerText: 'Ищем людей, которым приходят письма от ведомств. Просто напишите нам — пара вопросов по e-mail, ответите когда будет время. Никаких звонков. Тестеры первыми получают новые функции.',
     partnerLine: 'Вы консультант, школа или организация, которая помогает людям в Германии?',
     partnerLink: 'Станьте партнёром →',
     faqTitle: 'Частые вопросы',
     faq: [
-      ['Чем это лучше, чем спросить ChatGPT?', 'Чат-бот отвечает, только если вы знаете, что спросить, и не следит за сроками. DEASY сам показывает сроки и добавляет их в календарь, проверяет письмо на мошенничество, готовит фразы для звонка и собирает все письма в одном месте.'],
+      ['Чем это лучше, чем спросить ChatGPT?', 'Чат-бот отвечает, только если вы знаете, что спросить, и не следит за сроками. DEASY сам показывает сроки и добавляет их в календарь, проверяет письмо на мошенничество, готовит фразы для звонка и держит все разборы в одном месте — в памяти вашего браузера, на наш сервер они не попадают.'],
       ['Почему не просто Google Translate?', 'Переводчик даёт слова, но не объясняет, что они значат для вас: что от вас хотят, до какого числа и куда обратиться. DEASY показывает именно это — и, если нужно, перевод по абзацам рядом с оригиналом.'],
       ['Я и так храню письма в папке на телефоне. Зачем DEASY?', 'Папка не напомнит о сроке и не подскажет, что делать. В «Моих письмах» видно, где срок ближе всего, письма сгруппированы по отправителю, а по тексту разборов работает поиск.'],
       ['Это юридическая консультация?', 'Нет. DEASY объясняет, что написано в письме, и помогает найти сроки и следующие шаги. Он не заменяет консультацию юриста, налогового консультанта или специалиста. Важное всегда уточняйте у отправителя письма или в бесплатной консультации (Beratungsstelle).'],
@@ -135,7 +135,7 @@ const COPY = {
     how: [
       { h: 'Brief fotografieren', p: 'Mit dem Handy oder als PDF hochladen. Auch mehrere Seiten.' },
       { h: 'Erklärung lesen', p: 'Nach 10–20 Sekunden: Inhalt, Fristen, Unterlagen und wer hilft. Rückfragen im Chat möglich.' },
-      { h: 'Frist nicht verpassen', p: 'Frist in den Kalender übernehmen und den Brief unter „Meine Briefe“ ablegen.' },
+      { h: 'Frist nicht verpassen', p: 'Frist in den Kalender übernehmen. Die Erklärung bleibt unter „Meine Briefe“ – in Ihrem Browser.' },
     ],
     pricesTitle: 'Sie zahlen pro Erklärung, nicht im Abo',
     pricesLead: 'Post kommt unregelmäßig – deshalb keine monatlichen Kosten. Gekaufte Erklärungen gelten 12 Monate.',
@@ -172,12 +172,12 @@ const COPY = {
     guidesLead: 'Kurz und verständlich: welcher Brief gekommen ist, welche Fristen es gibt und wer hilft.',
     guidesAll: 'Alle Ratgeber →',
     testerTitle: 'Helfen Sie, DEASY besser zu machen',
-    testerText: 'Wir suchen Menschen, die Post von Behörden bekommen. Ein kurzes Gespräch, 15–20 Minuten per Telefon oder Video: Sie erzählen, wie Sie heute mit Briefen umgehen. Tester bekommen neue Funktionen zuerst.',
+    testerText: 'Wir suchen Menschen, die Post von Behörden bekommen. Schreiben Sie uns einfach — ein paar Fragen per E-Mail, Sie antworten, wann es passt. Keine Anrufe. Tester bekommen neue Funktionen zuerst.',
     partnerLine: 'Sie beraten, unterrichten oder unterstützen Menschen in Deutschland?',
     partnerLink: 'Partner werden →',
     faqTitle: 'Häufige Fragen',
     faq: [
-      ['Was ist besser als ChatGPT zu fragen?', 'Ein Chatbot antwortet nur, wenn Sie wissen, was Sie fragen sollen – und behält keine Fristen im Blick. DEASY zeigt die Fristen von selbst und trägt sie in den Kalender ein, prüft auf Betrug, bereitet Sätze für den Anruf vor und sammelt alle Briefe an einem Ort.'],
+      ['Was ist besser als ChatGPT zu fragen?', 'Ein Chatbot antwortet nur, wenn Sie wissen, was Sie fragen sollen – und behält keine Fristen im Blick. DEASY zeigt die Fristen von selbst und trägt sie in den Kalender ein, prüft auf Betrug, bereitet Sätze für den Anruf vor und hält alle Erklärungen an einem Ort — im Speicher Ihres Browsers, nicht auf unserem Server.'],
       ['Warum nicht einfach Google Übersetzer?', 'Eine Übersetzung liefert die Wörter, aber nicht, was sie für Sie bedeuten: was verlangt wird, bis wann und wer hilft. Genau das zeigt DEASY – auf Wunsch zusätzlich Absatz für Absatz neben dem Original.'],
       ['Ich habe meine Briefe doch schon in einem Ordner. Wozu DEASY?', 'Ein Ordner erinnert an keine Frist und sagt nicht, was zu tun ist. Unter „Meine Briefe“ sehen Sie, wo die Frist am nächsten ist, die Briefe sind nach Absender gruppiert und die Erklärungen durchsuchbar.'],
       ['Ist das eine Rechtsberatung?', 'Nein. DEASY erklärt den Inhalt von Briefen und hilft, Fristen und nächste Schritte zu erkennen. Es ersetzt keine rechtliche, steuerliche oder sonstige fachliche Beratung. Prüfen Sie Wichtiges immer beim Absender oder in einer kostenlosen Beratungsstelle.'],
@@ -491,7 +491,7 @@ export default function Home() {
             <div>
               <h2>{t.testerTitle}</h2>
               <p className={styles.sectionLead}>{t.testerText}</p>
-              <p className={styles.small}>
+              <p className={styles.partnerLine}>
                 {t.partnerLine} <a href="/partner">{t.partnerLink}</a>
               </p>
             </div>
