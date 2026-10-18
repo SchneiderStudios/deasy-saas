@@ -25,6 +25,15 @@ Next.js 14 (pages router), React 18, TypeScript, `@anthropic-ai/sdk`. Депло
    → `{ success: true, reply: { subject, body (немецкий), translation (рус., если language=ru), tips[], placeholders[] } }`.
    Готовые шаблоны без ИИ — `lib/replyTemplates.ts`.
 
+7. `POST /api/translate-document` `{ images, language: 'ru' }` → `{ success, absaetze: {de, ru}[] }` — перевод письма по абзацам (`components/TranslationView.tsx`, только для RU, по кнопке, лимит не списывается). Налоговые письма → 403. Перевод сохраняется в «Моих письмах» (`uebersetzung`).
+8. `POST /api/kontakt` `{ art: 'tester'|'partner', name, email, organisation?, themen?, nachricht?, language, einwilligung: true, website? }` → письмо владельцу (`lib/mail.ts`), ответ на e-mail заявителя. Форма — `components/ContactForm.tsx` (главная `#tester`, `/partner`).
+
+## Бесплатные разделы (без ИИ)
+- `/brief` — конструктор письма DIN 5008 (форма B, конверт DIN lang). Только в браузере, ничего не отправляет. Черновик из «Написать ответ» передаётся через localStorage `deasyBriefEntwurf` и удаляется сразу при чтении; адрес отправителя — `deasyAbsender`, только по галочке. Разбор текста шаблонов — `lib/briefEntwurf.ts`.
+- `/ratgeber`, `/ratgeber/[slug]` — гайды RU/DE из `lib/guides.ts`. Только общая информация, без оценки случая; без налоговых тем; ссылки — только официальные.
+- Перед отправкой письма — шаг «Проверить и закрасить» (`components/RedactionEditor.tsx`): закрашенное впекается в JPEG в браузере. Отключается галочкой (`deasySchwaerzenAus`). В чате и в заметках к ответу IBAN/карты/Steuer-ID/e-mail скрываются `lib/maskieren.ts`.
+- «Мои письма»: поиск, группировка по отправителю, переименование (`titel`).
+
 Меняя одну сторону контракта — меняй и другую в том же коммите.
 
 6. `POST /api/check-fraud` `{ images, language }` → `{ success, check: { art, absender, echtheit: 'unauffaellig'|'pruefen'|'verdaechtig', betrugsHinweise[], entwarnung[], schritte[] } }` — отдельный бесплатный режим «Проверить на обман» (`/app?modus=betrug`), модель Sonnet, работает и для налоговых писем.

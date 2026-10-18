@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/Assistant.module.css';
 import { REPLY_TEMPLATES } from '@/lib/replyTemplates';
+import { ENTWURF_KEY } from '@/lib/briefEntwurf';
+import { maskieren } from '@/lib/maskieren';
 
 export interface AssistantAnalysis {
   summary: string;
@@ -55,6 +57,8 @@ const T = {
     generating: 'Daten werden aus dem Brief übernommen… (ca. 15–30 Sek.)',
     yourLetter: 'Vorlage, von KI mit Daten aus dem Brief gefüllt – bitte prüfen und anpassen',
     copy: '📋 Kopieren',
+    masked: 'IBAN, Kartennummern, Steuer-ID und E-Mail-Adressen werden vor dem Senden automatisch verdeckt.',
+    din: '📄 Als Brief (DIN) gestalten',
     copied: '✓ Kopiert',
     download: '⬇️ Als Datei',
     email: '📧 Per E-Mail',
@@ -97,6 +101,8 @@ const T = {
     generating: 'ИИ переносит данные из письма… (15–30 сек.)',
     yourLetter: 'Шаблон на немецком, заполненный ИИ данными из письма, — проверьте и поправьте перед отправкой',
     copy: '📋 Копировать',
+    masked: 'Номера счетов (IBAN), карт, Steuer-ID и e-mail скрываются автоматически до отправки.',
+    din: '📄 Оформить письмо (DIN)',
     copied: '✓ Скопировано',
     download: '⬇️ Скачать',
     email: '📧 Отправить e-mail',
@@ -164,7 +170,8 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
   }, [messages, chatLoading]);
 
   const sendMessage = async (text: string) => {
-    const question = text.trim();
+    // Номера счетов, карт, Steuer-ID и e-mail скрываем до отправки ИИ (видно и в пузыре сообщения)
+    const question = maskieren(text.trim()).text;
     if (!question || chatLoading) return;
 
     const userMsg: ChatMessage = { id: newId(), role: 'user', content: question };
@@ -213,7 +220,7 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
       const res = await fetch('/api/generate-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ replyType, notes, analysis, images, language }),
+        body: JSON.stringify({ replyType, notes: maskieren(notes).text, analysis, images, language }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.error || t.replyError);
@@ -260,6 +267,14 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
     a.download = `Antwort_${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  /** Открыть письмо в конструкторе DIN 5008 (/brief, новая вкладка). Черновик удаляется там сразу после чтения. */
+  const openInGenerator = () => {
+    try {
+      localStorage.setItem(ENTWURF_KEY, JSON.stringify({ text: letter, betreff: reply?.subject || '' }));
+    } catch {}
+    window.open('/brief', '_blank');
   };
 
   const emailHref = `mailto:?subject=${encodeURIComponent(reply?.subject || '')}&body=${encodeURIComponent(letter)}`;
@@ -334,6 +349,7 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
               {t.send}
             </button>
           </form>
+          <p style={{ margin: '6px 2px 0', fontSize: 12, color: '#6b7085' }}>🔒 {t.masked}</p>
         </>
       )}
 
@@ -399,6 +415,9 @@ export default function DocumentAssistant({ analysis, images, language }: Props)
               <div className={styles.actions}>
                 <button className={styles.primary} onClick={copyLetter}>
                   {copied ? t.copied : t.copy}
+                </button>
+                <button className={styles.secondary} onClick={openInGenerator}>
+                  {t.din}
                 </button>
                 <button className={styles.secondary} onClick={downloadLetter}>
                   {t.download}

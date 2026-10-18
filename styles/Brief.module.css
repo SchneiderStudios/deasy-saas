@@ -1,0 +1,309 @@
+/* Конструктор письма DIN 5008, форма B (Fensterumschlag DIN lang). Все размеры листа — в мм. */
+
+.privacy {
+  margin-top: 16px;
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  font-size: 0.92rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(24px, 4vw, 48px);
+  margin-top: 32px;
+  align-items: start;
+}
+
+.form {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.form fieldset {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  background: #fff;
+}
+
+.form legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.form input:not([type='checkbox']),
+.form textarea,
+.form select {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.form textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus {
+  border-color: var(--pen);
+  outline: none;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #3a4152;
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.info {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #1f3bb0;
+  font-size: 0.92rem;
+}
+
+.warn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef3f2;
+  color: #b42318;
+  font-size: 0.92rem;
+}
+
+.tips {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.tips h2 {
+  font-size: 1.1rem !important;
+  margin-bottom: 8px !important;
+}
+
+.tips ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #3a4152;
+  font-size: 0.95rem;
+}
+
+.tips li {
+  margin-bottom: 6px;
+}
+
+/* ---------- Превью ---------- */
+.previewCol {
+  min-width: 0;
+  position: sticky;
+  top: 76px;
+}
+
+.previewWrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.sheet {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  background: #fff;
+  color: #111;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
+  line-height: 1.38;
+  transform-origin: top left;
+  box-shadow: 0 1px 2px rgba(29, 36, 51, 0.08), 0 12px 32px rgba(29, 36, 51, 0.12);
+  overflow: hidden;
+}
+
+.falz1,
+.falz2,
+.loch {
+  position: absolute;
+  left: 4mm;
+  height: 0;
+  border-top: 0.3mm solid #8a8f9c;
+}
+
+.falz1 {
+  top: 105mm;
+  width: 5mm;
+}
+
+.loch {
+  top: 148.5mm;
+  width: 7mm;
+}
+
+.falz2 {
+  top: 210mm;
+  width: 5mm;
+}
+
+/* Anschriftfeld: 20 mm слева, 45 мм сверху, 85 × 45 мм */
+.anschrift {
+  position: absolute;
+  left: 20mm;
+  top: 45mm;
+  width: 85mm;
+  height: 45mm;
+  padding-left: 5mm;
+}
+
+.ruecksende {
+  font-size: 7pt;
+  line-height: 1.2;
+  margin-top: 2mm;
+  padding-bottom: 0.5mm;
+  border-bottom: 0.2mm solid #444;
+  width: fit-content;
+  max-width: 80mm;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empf {
+  position: absolute;
+  top: 17.7mm;
+  left: 5mm;
+  right: 0;
+}
+
+/* Informationsblock: 125 мм слева, 50 мм сверху */
+.infoblock {
+  position: absolute;
+  left: 125mm;
+  top: 50mm;
+  width: 75mm;
+  font-size: 10pt;
+}
+
+.infoName {
+  font-weight: 700;
+}
+
+.infoGap {
+  margin-top: 4mm;
+}
+
+/* Betreff и текст: с 98,5 мм, поля 25 мм слева / 20 мм справа и снизу */
+.body {
+  position: absolute;
+  left: 25mm;
+  right: 20mm;
+  top: 98.5mm;
+  bottom: 20mm;
+  overflow: hidden;
+}
+
+.betreff {
+  font-weight: 700;
+  margin: 0 0 8.5mm !important;
+}
+
+.text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.gruss {
+  margin-top: 4.2mm;
+}
+
+.sign {
+  margin-top: 12mm;
+}
+
+.ph {
+  background: #ffe45c;
+  color: inherit;
+  border-radius: 2px;
+}
+
+.printOnly {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .previewCol {
+    position: static;
+  }
+}
+
+@media (max-width: 420px) {
+  .two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .noPrint {
+    display: none !important;
+  }
+
+  .printOnly {
+    display: block;
+  }
+
+  .printOnly .sheet {
+    box-shadow: none;
+    transform: none;
+  }
+
+  .printOnly .ph {
+    background: none;
+  }
+}

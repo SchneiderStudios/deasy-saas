@@ -23,6 +23,10 @@ export interface SavedCase {
   echtheit?: string;
   betrugsHinweise?: string[];
   erledigt?: boolean;
+  /** Своё название письма (переименование в «Моих письмах») */
+  titel?: string;
+  /** Перевод по абзацам (оригинал DE + RU), если пользователь его открывал */
+  uebersetzung?: { de: string; ru: string }[];
 }
 
 const KEY = 'deasyCases';
@@ -89,5 +93,11 @@ export function useDocumentHistory() {
     setCases(next);
   }, []);
 
-  return { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone };
+  const updateCase = useCallback((id: string, patch: Partial<Pick<SavedCase, 'titel' | 'uebersetzung'>>) => {
+    const next = read().map((c) => (c.id === id ? { ...c, ...patch } : c));
+    write(next);
+    setCases(next);
+  }, []);
+
+  return { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone, updateCase };
 }

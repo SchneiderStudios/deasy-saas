@@ -1,0 +1,356 @@
+/* Внутренние страницы: гайды, конструктор письма, партнёры. Токены — в styles/globals.css */
+
+.page {
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.page h1,
+.page h2,
+.page h3 {
+  line-height: 1.15;
+  margin: 0;
+}
+
+.page h1 {
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  max-width: 24ch;
+}
+
+.page h2 {
+  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.page h3 {
+  font-size: 1.12rem;
+  font-weight: 600;
+}
+
+.page p {
+  margin: 0;
+}
+
+/* ---------- Nav ---------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(251, 251, 248, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+
+.navInner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.logo span {
+  background: linear-gradient(transparent 55%, var(--marker) 55%, var(--marker) 92%, transparent 92%);
+}
+
+.navLinks {
+  display: flex;
+  gap: 22px;
+  font-size: 0.95rem;
+}
+
+.navLinks a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.navLinks a:hover {
+  color: var(--ink);
+}
+
+.navRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lang button {
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.lang button[aria-pressed='true'] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.navCta {
+  background: var(--pen);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 9px 16px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* ---------- Layout ---------- */
+.main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 72px) 20px;
+}
+
+.narrow {
+  max-width: 760px;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pen);
+  margin-bottom: 10px;
+}
+
+.lead {
+  margin-top: 14px !important;
+  font-size: 1.15rem;
+  color: #3a4152;
+  max-width: 60ch;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.btnPrimary,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  border: 0;
+}
+
+.btnPrimary {
+  background: var(--pen);
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background: var(--pen-dark);
+}
+
+.btnGhost {
+  background: #fff;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+
+.btnGhost:hover {
+  background: var(--wash);
+}
+
+/* ---------- Ratgeber ---------- */
+.guideGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.guideCard {
+  display: block;
+  padding: 22px 20px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.guideCard:hover {
+  border-color: var(--pen);
+  transform: translateY(-2px);
+}
+
+.guideCard > span {
+  font-size: 1.7rem;
+}
+
+.guideCard h3 {
+  margin-top: 10px;
+}
+
+.guideCard p {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #3a4152;
+}
+
+.article h2 {
+  margin-top: 40px;
+  margin-bottom: 12px;
+}
+
+.article p,
+.article li {
+  color: #2c3242;
+}
+
+.article ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.article li {
+  margin-bottom: 8px;
+}
+
+.breadcrumb {
+  font-size: 0.92rem;
+  margin-bottom: 20px;
+}
+
+.breadcrumb a {
+  color: var(--pen);
+}
+
+.notice {
+  margin-top: 32px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--wash);
+  border-left: 4px solid var(--ink);
+  font-size: 0.95rem;
+}
+
+.links {
+  list-style: none;
+  padding: 0 !important;
+}
+
+.links li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  margin: 0 !important;
+}
+
+.links a {
+  color: var(--pen);
+  font-weight: 600;
+}
+
+.ctaBox {
+  margin-top: 40px;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: #fff;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.ctaBox p {
+  color: #d6dae3;
+  margin-top: 4px;
+}
+
+.ctaBox .btnPrimary {
+  background: var(--marker);
+  color: var(--ink);
+}
+
+/* ---------- Partner ---------- */
+.partnerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 32px 0 48px;
+}
+
+.partnerItem {
+  border-top: 3px solid var(--ink);
+  padding-top: 14px;
+}
+
+.partnerItem p {
+  margin-top: 8px;
+  color: #3a4152;
+}
+
+.formWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(24px, 5vw, 56px);
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+  .navLinks {
+    display: none;
+  }
+
+  .guideGrid,
+  .partnerGrid,
+  .formWrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .navCta {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guideCard {
+    transition: none;
+  }
+}
