@@ -15,6 +15,13 @@ export const LEGAL_LINKS = [
   { href: '/vertrag?aktion=widerrufen', label: 'Vertrag widerrufen' },
 ];
 
+/** Полезные бесплатные разделы (не юридические) — тоже в футере на всех страницах. */
+const SITE_LINKS = [
+  { href: '/ratgeber', label: 'Ratgeber / Гайды' },
+  { href: '/brief', label: 'Brief-Generator' },
+  { href: '/partner', label: 'Partner' },
+];
+
 export default function LegalLinks({ compact = false }: { compact?: boolean }) {
   return (
     <footer
@@ -28,6 +35,13 @@ export default function LegalLinks({ compact = false }: { compact?: boolean }) {
         lineHeight: 1.9,
       }}
     >
+      <nav aria-label="DEASY" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '4px 16px', marginBottom: 4 }}>
+        {SITE_LINKS.map((l) => (
+          <a key={l.href} href={l.href} style={{ color: '#2b4fd8', fontWeight: 600 }}>
+            {l.label}
+          </a>
+        ))}
+      </nav>
       <nav aria-label="Rechtliches" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '4px 16px' }}>
         {LEGAL_LINKS.map((l) => (
           <a key={l.href} href={l.href} style={{ color: '#4b4e5c' }}>

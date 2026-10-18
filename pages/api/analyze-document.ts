@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
+import { TAX_SENDER } from '@/lib/steuer';
 
 export const config = {
   api: {
@@ -66,7 +67,7 @@ function extras(parsed: any) {
  * (Hauptzollamt) sowie Gemeindesteuern (Grundsteuer, Hundesteuer, Zweitwohnungsteuer).
  * Zusätzlich zur Einstufung durch die KI prüfen wir den Absender per Muster.
  */
-const TAX_SENDER = /finanzamt|finanzverwaltung|bundeszentralamt\s+f(ü|ue)r\s+steuern|\bbzst\b|hauptzollamt|familienkasse|steueramt|steuerverwaltung|kasse\s*\/\s*steuern|elster/i;
+// TAX_SENDER — в lib/steuer.ts (общий для анализа и перевода)
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

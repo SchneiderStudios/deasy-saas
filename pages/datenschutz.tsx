@@ -41,6 +41,8 @@ export default function Datenschutz() {
           <li>Kein Benutzerkonto, keine Cookies, kein Tracking, keine Werbung.</li>
           <li>Hochgeladene Briefe werden nur zur Analyse an unseren KI-Dienstleister übermittelt und von uns nicht dauerhaft gespeichert.</li>
           <li>Ihr Dokumentverlauf und Ihr Nutzungszähler liegen ausschließlich in Ihrem eigenen Browser.</li>
+          <li>Vor dem Senden können Sie Angaben im Brief schwärzen – das geschieht nur auf Ihrem Gerät.</li>
+          <li>Der Brief-Generator arbeitet nur in Ihrem Browser; Ihre Eingaben werden nicht an uns gesendet.</li>
         </ul>
 
         <h2>3. Hosting und Server-Logfiles</h2>
@@ -68,21 +70,31 @@ export default function Datenschutz() {
         </p>
         <p>
           Wir speichern Ihre Dokumente, Analysen und Chatnachrichten nicht auf unseren Servern. Rechtsgrundlage
-          ist die Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Behördenbriefe können besondere
+          ist die Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Dasselbe gilt, wenn Sie die Übersetzung
+          eines Briefes Absatz für Absatz anfordern: Die Bilder des Briefes werden dafür erneut an Anthropic übermittelt.
+          Behördenbriefe können besondere
           Kategorien personenbezogener Daten enthalten (z. B. Gesundheitsdaten in Schreiben der Krankenkasse).
           Vor dem ersten Hochladen holen wir per Kontrollkästchen Ihre ausdrückliche Einwilligung in diese
           Verarbeitung und in die Übermittlung an Anthropic in die USA ein (Art. 6 Abs. 1 lit. a, Art. 9 Abs. 2 lit. a,
           Art. 49 Abs. 1 lit. a DSGVO); die Übermittlung ist zusätzlich durch die Datenschutzvereinbarung von Anthropic
           mit EU-Standardvertragsklauseln abgesichert (Art. 46 DSGVO). Sie können die Einwilligung jederzeit mit Wirkung
           für die Zukunft widerrufen, indem Sie das Häkchen entfernen; die bis dahin erfolgte Verarbeitung bleibt
-          rechtmäßig. Ohne Einwilligung ist eine Analyse nicht möglich. Tipp: Schwärzen Sie Angaben, die für die Erklärung nicht
-          nötig sind (z. B. Kontonummern).
+          rechtmäßig. Ohne Einwilligung ist eine Analyse nicht möglich.
+        </p>
+        <p>
+          <strong>Schwärzen vor dem Senden:</strong> Nach der Auswahl einer Datei zeigt DEASY den Brief an. Angaben, die Sie
+          schwärzen (z. B. Kontonummern, Namen), werden in Ihrem Browser dauerhaft in das Bild eingezeichnet, bevor es
+          gesendet wird – an uns und an Anthropic geht nur das geschwärzte Bild. Im Chat und im Feld für Antwortschreiben
+          werden IBAN, Kartennummern, Steuer-Identifikationsnummern und E-Mail-Adressen vor dem Senden automatisch
+          verdeckt. Namen und Anschriften erkennt diese Automatik nicht.
         </p>
 
         <h2>5. Speicherung in Ihrem Browser</h2>
         <p>
-          Ihr Dokumentverlauf (Zusammenfassungen, Fristen), Ihre Einwilligung (Abschnitt 4), Ihre Sprachauswahl, die Zähler für kostenlose Briefe und
-          Echtheits-Checks sowie Ihr Paket-Guthaben werden im lokalen Speicher (localStorage) Ihres Browsers abgelegt. Diese Daten
+          Ihr Dokumentverlauf (Zusammenfassungen, Fristen, von Ihnen vergebene Namen und angeforderte Übersetzungen), Ihre
+          Einwilligung (Abschnitt 4), Ihre Sprachauswahl, Ihre Einstellung zum Schwärzen-Schritt, die Zähler für kostenlose Briefe und
+          Echtheits-Checks, Ihr Paket-Guthaben sowie – nur wenn Sie das Häkchen „Adresse merken“ setzen – Ihre Absenderadresse
+          im Brief-Generator werden im lokalen Speicher (localStorage) Ihres Browsers abgelegt. Diese Daten
           verlassen Ihr Gerät nicht und sind für die von Ihnen gewünschte Funktion unbedingt erforderlich
           (§ 25 Abs. 2 Nr. 2 TDDDG). Sie können sie jederzeit löschen, indem Sie die Websitedaten in Ihrem
           Browser entfernen.
@@ -135,7 +147,24 @@ export default function Datenschutz() {
           uns, um DEASY zu verbessern (Art. 6 Abs. 1 lit. f DSGVO). Bitte tragen Sie keine Namen, Adressen oder Aktenzeichen ein.
         </p>
 
-        <h2>10. Ihre Rechte</h2>
+        <h2>10. Brief-Generator</h2>
+        <p>
+          Der Brief-Generator (<a href="/brief">/brief</a>) erstellt den Brief vollständig in Ihrem Browser. Ihre Eingaben
+          werden nicht an unseren Server oder Dritte übertragen. Übernehmen Sie einen Antwortentwurf aus DEASY in den
+          Generator, wird er kurz im lokalen Speicher Ihres Browsers abgelegt und beim Öffnen des Generators sofort wieder
+          gelöscht. Das PDF erzeugt die Druckfunktion Ihres Browsers.
+        </p>
+
+        <h2>11. Anmeldung als Tester oder Partner</h2>
+        <p>
+          Wenn Sie sich als Tester oder Partner melden, verarbeiten wir Ihren Namen, Ihre E-Mail-Adresse, gegebenenfalls Ihre
+          Organisation, die ausgewählten Themen und Ihre Nachricht, um mit Ihnen Kontakt aufzunehmen (Art. 6 Abs. 1 lit. a und b
+          DSGVO). Die Angaben werden nicht auf unserem Server gespeichert, sondern per E-Mail über unser Postfach bei Google
+          (siehe Abschnitt 7) an uns gesendet. Wir löschen sie, wenn der Kontakt abgeschlossen ist, spätestens nach 12 Monaten,
+          oder früher auf Ihren Wunsch. Ihre Einwilligung können Sie jederzeit per E-Mail widerrufen.
+        </p>
+
+        <h2>12. Ihre Rechte</h2>
         <p>
           Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung
           der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO) sowie das
@@ -147,9 +176,9 @@ export default function Datenschutz() {
           Bundesland Ihres Wohnorts oder des Sitzes des Verantwortlichen.
         </p>
 
-        <h2>11. Automatisierte Ergebnisse</h2>
+        <h2>13. Automatisierte Ergebnisse</h2>
         <p>
-          Analysen und Antwortentwürfe werden von einer KI erzeugt (Art. 50 KI-Verordnung). Sie dienen nur der
+          Analysen, Übersetzungen und Antwortentwürfe werden von einer KI erzeugt (Art. 50 KI-Verordnung). Sie dienen nur der
           Orientierung; es findet keine automatisierte Entscheidung mit rechtlicher Wirkung für Sie statt
           (Art. 22 DSGVO).
         </p>

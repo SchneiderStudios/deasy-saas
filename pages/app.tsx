@@ -11,6 +11,8 @@ import { BeratungHinweis, SteuerHinweis } from '@/components/BeratungHinweis';
 import { FristenKarte, EchtheitCheck, AnrufVorbereitung, FraudResult } from '@/components/LetterTools';
 import type { FraudCheck } from '@/components/LetterTools';
 import HistoryView from '@/components/HistoryView';
+import RedactionEditor, { SKIP_KEY } from '@/components/RedactionEditor';
+import TranslationView from '@/components/TranslationView';
 import type { SavedCase } from '@/hooks/useDocumentHistory';
 
 interface AnalysisResult {
@@ -122,12 +124,42 @@ const TEXTS_RU = {
 export default function App() {
   const { freeLeft, paidLeft, totalLeft, canMakeRequest, incrementUsage, packs, activation, activationError, activatedLetters, dismissActivation } = usePricingTiers();
   const { convertFileToImages, error: pdfError, clearError } = usePdfUpload();
-  const { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone } = useDocumentHistory();
+  const { cases, saveCaseToHistory, deleteCaseFromHistory, toggleDone, updateCase } = useDocumentHistory();
 
-  const [selectedLanguage, setSelectedLanguage] = useState<'de' | 'ru'>('de');
+  const [selectedLanguage, setSelectedLanguageState] = useState<'de' | 'ru'>('de');
+  // Общий выбор языка с главной и внутренними страницами
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('deasyLanguage');
+      if (saved === 'de' || saved === 'ru') setSelectedLanguageState(saved);
+    } catch {}
+  }, []);
+  const setSelectedLanguage = (l: 'de' | 'ru') => {
+    setSelectedLanguageState(l);
+    try {
+      localStorage.setItem('deasyLanguage', l);
+    } catch {}
+  };
   const TEXTS = selectedLanguage === 'ru' ? TEXTS_RU : TEXTS_DE;
 
-  const [currentView, setCurrentView] = useState<'upload' | 'analysis' | 'history' | 'fraud'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'review' | 'analysis' | 'history' | 'fraud'>('upload');
+  // Шаг «Проверить и закрасить данные» перед отправкой
+  const [pending, setPending] = useState<{ images: string[]; fileName: string } | null>(null);
+  const [reviewStep, setReviewStep] = useState(true);
+  useEffect(() => {
+    try {
+      setReviewStep(localStorage.getItem(SKIP_KEY) !== '1');
+    } catch {}
+  }, [currentView]);
+  const updateReviewStep = (on: boolean) => {
+    setReviewStep(on);
+    try {
+      if (on) localStorage.removeItem(SKIP_KEY);
+      else localStorage.setItem(SKIP_KEY, '1');
+    } catch {}
+  };
+  // Письмо из «Моих писем», открытое сейчас (для сохранения перевода)
+  const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -249,9 +281,9 @@ export default function App() {
 
     // Налоговые письма не разбираем (§ 2 StBerG): не сохраняем и не списываем лимит
     if (!analysisData.restricted) {
-      saveCaseToHistory(analysisData, fileName);
+      setCurrentCaseId(saveCaseToHistory(analysisData, fileName));
       incrementUsage();
-    }
+    } else setCurrentCaseId(null);
     setDocKey((k) => k + 1); // новый документ → новый чат
   };
 
@@ -301,14 +333,44 @@ export default function App() {
       if (!result.base64Images || result.base64Images.length === 0) {
         throw new Error('Failed to process file');
       }
-      setLastUpload({ images: result.base64Images, fileName: result.fileName });
 
-      if (mode === 'betrug') await checkFraud(result.base64Images);
-      else await analyzeImages(result.base64Images, result.fileName);
+      let skipReview = false;
+      try {
+        skipReview = localStorage.getItem(SKIP_KEY) === '1';
+      } catch {}
+      if (!skipReview) {
+        // Сначала предпросмотр: пользователь может закрасить личные данные
+        setPending({ images: result.base64Images, fileName: result.fileName });
+        setCurrentView('review');
+        try { window.scrollTo({ top: 0 }); } catch {}
+        return;
+      }
+      await submitImages(result.base64Images, result.fileName);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : (selectedLanguage === 'de' ? 'Upload fehlgeschlagen' : 'Загрузка не удалась');
       setError(errorMessage);
       console.error('Upload error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /** Отправка (уже закрашенных) изображений на разбор или проверку. */
+  const submitImages = async (images: string[], fileName: string) => {
+    setLastUpload({ images, fileName });
+    if (mode === 'betrug') await checkFraud(images);
+    else await analyzeImages(images, fileName);
+  };
+
+  const confirmReview = async (images: string[]) => {
+    if (!pending) return;
+    try {
+      setIsLoading(true);
+      setError(null);
+      await submitImages(images, pending.fileName);
+      setPending(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : selectedLanguage === 'de' ? 'Upload fehlgeschlagen' : 'Загрузка не удалась');
     } finally {
       setIsLoading(false);
     }
@@ -351,6 +413,8 @@ export default function App() {
       betrugsHinweise: c.betrugsHinweise || [],
     });
     setUploadedImages([]);
+    setCurrentCaseId(c.id);
+    setIsDemo(false);
     setDocKey((k) => k + 1);
     setCurrentView('analysis');
     window.scrollTo({ top: 0 });
@@ -404,6 +468,15 @@ export default function App() {
           ? 'DEASY nutzt künstliche Intelligenz (Claude von Anthropic). Ergebnisse werden automatisch erzeugt, können Fehler enthalten und ersetzen keine Beratung durch Fachleute. Steuerschreiben (z. B. Finanzamt, Familienkasse) erklären wir nicht.'
           : 'DEASY работает на искусственном интеллекте (Claude от Anthropic). Результаты создаются автоматически, могут содержать ошибки и не заменяют консультацию специалиста. Налоговые письма (например, от Finanzamt или Familienkasse) мы не разбираем.'}
       </p>
+
+      <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', margin: '0 0 12px', fontSize: 13, color: '#067647', cursor: 'pointer' }}>
+        <input type="checkbox" checked={reviewStep} onChange={(e) => updateReviewStep(e.target.checked)} style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0 }} />
+        <span>
+          🔒 {selectedLanguage === 'de'
+            ? 'Vor dem Senden Brief anzeigen und Kontonummer, Namen usw. schwärzen – direkt auf Ihrem Gerät.'
+            : 'Перед отправкой показать письмо и закрасить номер счёта, имена и т. п. — прямо на вашем телефоне.'}
+        </span>
+      </label>
 
       <div
         className={styles.uploadArea}
@@ -541,6 +614,15 @@ export default function App() {
             </p>
           </div>
 
+          {selectedLanguage === 'ru' && !isDemo && (
+            <TranslationView
+              key={`tr-${docKey}`}
+              images={uploadedImages}
+              saved={cases.find((c) => c.id === currentCaseId)?.uebersetzung}
+              onLoaded={(a) => currentCaseId && updateCase(currentCaseId, { uebersetzung: a })}
+            />
+          )}
+
           <FristenKarte
             fristen={analysis.fristen}
             deadlines={analysis.deadlines}
@@ -671,6 +753,25 @@ export default function App() {
 
       <main className={styles.mainContent}>
         {currentView === 'upload' && renderUploadView()}
+        {currentView === 'review' && pending && (
+          <div className={styles.analysisPanel}>
+            <RedactionEditor
+              key={pending.fileName + pending.images.length}
+              images={pending.images}
+              mode={mode}
+              language={selectedLanguage}
+              busy={isLoading}
+              onConfirm={confirmReview}
+              onCancel={() => {
+                setPending(null);
+                setError(null);
+                setCurrentView('upload');
+              }}
+            />
+            {isLoading && <p style={{ marginTop: 10, color: '#666' }}>{TEXTS.analyzing}</p>}
+            {error && <p style={{ marginTop: 10, color: '#b42318' }}>{error}</p>}
+          </div>
+        )}
         {currentView === 'analysis' && renderAnalysisView()}
         {currentView === 'fraud' && fraudCheck && (
           <div className={styles.analysisPanel}>
@@ -694,6 +795,7 @@ export default function App() {
             onOpen={openCase}
             onDelete={deleteCaseFromHistory}
             onToggleDone={toggleDone}
+            onRename={(id, titel) => updateCase(id, { titel })}
             onBack={() => setCurrentView(analysis ? 'analysis' : 'upload')}
           />
         )}

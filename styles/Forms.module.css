@@ -1,0 +1,151 @@
+/* Формы «тестер / партнёр». Токены — в styles/globals.css */
+
+.form {
+  display: grid;
+  gap: 14px;
+  max-width: 640px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--pen);
+  outline: none;
+}
+
+.chips {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chips legend {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.chips button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chips button[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.hint {
+  font-size: 0.85rem !important;
+  color: var(--muted);
+  margin-top: -6px !important;
+}
+
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #3a4152;
+  cursor: pointer;
+}
+
+.consent input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.consent a {
+  color: var(--pen);
+}
+
+.submit {
+  justify-self: start;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--pen);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.02rem;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--pen-dark);
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.done {
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  max-width: 640px;
+}
+
+.error {
+  color: #b42318;
+  font-size: 0.92rem;
+}
+
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .submit {
+    width: 100%;
+  }
+}

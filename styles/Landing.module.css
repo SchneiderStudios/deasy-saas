@@ -805,3 +805,158 @@
 .demoLink:hover {
   text-decoration-thickness: 2px;
 }
+
+/* ---------- Цифры с источниками ---------- */
+.stats {
+  padding-top: 0 !important;
+  padding-bottom: clamp(32px, 5vw, 56px) !important;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(20px, 4vw, 48px);
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+}
+
+.stat strong {
+  display: block;
+  font-size: clamp(2.2rem, 4.6vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  background: linear-gradient(transparent 62%, var(--marker) 62%);
+  width: fit-content;
+}
+
+.stat p {
+  margin-top: 10px !important;
+  max-width: 38ch;
+  color: #3a4152;
+}
+
+.stat a {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* ---------- Данные под контролем ---------- */
+.privacy {
+  background: var(--wash);
+}
+
+.privacyGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 32px !important;
+  margin-bottom: 20px !important;
+}
+
+.privacyItem {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 18px;
+}
+
+.privacyItem p {
+  margin-top: 8px !important;
+  color: #3a4152;
+  font-size: 0.97rem;
+}
+
+.privacyNum {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+/* ---------- Гайды ---------- */
+.guideGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px !important;
+  margin-bottom: 8px !important;
+}
+
+.guideCard {
+  display: block;
+  padding: 20px 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.guideCard:hover {
+  border-color: var(--pen);
+  transform: translateY(-2px);
+}
+
+.guideCard > span {
+  font-size: 1.6rem;
+}
+
+.guideCard h3 {
+  margin-top: 8px !important;
+}
+
+.guideCard p {
+  margin-top: 8px !important;
+  font-size: 0.95rem;
+  color: #3a4152;
+}
+
+/* ---------- Тестеры ---------- */
+.tester {
+  border-top: 1px solid var(--line);
+}
+
+.testerInner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(28px, 5vw, 64px);
+  align-items: start;
+}
+
+.testerInner .sectionLead {
+  margin-bottom: 16px !important;
+}
+
+@media (max-width: 900px) {
+  .statsGrid,
+  .guideGrid,
+  .testerInner {
+    grid-template-columns: 1fr;
+  }
+
+  .privacyGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .privacyGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guideCard {
+    transition: none;
+  }
+}
