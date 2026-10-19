@@ -1,28 +1,29 @@
-/* Экран разбора — «лист с пометками»:
-   белый лист с текстом разбора, пометки на полях (справа на компьютере, под текстом на телефоне).
-   Цвет используется только для срока и для результата проверки на обман. */
+/* Экран разбора — «письмо на столе»:
+   белый лист с тенью лежит на тёплом фоне, слева текст разбора,
+   справа, за тонкой линией поля, — пометки от руки (маркер и синяя ручка).
+   Никаких карточек с рамками: разделяют воздух и линии. */
 
 .sheet {
   background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: clamp(18px, 3vw, 32px);
-  margin-bottom: 18px;
+  border-radius: 3px;
+  padding: clamp(22px, 4vw, 56px) clamp(20px, 4vw, 52px);
+  margin: 0 0 28px;
+  box-shadow: 0 1px 2px rgba(29, 36, 51, 0.1), 0 18px 44px -28px rgba(29, 36, 51, 0.55);
 }
 
 /* шапка листа: от кого, когда, номер дела */
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  gap: 4px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-  margin: 0 0 16px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--ink);
+  margin: 0 0 26px;
 }
 
 .metaStrong {
@@ -30,67 +31,79 @@
 }
 
 .title {
-  font-size: clamp(21px, 2.6vw, 27px);
-  line-height: 1.25;
+  font-size: clamp(26px, 3.6vw, 40px);
+  line-height: 1.15;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.022em;
   text-wrap: balance;
-  margin: 0 0 10px;
+  margin: 0 0 14px;
+  max-width: 20ch;
+  max-width: min(100%, 24ch);
 }
 
 .aiNote {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 18px;
+  margin: 0 0 30px;
 }
 
-/* две колонки: текст и пометки на полях */
+/* две колонки: текст и поле с пометками */
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 290px);
-  gap: clamp(18px, 3vw, 36px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 310px);
+  gap: clamp(20px, 4vw, 48px);
   align-items: start;
 }
 
 .body {
   min-width: 0;
-  font-size: 17px;
-  line-height: 1.65;
+  font-size: 18.5px;
+  line-height: 1.72;
+  max-width: 62ch;
 }
 
 .body p {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
 }
 
 .body p:last-child {
   margin-bottom: 0;
 }
 
+/* маркер: неровная полоса поверх строки, как от настоящего маркера */
 .mark {
-  background: linear-gradient(transparent 55%, var(--marker) 55%);
-  padding: 0 2px;
+  background: linear-gradient(104deg, rgba(255, 228, 92, 0) 0.3%, var(--marker) 2%, var(--marker) 97%, rgba(255, 228, 92, 0) 99.6%);
+  border-radius: 2px;
+  color: inherit;
+  padding: 0 4px;
+  margin: 0 -2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 /* строка «что требует письмо» */
 .demand {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
-  margin-top: 18px;
-  padding-top: 14px;
+  margin-top: 26px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
-  font-size: 15.5px;
+  font-size: 17px;
 }
 
 .dot {
   flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  margin-top: 7px;
+  margin-top: 8px;
   background: var(--muted);
 }
 
@@ -108,77 +121,90 @@
 
 .demandLabel {
   display: block;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .demandHint {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin: 6px 0 0;
+  font-size: 13.5px;
   color: var(--muted);
 }
 
-/* пометки на полях */
+/* ---------- поле с пометками ---------- */
+
 .notes {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 26px;
   min-width: 0;
+  padding-left: clamp(16px, 3vw, 32px);
+  border-left: 1px solid var(--line);
 }
 
 .note {
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--line);
-  border-radius: 0 10px 10px 0;
-  padding: 12px 14px;
-  background: #fff;
-  font-size: 14.5px;
-  line-height: 1.55;
   min-width: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
 }
 
+.note + .note {
+  padding-top: 24px;
+  border-top: 1px dotted var(--line);
+}
+
+/* срок — штамп от руки */
 .noteFrist {
-  border-left-color: var(--alarm);
-  background: #fdf6f4;
+  border: 2px solid var(--alarm);
+  border-radius: 4px;
+  padding: 14px 16px;
+  transform: rotate(-1.1deg);
+  background: #fff;
 }
 
-.noteMarker {
-  border-left-color: var(--marker);
-  background: #fffdf2;
+.noteFrist + .note,
+.note + .noteFrist {
+  border-top: none;
+  padding-top: 0;
+}
+
+.noteMarker .noteHead,
+.noteMarker .noteHeadText {
+  background: linear-gradient(104deg, rgba(255, 228, 92, 0) 0.3%, var(--marker) 2%, var(--marker) 97%, rgba(255, 228, 92, 0) 99.6%);
 }
 
 .notePen {
-  border-left-color: var(--pen);
-  background: #f7f9ff;
+  color: var(--ink);
 }
 
 .noteHead {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: 8px;
+  width: fit-content;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+  padding: 1px 2px;
+}
+
+.noteFrist .noteHead {
+  color: var(--alarm);
 }
 
 .noteHead svg {
   flex: 0 0 auto;
 }
 
-.note h3 {
-  font-size: 16px;
-  margin: 0 0 6px;
-}
-
 .note p {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
 }
 
 .note p:last-child {
@@ -188,28 +214,52 @@
 .note ul,
 .note ol {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 10px;
+}
+
+.note li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.note li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 8px;
+  height: 2px;
+  background: var(--pen);
+  border-radius: 1px;
+}
+
+.noteFrist li::before {
+  background: var(--alarm);
 }
 
 .fristDate {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 .fristLeft {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .fristRow + .fristRow {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dotted var(--line);
 }
 
 .statusOk {
@@ -227,63 +277,66 @@
   font-weight: 700;
 }
 
-/* кнопки внутри пометок */
+/* кнопки: чернила на бумаге, без «веб-кнопочности» */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border: 1px solid var(--pen);
-  background: #fff;
+  gap: 8px;
+  border: none;
+  background: none;
   color: var(--pen-dark);
-  border-radius: 10px;
-  padding: 8px 13px;
-  font-weight: 600;
-  font-size: 14px;
+  padding: 4px 0;
+  font-weight: 700;
+  font-size: 15px;
   font-family: inherit;
   cursor: pointer;
+  border-bottom: 2px solid var(--pen);
+  border-radius: 0;
 }
 
 .btn:hover {
-  background: #f1f4ff;
+  color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 
 .btnFull {
-  width: 100%;
-  justify-content: center;
+  width: auto;
 }
 
 .btnSolid {
-  background: var(--pen);
+  background: var(--ink);
   color: #fff;
-  border-color: var(--pen);
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
 }
 
 .btnSolid:hover {
-  background: var(--pen-dark);
+  background: #000;
+  color: #fff;
 }
 
 .hint {
   font-size: 12.5px;
+  line-height: 1.5;
   color: var(--muted);
-  margin: 8px 0 0;
+  margin: 10px 0 0;
 }
 
-/* сворачиваемые блоки под листом */
+/* сворачиваемые блоки под листом — без рамок, только линия */
 .fold {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  padding: 14px 16px;
-  margin-bottom: 14px;
+  border-top: 1px solid var(--line);
+  padding: 16px 2px;
+  margin: 0;
 }
 
 .fold > summary {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 15.5px;
+  font-weight: 700;
+  font-size: 16px;
   list-style: none;
 }
 
@@ -295,7 +348,7 @@
   content: '+';
   margin-left: auto;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -304,9 +357,9 @@
 }
 
 .foldBody {
-  margin-top: 12px;
-  font-size: 15px;
-  line-height: 1.6;
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.65;
 }
 
 .linkish {
@@ -315,12 +368,45 @@
   cursor: pointer;
 }
 
-@media (max-width: 860px) {
+/* нижняя полоса листа: документы и проверка в две колонки */
+.footNotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(20px, 4vw, 48px);
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 2px solid var(--ink);
+}
+
+.footNotes .note + .note {
+  padding-top: 0;
+  border-top: none;
+}
+
+/* блок под листом (пример, отзыв) — на фоне стола, без карточки */
+.deskBlock {
+  padding: 18px 2px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 880px) {
   .grid {
     grid-template-columns: 1fr;
   }
 
+  .notes {
+    padding-left: 0;
+    border-left: none;
+    border-top: 2px solid var(--ink);
+    padding-top: 24px;
+    gap: 22px;
+  }
+
   .body {
-    font-size: 16.5px;
+    font-size: 17.5px;
+  }
+
+  .title {
+    max-width: none;
   }
 }

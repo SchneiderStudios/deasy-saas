@@ -566,7 +566,7 @@ export default function App() {
       analysis?.risk === 'Kritisch' ? sh.dotKritisch : analysis?.risk === 'Mittel' ? sh.dotMittel : sh.dotGering;
 
     return (
-      <div className={styles.analysisPanel}>
+      <div className={`${styles.analysisPanel} ${styles.deskPanel}`}>
         <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
           ← {de ? 'Neuer Brief' : 'Новое письмо'}
         </button>
@@ -686,21 +686,24 @@ export default function App() {
                     </div>
                   )}
 
-                  {(analysis.unterlagen || []).length > 0 && (
-                    <div className={sh.note}>
-                      <p className={sh.noteHead}>
-                        <IconBag /> {de ? 'Unterlagen' : 'Документы'}
-                      </p>
-                      <ul>
-                        {(analysis.unterlagen || []).map((u) => (
-                          <li key={u}>{u}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
                 </aside>
+              </div>
+
+              <div className={sh.footNotes}>
+                {(analysis.unterlagen || []).length > 0 && (
+                  <div className={sh.note}>
+                    <p className={sh.noteHead}>
+                      <IconBag /> {de ? 'Unterlagen' : 'Документы'}
+                    </p>
+                    <ul>
+                      {(analysis.unterlagen || []).map((u) => (
+                        <li key={u}>{u}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
               </div>
             </article>
 
@@ -761,7 +764,7 @@ export default function App() {
 
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container}${currentView === 'analysis' ? ' ' + styles.deskBg : ''}`}>
       <header className={styles.topBar}>
         <div className={styles.brand}>
           <a href="/" className={styles.logo}>DEASY</a>

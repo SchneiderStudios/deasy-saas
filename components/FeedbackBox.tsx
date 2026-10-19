@@ -70,14 +70,14 @@ export default function FeedbackBox({ language, demo }: { language: Lang; demo?:
 
   if (state === 'done') {
     return (
-      <div style={{ margin: '16px 0', padding: '14px 16px', borderRadius: 12, background: '#fff', border: '1px solid var(--line)' }}>
+      <div style={{ margin: '8px 0 0', padding: '18px 2px 2px', borderTop: '1px solid var(--line)' }}>
         {t.thanks}
       </div>
     );
   }
 
   return (
-    <div style={{ margin: '16px 0', padding: '16px', borderRadius: 12, background: '#fff', border: '1px solid var(--line)' }}>
+    <div style={{ margin: '8px 0 0', padding: '18px 2px 2px', borderTop: '1px solid var(--line)' }}>
       <h3 style={{ margin: 0 }}>{t.title}</h3>
       <p style={{ margin: '2px 0 12px', fontSize: 13, color: '#6b7085' }}>{t.sub}</p>
 
