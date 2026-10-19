@@ -72,11 +72,10 @@ const TEXT: Record<Lang, { title: string; intro: string; officialLabel: string; 
 };
 
 const box: React.CSSProperties = {
-  marginTop: 20,
-  border: '1px solid #e5e7eb',
-  borderRadius: 12,
-  padding: '12px 16px',
-  background: '#fcfcfd',
+  marginTop: 8,
+  borderTop: '1px solid var(--line)',
+  padding: '18px 2px 2px',
+  background: 'transparent',
   fontSize: 14,
   lineHeight: 1.55,
   color: '#3d4257',
@@ -92,7 +91,7 @@ export function BeratungHinweis({ language, open = false }: { language: Lang; op
   const t = TEXT[language];
   return (
     <details style={box} open={open}>
-      <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#1c2340' }}>🧭 {t.title}</summary>
+      <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#1c2340' }}>{t.title}</summary>
       <p style={{ margin: '10px 0 8px' }}>{t.intro}</p>
       <ul style={{ margin: 0, paddingLeft: 18 }}>
         {t.topics.map((x) => (

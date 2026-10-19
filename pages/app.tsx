@@ -13,6 +13,9 @@ import type { FraudCheck } from '@/components/LetterTools';
 import HistoryView from '@/components/HistoryView';
 import RedactionEditor, { SKIP_KEY } from '@/components/RedactionEditor';
 import TranslationView from '@/components/TranslationView';
+import sh from '@/styles/Sheet.module.css';
+import { markieren, ersterSatz } from '@/lib/markieren';
+import { IconInfo, IconSteps, IconBag, IconDoc, IconEye, IconCamera, IconChat } from '@/components/icons';
 import type { SavedCase } from '@/hooks/useDocumentHistory';
 
 interface AnalysisResult {
@@ -542,152 +545,226 @@ export default function App() {
     </div>
   );
 
-  const renderAnalysisView = () => (
-    <div className={styles.analysisPanel}>
-      <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
-        ← {selectedLanguage === 'ru' ? 'Новое письмо' : 'Neuer Brief'}
-      </button>
+  const renderAnalysisView = () => {
+    const de = selectedLanguage === 'de';
+    const [kopf, rest] = analysis && !analysis.restricted ? ersterSatz(analysis.summary) : ['', ''];
+    const marken = [analysis?.aktenzeichen, analysis?.telefon].filter(Boolean) as string[];
+    const risikoText = analysis
+      ? (de
+          ? {
+              Kritisch: 'Frist mit genannten Folgen (z. B. Mahnung, Kürzung, Vollstreckung oder Gericht)',
+              Mittel: 'Der Brief verlangt eine Handlung',
+              Gering: 'Der Brief informiert nur',
+            }
+          : {
+              Kritisch: 'В письме есть срок и названы последствия (штраф, взыскание, сокращение выплат или суд)',
+              Mittel: 'Письмо просит что-то сделать',
+              Gering: 'Письмо только информирует',
+            })[analysis.risk] || analysis.risk
+      : '';
+    const dotKlasse =
+      analysis?.risk === 'Kritisch' ? sh.dotKritisch : analysis?.risk === 'Mittel' ? sh.dotMittel : sh.dotGering;
 
-      {isDemo && (
-        <div style={{ margin: '0 0 16px', padding: '14px 16px', borderRadius: 12, background: '#fff8db', border: '1px solid #f5e08a' }}>
-          <strong>👀 {selectedLanguage === 'de' ? 'Beispiel: So sieht eine Erklärung aus' : 'Пример: так выглядит разбор'}</strong>
-          <p style={{ margin: '4px 0 8px', fontSize: 14 }}>
-            {selectedLanguage === 'de'
-              ? 'Ein erfundener Brief vom Jobcenter. Kein Upload, Ihre kostenlosen Erklärungen bleiben erhalten.'
-              : 'Вымышленное письмо из Jobcenter. Ничего не загружается, ваши бесплатные разборы не тратятся.'}
-          </p>
-          <details>
-            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>📄 {selectedLanguage === 'de' ? 'Original-Brief anzeigen' : 'Показать само письмо'}</summary>
-            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 13.5, background: '#fff', padding: 12, borderRadius: 8, border: '1px solid #e5e7eb', marginTop: 8 }}>{DEMO_LETTER_TEXT}</pre>
-          </details>
-        </div>
-      )}
+    return (
+      <div className={`${styles.analysisPanel} ${styles.deskPanel}`}>
+        <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
+          ← {de ? 'Neuer Brief' : 'Новое письмо'}
+        </button>
 
-      {uploadedImages.length > 0 && (
-        <details className={styles.docPreview}>
-          <summary>📄 {selectedLanguage === 'de' ? 'Dokument anzeigen' : 'Показать документ'}{uploadedImages.length > 1 ? ` (${uploadedImages.length})` : ''}</summary>
-          {uploadedImages.map((img, i) => (
-            <img key={i} src={`data:image/jpeg;base64,${img}`} alt={`Seite ${i + 1}`} />
-          ))}
-        </details>
-      )}
-
-      {analysis?.restricted === 'steuer' && (
-        <>
-          <SteuerHinweis language={selectedLanguage} absender={analysis.absender} />
-          <div style={{ height: 16 }} />
-          <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
-          <BeratungHinweis language={selectedLanguage} />
-        </>
-      )}
-
-      {analysis && !analysis.restricted && (
-        <>
-          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f0f7ff', borderRadius: '8px' }}>
-            <h3>{TEXTS.summary}</h3>
-            <p style={{ fontSize: 12, color: '#6b7085', margin: '-4px 0 8px' }}>
-              🤖 {selectedLanguage === 'de' ? 'KI-generiert · ohne Gewähr · keine Rechtsberatung' : 'Создано ИИ · без гарантий · не юридическая консультация'}
+        {isDemo && (
+          <div className={`${sh.note} ${sh.noteMarker}`} style={{ marginBottom: 16 }}>
+            <p className={sh.noteHead}>
+              <IconEye /> {de ? 'Beispiel' : 'Пример разбора'}
             </p>
-            <p>{analysis.summary}</p>
-          </div>
-
-          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#fff3cd', borderRadius: '8px' }}>
-            <h3>{TEXTS.risk}</h3>
             <p>
-              {analysis.risk === 'Kritisch' ? '🔴' : analysis.risk === 'Mittel' ? '🟡' : '🟢'}{' '}
-              {selectedLanguage === 'ru'
-                ? {
-                    Kritisch: 'В письме есть срок и названы последствия (штраф, взыскание, сокращение выплат или суд)',
-                    Mittel: 'Письмо просит что-то сделать',
-                    Gering: 'Письмо только информирует',
-                  }[analysis.risk] || analysis.risk
-                : {
-                    Kritisch: 'Frist mit genannten Folgen (z. B. Mahnung, Kürzung, Vollstreckung oder Gericht)',
-                    Mittel: 'Der Brief verlangt eine Handlung',
-                    Gering: 'Der Brief informiert nur',
-                  }[analysis.risk] || analysis.risk}
+              {de
+                ? 'Ein erfundener Brief vom Jobcenter. Kein Upload, Ihre kostenlosen Erklärungen bleiben erhalten.'
+                : 'Вымышленное письмо из Jobcenter. Ничего не загружается, ваши бесплатные разборы не тратятся.'}
             </p>
-            <p style={{ fontSize: 12.5, color: '#6b5a1f', margin: 0 }}>
-              {selectedLanguage === 'ru'
-                ? 'Это пересказ письма, а не правовая оценка вашей ситуации.'
-                : 'Wiedergabe des Briefinhalts – keine rechtliche Bewertung Ihrer Situation.'}
-            </p>
+            <details style={{ marginTop: 6 }}>
+              <summary className={sh.linkish} style={{ cursor: 'pointer' }}>
+                {de ? 'Original-Brief anzeigen' : 'Показать само письмо'}
+              </summary>
+              <pre
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'inherit',
+                  fontSize: 13.5,
+                  background: 'var(--wash)',
+                  padding: 12,
+                  borderRadius: 8,
+                  marginTop: 8,
+                }}
+              >
+                {DEMO_LETTER_TEXT}
+              </pre>
+            </details>
           </div>
+        )}
 
-          {selectedLanguage === 'ru' && !isDemo && (
-            <TranslationView
-              key={`tr-${docKey}`}
-              images={uploadedImages}
-              saved={cases.find((c) => c.id === currentCaseId)?.uebersetzung}
-              onLoaded={(a) => currentCaseId && updateCase(currentCaseId, { uebersetzung: a })}
-            />
-          )}
-
-          <FristenKarte
-            fristen={analysis.fristen}
-            deadlines={analysis.deadlines}
-            absender={analysis.absender}
-            aktenzeichen={analysis.aktenzeichen}
-            language={selectedLanguage}
-          />
-
-          {analysis.actions.length > 0 && (
-            <div style={{ marginBottom: '16px', padding: '14px 16px', backgroundColor: '#ede7f6', borderRadius: '12px' }}>
-              <h3 style={{ margin: '0 0 8px' }}>{selectedLanguage === 'de' ? '👣 Nächste Schritte' : '👣 Что сделать'}</h3>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {analysis.actions.map((a, i) => (
-                  <li key={i}>{a}</li>
-                ))}
-              </ul>
+        {uploadedImages.length > 0 && (
+          <details className={sh.fold}>
+            <summary>
+              <IconDoc /> {de ? 'Dokument anzeigen' : 'Показать документ'}
+              {uploadedImages.length > 1 ? ` (${uploadedImages.length})` : ''}
+            </summary>
+            <div className={sh.foldBody}>
+              {uploadedImages.map((img, i) => (
+                <img
+                  key={i}
+                  src={`data:image/jpeg;base64,${img}`}
+                  alt={`Seite ${i + 1}`}
+                  style={{ display: 'block', width: '100%', marginBottom: 10, borderRadius: 8, border: '1px solid var(--line)' }}
+                />
+              ))}
             </div>
-          )}
+          </details>
+        )}
 
-          <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
+        {analysis?.restricted === 'steuer' && (
+          <>
+            <SteuerHinweis language={selectedLanguage} absender={analysis.absender} />
+            <div style={{ height: 16 }} />
+            <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
+            <BeratungHinweis language={selectedLanguage} />
+          </>
+        )}
 
-          <AnrufVorbereitung
-            absender={analysis.absender}
-            aktenzeichen={analysis.aktenzeichen}
-            briefdatum={analysis.briefdatum}
-            telefon={analysis.telefon}
-            unterlagen={analysis.unterlagen}
-            verdacht={analysis.echtheit === 'pruefen'}
-            language={selectedLanguage}
-          />
-
-          {isDemo ? (
-            <div style={{ margin: '16px 0', padding: '18px 16px', borderRadius: 12, background: '#eef2ff', textAlign: 'center' }}>
-              <p style={{ margin: '0 0 4px', fontWeight: 700 }}>
-                {selectedLanguage === 'de' ? '💬 Bei Ihrem eigenen Brief kommen dazu:' : '💬 Для вашего письма будет ещё:'}
+        {analysis && !analysis.restricted && (
+          <>
+            <article className={sh.sheet}>
+              <p className={sh.meta}>
+                {analysis.absender && <span className={sh.metaStrong}>{analysis.absender}</span>}
+                {analysis.briefdatum && <span>{de ? `Brief vom ${analysis.briefdatum}` : `Письмо от ${analysis.briefdatum}`}</span>}
+                {analysis.aktenzeichen && <span>Az. {analysis.aktenzeichen}</span>}
               </p>
-              <p style={{ margin: '0 0 12px', fontSize: 14 }}>
-                {selectedLanguage === 'de'
-                  ? 'Fragen an den KI-Assistenten und Vorlagen für einfache Antworten (z. B. Fristverlängerung).'
-                  : 'вопросы ИИ-ассистенту и шаблоны простых ответов (например, просьба продлить срок).'}
+
+              <h1 className={sh.title}>{kopf ? markieren(kopf, sh.mark, marken) : de ? 'Das steht im Brief' : 'Что в письме'}</h1>
+
+              <div className={sh.grid}>
+                <div className={sh.body}>
+                  <p>{markieren(rest || analysis.summary, sh.mark, marken)}</p>
+
+                  <div className={sh.demand}>
+                    <span className={`${sh.dot} ${dotKlasse}`} />
+                    <div>
+                      <span className={sh.demandLabel}>{TEXTS.risk}</span>
+                      {risikoText}
+                      <p className={sh.demandHint}>
+                        {de
+                          ? 'Wiedergabe des Briefinhalts – keine rechtliche Bewertung Ihrer Situation.'
+                          : 'Это пересказ письма, а не правовая оценка вашей ситуации.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <aside className={sh.notes}>
+                  <FristenKarte
+                    fristen={analysis.fristen}
+                    deadlines={analysis.deadlines}
+                    absender={analysis.absender}
+                    aktenzeichen={analysis.aktenzeichen}
+                    language={selectedLanguage}
+                  />
+
+                  {analysis.actions.length > 0 && (
+                    <div className={`${sh.note} ${sh.notePen}`}>
+                      <p className={sh.noteHead}>
+                        <IconSteps /> {de ? 'Nächste Schritte' : 'Что сделать'}
+                      </p>
+                      <ul>
+                        {analysis.actions.map((a, i) => (
+                          <li key={i}>{a}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                </aside>
+              </div>
+
+              <div className={sh.footNotes}>
+                {(analysis.unterlagen || []).length > 0 && (
+                  <div className={sh.note}>
+                    <p className={sh.noteHead}>
+                      <IconBag /> {de ? 'Unterlagen' : 'Документы'}
+                    </p>
+                    <ul>
+                      {(analysis.unterlagen || []).map((u) => (
+                        <li key={u}>{u}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
+              </div>
+
+              <p className={sh.aiNote}>
+                <IconInfo size={14} />
+                {de ? 'KI-generiert · ohne Gewähr · keine Rechtsberatung' : 'Создано ИИ · без гарантий · не юридическая консультация'}
               </p>
-              <button type="button" className={styles.analyzeButton} onClick={() => { setIsDemo(false); setAnalysis(null); setCurrentView('upload'); }}>
-                {selectedLanguage === 'de' ? '📷 Eigenen Brief erklären lassen' : '📷 Разобрать своё письмо'}
-              </button>
-            </div>
-          ) : (
-            <DocumentAssistant
-              key={docKey}
-              analysis={analysis}
-              images={uploadedImages}
+            </article>
+
+            {selectedLanguage === 'ru' && !isDemo && (
+              <TranslationView
+                key={`tr-${docKey}`}
+                images={uploadedImages}
+                saved={cases.find((c) => c.id === currentCaseId)?.uebersetzung}
+                onLoaded={(a) => currentCaseId && updateCase(currentCaseId, { uebersetzung: a })}
+              />
+            )}
+
+            <AnrufVorbereitung
+              absender={analysis.absender}
+              aktenzeichen={analysis.aktenzeichen}
+              briefdatum={analysis.briefdatum}
+              telefon={analysis.telefon}
+              unterlagen={analysis.unterlagen}
+              verdacht={analysis.echtheit === 'pruefen'}
               language={selectedLanguage}
             />
-          )}
 
-          <FeedbackBox key={`fb-${docKey}`} language={selectedLanguage} demo={isDemo} />
+            {isDemo ? (
+              <div className={`${sh.note} ${sh.notePen}`} style={{ margin: '16px 0' }}>
+                <p className={sh.noteHead}>
+                  <IconChat /> {de ? 'Bei Ihrem eigenen Brief' : 'Для вашего письма'}
+                </p>
+                <p>
+                  {de
+                    ? 'Dazu kommen Fragen an den KI-Assistenten und Vorlagen für einfache Antworten (z. B. Fristverlängerung).'
+                    : 'Будут ещё вопросы ИИ-ассистенту и шаблоны простых ответов (например, просьба продлить срок).'}
+                </p>
+                <button
+                  type="button"
+                  className={`${sh.btn} ${sh.btnFull} ${sh.btnSolid}`}
+                  style={{ marginTop: 10 }}
+                  onClick={() => {
+                    setIsDemo(false);
+                    setAnalysis(null);
+                    setCurrentView('upload');
+                  }}
+                >
+                  <IconCamera /> {de ? 'Eigenen Brief erklären lassen' : 'Разобрать своё письмо'}
+                </button>
+              </div>
+            ) : (
+              <DocumentAssistant key={docKey} analysis={analysis} images={uploadedImages} language={selectedLanguage} />
+            )}
 
-          <BeratungHinweis language={selectedLanguage} />
-        </>
-      )}
-    </div>
-  );
+            <FeedbackBox key={`fb-${docKey}`} language={selectedLanguage} demo={isDemo} />
+
+            <BeratungHinweis language={selectedLanguage} />
+          </>
+        )}
+      </div>
+    );
+  };
 
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container}${currentView === 'analysis' ? ' ' + styles.deskBg : ''}`}>
       <header className={styles.topBar}>
         <div className={styles.brand}>
           <a href="/" className={styles.logo}>DEASY</a>
@@ -751,7 +828,7 @@ export default function App() {
         </div>
       )}
 
-      <main className={styles.mainContent}>
+      <main className={`${styles.mainContent}${currentView === 'analysis' ? ' ' + styles.mainWide : ''}`}>
         {currentView === 'upload' && renderUploadView()}
         {currentView === 'review' && pending && (
           <div className={styles.analysisPanel}>

@@ -1,0 +1,413 @@
+/* Экран разбора — «письмо на столе»:
+   белый лист с тенью лежит на тёплом фоне, слева текст разбора,
+   справа, за тонкой линией поля, — пометки от руки (маркер и синяя ручка).
+   Никаких карточек с рамками: разделяют воздух и линии. */
+
+.sheet {
+  background: #fff;
+  border-radius: 3px;
+  padding: clamp(22px, 4vw, 56px) clamp(20px, 4vw, 52px);
+  margin: 0 0 28px;
+  box-shadow: 0 1px 2px rgba(29, 36, 51, 0.1), 0 18px 44px -28px rgba(29, 36, 51, 0.55);
+}
+
+/* шапка листа: от кого, когда, номер дела */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--ink);
+  margin: 0 0 26px;
+}
+
+.metaStrong {
+  color: var(--ink);
+}
+
+.title {
+  font-size: clamp(26px, 3.6vw, 40px);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  margin: 0 0 30px;
+  max-width: min(100%, 24ch);
+}
+
+.aiNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 30px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* две колонки: текст и поле с пометками */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 310px);
+  gap: clamp(20px, 4vw, 48px);
+  align-items: start;
+}
+
+.body {
+  min-width: 0;
+  font-size: 18.5px;
+  line-height: 1.72;
+  max-width: 62ch;
+}
+
+.body p {
+  margin: 0 0 14px;
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+/* маркер: неровная полоса поверх строки, как от настоящего маркера */
+.mark {
+  background: linear-gradient(104deg, rgba(255, 228, 92, 0) 0.3%, var(--marker) 2%, var(--marker) 97%, rgba(255, 228, 92, 0) 99.6%);
+  border-radius: 2px;
+  color: inherit;
+  padding: 0 4px;
+  margin: 0 -2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* строка «что требует письмо» */
+.demand {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 17px;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  margin-top: 8px;
+  background: var(--muted);
+}
+
+.dotKritisch {
+  background: var(--alarm);
+}
+
+.dotMittel {
+  background: #b54708;
+}
+
+.dotGering {
+  background: #1f7a4d;
+}
+
+.demandLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.demandHint {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* ---------- поле с пометками ---------- */
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-width: 0;
+  padding-left: clamp(16px, 3vw, 32px);
+  border-left: 1px solid var(--line);
+}
+
+.note {
+  min-width: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.note + .note {
+  padding-top: 24px;
+  border-top: 1px dotted var(--line);
+}
+
+/* срок — штамп от руки */
+.noteFrist {
+  border: 2px solid var(--alarm);
+  border-radius: 4px;
+  padding: 14px 16px;
+  transform: rotate(-1.1deg);
+  background: #fff;
+}
+
+.noteFrist + .note,
+.note + .noteFrist {
+  border-top: none;
+  padding-top: 0;
+}
+
+.noteMarker .noteHead,
+.noteMarker .noteHeadText {
+  background: linear-gradient(104deg, rgba(255, 228, 92, 0) 0.3%, var(--marker) 2%, var(--marker) 97%, rgba(255, 228, 92, 0) 99.6%);
+}
+
+.notePen {
+  color: var(--ink);
+}
+
+.noteHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+  padding: 1px 2px;
+}
+
+.noteFrist .noteHead {
+  color: var(--alarm);
+}
+
+.noteHead svg {
+  flex: 0 0 auto;
+}
+
+.note p {
+  margin: 0 0 8px;
+}
+
+.note p:last-child {
+  margin-bottom: 0;
+}
+
+.note ul,
+.note ol {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.note li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.note li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 8px;
+  height: 2px;
+  background: var(--pen);
+  border-radius: 1px;
+}
+
+.noteFrist li::before {
+  background: var(--alarm);
+}
+
+.fristDate {
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.fristLeft {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fristRow + .fristRow {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dotted var(--line);
+}
+
+.statusOk {
+  color: #1f7a4d;
+  font-weight: 700;
+}
+
+.statusWarn {
+  color: #b54708;
+  font-weight: 700;
+}
+
+.statusBad {
+  color: var(--alarm);
+  font-weight: 700;
+}
+
+/* кнопки: чернила на бумаге, без «веб-кнопочности» */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  color: var(--pen-dark);
+  padding: 4px 0;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid var(--pen);
+  border-radius: 0;
+}
+
+.btn:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.btnFull {
+  width: auto;
+}
+
+.btnSolid {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+}
+
+.btnSolid:hover {
+  background: #000;
+  color: #fff;
+}
+
+.hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 10px 0 0;
+}
+
+/* сворачиваемые блоки под листом — без рамок, только линия */
+.fold {
+  border-top: 1px solid var(--line);
+  padding: 16px 2px;
+  margin: 0;
+}
+
+.fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  list-style: none;
+}
+
+.fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fold > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.fold[open] > summary::after {
+  content: '–';
+}
+
+.foldBody {
+  margin-top: 14px;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.linkish {
+  color: var(--pen-dark);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* нижняя полоса листа: документы и проверка в две колонки */
+.footNotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(20px, 4vw, 48px);
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 2px solid var(--ink);
+}
+
+.footNotes .note + .note {
+  padding-top: 0;
+  border-top: none;
+}
+
+/* блок под листом (пример, отзыв) — на фоне стола, без карточки */
+.deskBlock {
+  padding: 18px 2px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 880px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notes {
+    padding-left: 0;
+    border-left: none;
+    border-top: 2px solid var(--ink);
+    padding-top: 24px;
+    gap: 22px;
+  }
+
+  .body {
+    font-size: 17.5px;
+  }
+
+  .title {
+    max-width: none;
+  }
+}

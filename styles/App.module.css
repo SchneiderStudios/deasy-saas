@@ -673,6 +673,22 @@
   padding: 20px 16px 48px;
 }
 
+/* экран разбора шире: текст слева, пометки на полях справа */
+.mainWide {
+  max-width: 1060px;
+}
+
+/* стол, на котором лежит лист с разбором */
+.deskBg {
+  background: #f5f4f1;
+}
+
+.deskPanel {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
 .backButton {
   background: none;
   border: none;
