@@ -409,3 +409,62 @@
     padding: 24px 18px;
   }
 }
+
+/* накопительная сводка на телефоне: строки прилипают сверху по мере прокрутки */
+.pinBar {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  .pinBar {
+    display: block;
+    position: sticky;
+    top: 58px; /* под липкой шапкой приложения */
+    z-index: 6;
+    margin: 0 0 -2px;
+  }
+
+  .pinRow {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    background: #fff;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 8px 14px -14px rgba(29, 36, 51, 0.7);
+    font-size: 13.5px;
+    line-height: 1.25;
+    min-width: 0;
+  }
+
+  .pinRow:first-child {
+    border-radius: 3px 3px 0 0;
+  }
+
+  .pinLabel {
+    flex: 0 0 auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .pinValue {
+    min-width: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pinAlarm {
+    border-bottom-color: var(--alarm);
+  }
+
+  .pinAlarm .pinLabel,
+  .pinAlarm .pinValue {
+    color: var(--alarm);
+    font-weight: 800;
+  }
+}

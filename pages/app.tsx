@@ -15,6 +15,9 @@ import RedactionEditor, { SKIP_KEY } from '@/components/RedactionEditor';
 import TranslationView from '@/components/TranslationView';
 import sh from '@/styles/Sheet.module.css';
 import { markieren, ersterSatz } from '@/lib/markieren';
+import PinSummary from '@/components/PinSummary';
+import type { PinItem } from '@/components/PinSummary';
+import { fmtDate, daysLeft } from '@/lib/ics';
 import { IconInfo, IconSteps, IconBag, IconDoc, IconEye, IconCamera, IconChat } from '@/components/icons';
 import type { SavedCase } from '@/hooks/useDocumentHistory';
 
@@ -565,11 +568,42 @@ export default function App() {
     const dotKlasse =
       analysis?.risk === 'Kritisch' ? sh.dotKritisch : analysis?.risk === 'Mittel' ? sh.dotMittel : sh.dotGering;
 
+    const ersteFrist = (analysis?.fristen || [])[0];
+    const pinItems: PinItem[] = [];
+    if (ersteFrist) {
+      const d = daysLeft(ersteFrist.datum);
+      pinItems.push({
+        key: 'frist',
+        label: de ? 'Frist' : 'Срок',
+        value: `${fmtDate(ersteFrist.datum)} · ${d < 0 ? (de ? 'abgelaufen' : 'прошёл') : de ? `noch ${d} Tage` : `осталось ${d} дн.`}`,
+        alarm: true,
+      });
+    }
+    if ((analysis?.actions || []).length > 0) {
+      pinItems.push({ key: 'actions', label: de ? 'Zuerst' : 'Сначала', value: (analysis?.actions || [])[0] });
+    }
+    if (analysis && !analysis.restricted) {
+      const verdacht = analysis.echtheit === 'pruefen' || (analysis.betrugsHinweise || []).length > 0;
+      pinItems.push({
+        key: 'check',
+        label: de ? 'Echtheit' : 'Проверка',
+        value: verdacht
+          ? de
+            ? 'bitte prüfen'
+            : 'стоит проверить'
+          : de
+          ? 'keine Auffälligkeiten'
+          : 'ничего подозрительного',
+      });
+    }
+
     return (
       <div className={`${styles.analysisPanel} ${styles.deskPanel}`}>
         <button onClick={() => setCurrentView('upload')} className={styles.backButton}>
           ← {de ? 'Neuer Brief' : 'Новое письмо'}
         </button>
+
+        {analysis && !analysis.restricted && pinItems.length > 0 && <PinSummary items={pinItems} />}
 
         {isDemo && (
           <div className={`${sh.note} ${sh.noteMarker}`} style={{ marginBottom: 16 }}>
@@ -660,6 +694,7 @@ export default function App() {
                 </div>
 
                 <aside className={sh.notes}>
+                  <span data-pin="frist" aria-hidden="true" />
                   <FristenKarte
                     fristen={analysis.fristen}
                     deadlines={analysis.deadlines}
@@ -670,6 +705,7 @@ export default function App() {
 
                   {analysis.actions.length > 0 && (
                     <div className={`${sh.note} ${sh.notePen}`}>
+                      <span data-pin="actions" aria-hidden="true" />
                       <p className={sh.noteHead}>
                         <IconSteps /> {de ? 'Nächste Schritte' : 'Что сделать'}
                       </p>
@@ -698,6 +734,7 @@ export default function App() {
                   </div>
                 )}
 
+                <span data-pin="check" aria-hidden="true" />
                 <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
               </div>
 
