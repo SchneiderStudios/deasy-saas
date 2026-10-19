@@ -36,7 +36,7 @@ const T = {
   de: {
     title: 'DEASY KI-Assistent',
     subtitle: 'Antworten erzeugt eine KI (Claude) – ohne Gewähr, keine Rechtsberatung',
-    tabChat: '💬 Fragen',
+    tabChat: 'Fragen',
     tabReply: '✉️ Antwort schreiben',
     welcome: 'Hallo! Ich bin ein KI-Assistent (kein Mensch). Ich habe Ihren Brief gelesen und erkläre, was drinsteht – eine rechtliche Bewertung Ihres Falls gebe ich nicht. Meine Antworten können Fehler enthalten und ersetzen keine Beratung. Was möchten Sie wissen?',
     chips: [
@@ -56,9 +56,9 @@ const T = {
     generate: 'Vorlage mit Daten aus dem Brief füllen',
     generating: 'Daten werden aus dem Brief übernommen… (ca. 15–30 Sek.)',
     yourLetter: 'Vorlage, von KI mit Daten aus dem Brief gefüllt – bitte prüfen und anpassen',
-    copy: '📋 Kopieren',
+    copy: 'Kopieren',
     masked: 'IBAN, Kartennummern, Steuer-ID und E-Mail-Adressen werden vor dem Senden automatisch verdeckt.',
-    din: '📄 Als Brief (DIN) gestalten',
+    din: 'Als Brief (DIN) gestalten',
     copied: '✓ Kopiert',
     download: '⬇️ Als Datei',
     email: '📧 Per E-Mail',
@@ -80,7 +80,7 @@ const T = {
   ru: {
     title: 'ИИ-ассистент DEASY',
     subtitle: 'Ответы создаёт ИИ (Claude) — без гарантий, не юридическая консультация',
-    tabChat: '💬 Вопросы',
+    tabChat: 'Вопросы',
     tabReply: '✉️ Написать ответ',
     welcome: 'Здравствуйте! Я ИИ-ассистент (не человек). Я прочитал ваше письмо и объясню, что в нём написано, — правовую оценку вашей ситуации я не даю. В ответах возможны ошибки, они не заменяют консультацию. Что хотите узнать?',
     chips: [
@@ -100,9 +100,9 @@ const T = {
     generate: 'Заполнить шаблон данными из письма',
     generating: 'ИИ переносит данные из письма… (15–30 сек.)',
     yourLetter: 'Шаблон на немецком, заполненный ИИ данными из письма, — проверьте и поправьте перед отправкой',
-    copy: '📋 Копировать',
+    copy: 'Копировать',
     masked: 'Номера счетов (IBAN), карт, Steuer-ID и e-mail скрываются автоматически до отправки.',
-    din: '📄 Оформить письмо (DIN)',
+    din: 'Оформить письмо (DIN)',
     copied: '✓ Скопировано',
     download: '⬇️ Скачать',
     email: '📧 Отправить e-mail',

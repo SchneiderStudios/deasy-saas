@@ -673,6 +673,11 @@
   padding: 20px 16px 48px;
 }
 
+/* экран разбора шире: текст слева, пометки на полях справа */
+.mainWide {
+  max-width: 1060px;
+}
+
 .backButton {
   background: none;
   border: none;

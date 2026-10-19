@@ -7,7 +7,7 @@ type Answer3 = 'ja' | 'teilweise' | 'nein';
 
 const T = {
   ru: {
-    title: '💬 Помогите улучшить DEASY',
+    title: 'Помогите улучшить DEASY',
     sub: '2 коротких вопроса, анонимно',
     q1: 'Разбор помог понять письмо?',
     a1: { ja: 'Да', teilweise: 'Частично', nein: 'Нет' },
@@ -20,7 +20,7 @@ const T = {
     error: 'Не удалось отправить. Попробуйте позже.',
   },
   de: {
-    title: '💬 Helfen Sie, DEASY zu verbessern',
+    title: 'Helfen Sie, DEASY zu verbessern',
     sub: '2 kurze Fragen, anonym',
     q1: 'Hat die Erklärung geholfen, den Brief zu verstehen?',
     a1: { ja: 'Ja', teilweise: 'Teilweise', nein: 'Nein' },
@@ -70,14 +70,14 @@ export default function FeedbackBox({ language, demo }: { language: Lang; demo?:
 
   if (state === 'done') {
     return (
-      <div style={{ margin: '16px 0', padding: '14px 16px', borderRadius: 12, background: '#ecfdf3', border: '1px solid #abefc6' }}>
+      <div style={{ margin: '16px 0', padding: '14px 16px', borderRadius: 12, background: '#fff', border: '1px solid var(--line)' }}>
         {t.thanks}
       </div>
     );
   }
 
   return (
-    <div style={{ margin: '16px 0', padding: '16px', borderRadius: 12, background: '#fffbea', border: '1px solid #f5e08a' }}>
+    <div style={{ margin: '16px 0', padding: '16px', borderRadius: 12, background: '#fff', border: '1px solid var(--line)' }}>
       <h3 style={{ margin: 0 }}>{t.title}</h3>
       <p style={{ margin: '2px 0 12px', fontSize: 13, color: '#6b7085' }}>{t.sub}</p>
 

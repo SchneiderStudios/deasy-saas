@@ -92,7 +92,7 @@ export function BeratungHinweis({ language, open = false }: { language: Lang; op
   const t = TEXT[language];
   return (
     <details style={box} open={open}>
-      <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#1c2340' }}>🧭 {t.title}</summary>
+      <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#1c2340' }}>{t.title}</summary>
       <p style={{ margin: '10px 0 8px' }}>{t.intro}</p>
       <ul style={{ margin: 0, paddingLeft: 18 }}>
         {t.topics.map((x) => (
