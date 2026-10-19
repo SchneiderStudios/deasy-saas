@@ -390,89 +390,22 @@
   border-top: 1px solid var(--line);
 }
 
-/* липкая полоса со сроком — только на телефоне */
-.stickyFrist {
-  display: none;
-}
-
-@media (max-width: 880px) {
-  .stickyFrist {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: sticky;
-    top: 58px; /* под липкой шапкой приложения */
-    z-index: 5;
-    margin: 0 -16px 14px;
-    padding: 10px 16px;
-    background: #fff;
-    border-bottom: 2px solid var(--alarm);
-    box-shadow: 0 6px 14px -12px rgba(29, 36, 51, 0.6);
-  }
-
-  .stickyDate {
-    font-size: 17px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
-  }
-
-  .stickyLeft {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--alarm);
-  }
-
-  .stickyBtn {
-    margin-left: auto;
-    border: none;
-    background: none;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--pen-dark);
-    border-bottom: 2px solid var(--pen);
-    padding: 2px 0;
-    cursor: pointer;
-  }
-}
-
+/* телефон: тот же лист, что и на компьютере — только пометки идут под текстом,
+   с той же линией поля слева, тем же маркером и тем же штампом срока */
 @media (max-width: 880px) {
   .grid {
     grid-template-columns: 1fr;
   }
 
   .notes {
-    padding-left: 0;
-    border-left: none;
-    border-top: 2px solid var(--ink);
-    padding-top: 24px;
-    gap: 22px;
+    gap: 24px;
   }
 
-  .body {
-    font-size: 17.5px;
-  }
-
-  .title {
-    max-width: none;
-    font-size: 28px;
-    margin-bottom: 24px;
+  .footNotes {
+    gap: 26px;
   }
 
   .sheet {
-    margin-bottom: 20px;
-  }
-
-  .meta {
-    font-size: 10.5px;
-    letter-spacing: 0.1em;
-    gap: 2px 12px;
-  }
-
-  .noteFrist {
-    transform: none;
+    padding: 24px 18px;
   }
 }
