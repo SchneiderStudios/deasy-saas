@@ -15,6 +15,7 @@ import RedactionEditor, { SKIP_KEY } from '@/components/RedactionEditor';
 import TranslationView from '@/components/TranslationView';
 import sh from '@/styles/Sheet.module.css';
 import { markieren, ersterSatz } from '@/lib/markieren';
+import { downloadIcs, fmtDate, daysLeft } from '@/lib/ics';
 import { IconInfo, IconSteps, IconBag, IconDoc, IconEye, IconCamera, IconChat } from '@/components/icons';
 import type { SavedCase } from '@/hooks/useDocumentHistory';
 
@@ -628,6 +629,25 @@ export default function App() {
             <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
             <BeratungHinweis language={selectedLanguage} />
           </>
+        )}
+
+        {analysis && !analysis.restricted && (analysis.fristen || []).length > 0 && (
+          <div className={sh.stickyFrist}>
+            <span className={sh.stickyDate}>{fmtDate((analysis.fristen || [])[0].datum)}</span>
+            <span className={sh.stickyLeft}>
+              {(() => {
+                const d = daysLeft((analysis.fristen || [])[0].datum);
+                return d < 0 ? (de ? 'abgelaufen' : 'срок прошёл') : de ? `noch ${d} Tage` : `осталось ${d} дн.`;
+              })()}
+            </span>
+            <button
+              type="button"
+              className={sh.stickyBtn}
+              onClick={() => downloadIcs(analysis.fristen || [], analysis.absender || '', analysis.aktenzeichen)}
+            >
+              {de ? 'In Kalender' : 'В календарь'}
+            </button>
+          </div>
         )}
 
         {analysis && !analysis.restricted && (
