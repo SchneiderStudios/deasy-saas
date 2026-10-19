@@ -641,11 +641,6 @@ export default function App() {
 
               <h1 className={sh.title}>{kopf ? markieren(kopf, sh.mark, marken) : de ? 'Das steht im Brief' : 'Что в письме'}</h1>
 
-              <p className={sh.aiNote}>
-                <IconInfo size={14} />
-                {de ? 'KI-generiert · ohne Gewähr · keine Rechtsberatung' : 'Создано ИИ · без гарантий · не юридическая консультация'}
-              </p>
-
               <div className={sh.grid}>
                 <div className={sh.body}>
                   <p>{markieren(rest || analysis.summary, sh.mark, marken)}</p>
@@ -705,6 +700,11 @@ export default function App() {
 
                 <EchtheitCheck echtheit={analysis.echtheit} hinweise={analysis.betrugsHinweise} language={selectedLanguage} />
               </div>
+
+              <p className={sh.aiNote}>
+                <IconInfo size={14} />
+                {de ? 'KI-generiert · ohne Gewähr · keine Rechtsberatung' : 'Создано ИИ · без гарантий · не юридическая консультация'}
+              </p>
             </article>
 
             {selectedLanguage === 'ru' && !isDemo && (
