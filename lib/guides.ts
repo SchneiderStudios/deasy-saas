@@ -108,6 +108,55 @@ export const GUIDES: Guide[] = [
     },
   },
   {
+    slug: 'aufforderung-zur-mitwirkung',
+    icon: '📄',
+    updated: 'Oktober 2026',
+    ru: {
+      title: 'Aufforderung zur Mitwirkung из Jobcenter: что делать',
+      lead: 'Jobcenter просит прислать документы до определённой даты. Это не наказание, а просьба помочь проверить ваше право на выплаты.',
+      sections: [
+        {
+          h: 'Что делать',
+          list: [
+            'Найдите в письме срок и список документов.',
+            'Отправьте документы до срока: через jobcenter.digital (подойдут фото с телефона), по почте или лично. Сохраните подтверждение.',
+            'Не успеваете или чего-то нет? До срока сообщите Jobcenter, отправьте то, что есть, и попросите продлить срок.',
+          ],
+        },
+        {
+          h: 'Если ничего не сделать',
+          p: 'Выплаты могут остановить полностью или частично, пока вы не пришлёте документы (§ 66 SGB I).',
+        },
+      ],
+      links: [
+        { label: 'Jobcenter — официальная информация', url: 'https://www.arbeitsagentur.de/grundsicherung' },
+        { label: 'Бесплатные консультации рядом с вами (BAMF-NAvI)', url: 'https://bamf-navi.bamf.de' },
+      ],
+    },
+    de: {
+      title: 'Aufforderung zur Mitwirkung vom Jobcenter: Was tun?',
+      lead: 'Das Jobcenter bittet Sie, bis zu einem bestimmten Datum Unterlagen zu schicken. Das ist keine Strafe, sondern eine Bitte, bei der Prüfung Ihres Anspruchs mitzuhelfen.',
+      sections: [
+        {
+          h: 'Was tun',
+          list: [
+            'Frist und Liste der Unterlagen im Brief suchen.',
+            'Unterlagen vor Fristende schicken: über jobcenter.digital (Handyfotos reichen), per Post oder persönlich. Nachweis aufbewahren.',
+            'Schaffen Sie es nicht oder fehlt etwas? Vor Fristende beim Jobcenter melden, das Vorhandene schicken und um Fristverlängerung bitten.',
+          ],
+        },
+        {
+          h: 'Wenn Sie nichts tun',
+          p: 'Die Leistungen können ganz oder teilweise gestoppt werden, bis Sie die Unterlagen nachreichen (§ 66 SGB I).',
+        },
+      ],
+      links: [
+        { label: 'Jobcenter – offizielle Informationen', url: 'https://www.arbeitsagentur.de/grundsicherung' },
+        { label: 'Kostenlose Beratung in Ihrer Nähe (BAMF-NAvI)', url: 'https://bamf-navi.bamf.de' },
+      ],
+    },
+  },
+  {
     slug: 'fristen-verstehen',
     icon: '⏰',
     updated: 'Oktober 2026',
