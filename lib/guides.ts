@@ -157,6 +157,55 @@ export const GUIDES: Guide[] = [
     },
   },
   {
+    slug: 'einladung-meldetermin',
+    icon: '📅',
+    updated: 'Oktober 2026',
+    ru: {
+      title: 'Einladung zum Meldetermin из Jobcenter: что делать',
+      lead: 'Jobcenter приглашает вас на встречу. Обычно это разговор о работе, учёбе или ваших документах. Бояться не нужно, главное — прийти вовремя.',
+      sections: [
+        {
+          h: 'Что делать',
+          list: [
+            'Найдите в письме дату, время, адрес и что взять с собой (паспорт, письмо, документы).',
+            'Сразу внесите встречу в календарь и придите немного заранее.',
+            'Не можете прийти — заболели или что-то срочное? Сообщите Jobcenter до встречи и пришлите подтверждение, например справку от врача.',
+          ],
+        },
+        {
+          h: 'Если не прийти без уважительной причины',
+          p: 'Выплаты могут уменьшить. С июля 2026 первый пропуск обходится без последствий, со второго выплату снижают на 30 % на месяц. Уважительная причина, например болезнь, проверяется.',
+        },
+      ],
+      links: [
+        { label: 'Jobcenter — официальная информация', url: 'https://www.arbeitsagentur.de/grundsicherung' },
+        { label: 'Бесплатные консультации рядом с вами (BAMF-NAvI)', url: 'https://bamf-navi.bamf.de' },
+      ],
+    },
+    de: {
+      title: 'Einladung zum Meldetermin vom Jobcenter: Was tun?',
+      lead: 'Das Jobcenter lädt Sie zu einem Gespräch ein. Meist geht es um Arbeit, Ausbildung oder Ihre Unterlagen. Kein Grund zur Sorge – wichtig ist, pünktlich zu kommen.',
+      sections: [
+        {
+          h: 'Was tun',
+          list: [
+            'Datum, Uhrzeit, Adresse und mitzubringende Unterlagen im Brief suchen (Ausweis, Einladung, Dokumente).',
+            'Termin sofort in den Kalender eintragen und etwas früher da sein.',
+            'Können Sie nicht kommen, etwa wegen Krankheit oder eines Notfalls? Vor dem Termin beim Jobcenter melden und einen Nachweis schicken, z. B. ein ärztliches Attest.',
+          ],
+        },
+        {
+          h: 'Wenn Sie ohne wichtigen Grund fehlen',
+          p: 'Die Leistungen können gemindert werden. Seit Juli 2026 hat das erste Versäumnis keine Folgen, ab dem zweiten wird der Regelbedarf für einen Monat um 30 % gemindert. Ein wichtiger Grund wie Krankheit wird geprüft.',
+        },
+      ],
+      links: [
+        { label: 'Jobcenter – offizielle Informationen', url: 'https://www.arbeitsagentur.de/grundsicherung' },
+        { label: 'Kostenlose Beratung in Ihrer Nähe (BAMF-NAvI)', url: 'https://bamf-navi.bamf.de' },
+      ],
+    },
+  },
+  {
     slug: 'fristen-verstehen',
     icon: '⏰',
     updated: 'Oktober 2026',
